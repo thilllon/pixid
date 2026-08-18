@@ -1,0 +1,4 @@
+{
+  "name": "blockies-typed",
+  "install": "pnpm install --frozen-lockfile"
+}
