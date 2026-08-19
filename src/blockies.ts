@@ -39,10 +39,13 @@ const hslToRgb = (h: number, s: number, l: number): [number, number, number] => 
 /**
  * The random number is a JavaScript implementation of `Xorshift PRNG`
  * Xorshift: [x, y, z, w] 32 bit values
+ *
+ * Seed hashing is based on Java's String.hashCode(), expanded to 4 32bit values.
+ * The state is local to each call so the same seed always produces the same image.
  */
-const randseed: RandSeed = [0, 0, 0, 0];
+const createRandSeed = (seed: string): RandSeed => {
+  const randseed: RandSeed = [0, 0, 0, 0];
 
-const createRandSeed = (seed: string) => {
   for (let i = 0; i < seed.length; i++) {
     randseed[i % 4] = (randseed[i % 4] << 5) - randseed[i % 4] + seed.charCodeAt(i);
   }
@@ -50,10 +53,7 @@ const createRandSeed = (seed: string) => {
   return randseed;
 };
 
-/**
- * based on Java's String.hashCode(), expanded to 4 32bit values
- */
-const rand = () => {
+const createRand = (randseed: RandSeed) => () => {
   const t = randseed[0] ^ (randseed[0] << 11);
 
   randseed[0] = randseed[1];
@@ -64,7 +64,9 @@ const rand = () => {
   return (randseed[3] >>> 0) / ((1 << 31) >>> 0);
 };
 
-const createHSL = () => {
+type Rand = ReturnType<typeof createRand>;
+
+const createHSL = (rand: Rand) => {
   // hue is the whole color spectrum
   const h = rand();
 
@@ -80,7 +82,7 @@ const createHSL = () => {
 /**
  * support square icons only for now
  */
-const createImageData = (width: number, height: number) => {
+const createImageData = (width: number, height: number, rand: Rand) => {
   const dataWidth = Math.ceil(width / 2);
   const mirrorWidth = width - dataWidth;
 
@@ -99,30 +101,24 @@ const createImageData = (width: number, height: number) => {
   return data;
 };
 
-const defaultOptions = {
-  scale: 24,
-  size: 7,
-  seed: '',
-  fgColor: [0, 0, 0],
-  bgColor: [255, 255, 255],
-  spotColor: [0, 0, 0],
-};
-
 export const createBuffer = (optsParam: Options) => {
-  const options = defaultOptions;
-  options.scale = optsParam.scale ?? options.scale;
-  options.size = optsParam.size ?? options.size;
-  options.seed = optsParam.seed ?? Math.floor(Math.random() * 10 ** 16).toString(16);
+  const seed = optsParam.seed ?? Math.floor(Math.random() * 10 ** 16).toString(16);
 
-  createRandSeed(options.seed);
+  const rand = createRand(createRandSeed(seed));
 
-  const [h, s, l] = createHSL();
+  const [h, s, l] = createHSL(rand);
   const rgb = hslToRgb(h, s, l);
-  options.fgColor = optsParam.fgColor ?? rgb;
-  options.bgColor = optsParam.bgColor ?? options.bgColor;
-  options.spotColor = optsParam.spotColor ?? rgb;
 
-  const imageData = createImageData(options.size, options.size);
+  const options = {
+    scale: optsParam.scale ?? 24,
+    size: optsParam.size ?? 7,
+    seed,
+    fgColor: optsParam.fgColor ?? rgb,
+    bgColor: optsParam.bgColor ?? ([255, 255, 255] as RGB),
+    spotColor: optsParam.spotColor ?? rgb,
+  };
+
+  const imageData = createImageData(options.size, options.size, rand);
 
   const imageWidth = options.size * options.scale;
 

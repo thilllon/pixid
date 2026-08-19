@@ -63,13 +63,27 @@ describe('blockies-typed', () => {
     expect(htmlData.length).toBe(LENGTH);
   });
 
-  it('same seeds make different images', () => {
+  it('same seeds make the same image', () => {
     const seed = uuid();
     const data1 = createDataURL({ seed });
     const data2 = createDataURL({ seed });
     const data3 = createDataURL({ seed });
+    expect(data1).toBe(data2);
+    expect(data2).toBe(data3);
+  });
+
+  it('different seeds make different images', () => {
+    const data1 = createDataURL({ seed: uuid() });
+    const data2 = createDataURL({ seed: uuid() });
     expect(data1).not.toBe(data2);
-    expect(data2).not.toBe(data3);
+  });
+
+  it('options do not leak between calls', () => {
+    const seed = uuid();
+    const before = createDataURL({ seed });
+    createDataURL({ seed: uuid(), bgColor: [12, 34, 56], size: 10, scale: 8 });
+    const after = createDataURL({ seed });
+    expect(after).toBe(before);
   });
 
   it('should be defined', () => {

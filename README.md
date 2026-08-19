@@ -78,7 +78,7 @@ All options are optional.
 | `bgColor`   | `[number, number, number]` | `[255, 255, 255]`    | Background color as an RGB tuple                     |
 | `spotColor` | `[number, number, number]` | derived from seed    | Spot (accent) color as an RGB tuple                  |
 
-> **Note:** the pseudo-random generator keeps its internal state between calls, so calling `createBuffer`/`createDataURL` twice with the same seed within the same process currently produces different images.
+> **Note:** generation is deterministic — calling `createBuffer`/`createDataURL` with the same seed and options always produces the same image, so a wallet address (or user id) always maps to the same icon.
 
 ## API
 
