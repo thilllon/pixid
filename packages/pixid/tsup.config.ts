@@ -7,6 +7,7 @@ export default defineConfig([
     format: ['esm', 'cjs'],
     dts: true,
     clean: true,
+    minify: true,
     target: 'es2022',
   },
   {
@@ -20,6 +21,7 @@ export default defineConfig([
   {
     entry: ['src/cli.ts'],
     format: ['esm'],
+    minify: true,
     target: 'es2022',
     banner: { js: '#!/usr/bin/env node' },
     define: { __PKG_VERSION__: JSON.stringify(pkg.version) },
