@@ -1,0 +1,56 @@
+{
+  "name": "@pixid/react",
+  "version": "0.1.0",
+  "description": "React component for pixid blocky identicons. Renders inline SVG, works in server components, no client-side requirements.",
+  "keywords": [
+    "identicon",
+    "blockies",
+    "avatar",
+    "react",
+    "pixel"
+  ],
+  "license": "MIT",
+  "author": "thilllon",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thilllon/blockies-typed.git",
+    "directory": "packages/react"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup"
+  },
+  "dependencies": {
+    "@pixid/core": "workspace:^"
+  },
+  "peerDependencies": {
+    "react": ">=17"
+  },
+  "devDependencies": {
+    "@pixid/svg": "workspace:^",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
