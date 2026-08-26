@@ -8,6 +8,10 @@
     "type": "git",
     "url": "https://github.com/thilllon/pixid.git"
   },
+  "homepage": "https://github.com/thilllon/pixid",
+  "bugs": {
+    "url": "https://github.com/thilllon/pixid/issues"
+  },
   "engines": {
     "node": ">=18"
   },
