@@ -177,6 +177,9 @@ original, so icons for the same seed differ from `blockies-typed` output.
 
 ## Development
 
+Node.js and pnpm versions are pinned in `mise.toml` (Node 24 LTS, pnpm 11).
+With [mise](https://mise.jdx.dev) installed, `mise install` sets both up.
+
 ```
 pnpm install
 pnpm build        # tsup, all packages
