@@ -37,7 +37,7 @@ importers:
         version: 10.9.1
       pixid:
         specifier: workspace:^
-        version: link:packages/cli
+        version: link:packages/pixid
       pngjs:
         specifier: ^7.0.0
         version: 7.0.0
@@ -68,6 +68,20 @@ importers:
 
   packages/cli:
     dependencies:
+      '@pixid/png':
+        specifier: workspace:^
+        version: link:../png
+      '@pixid/svg':
+        specifier: workspace:^
+        version: link:../svg
+
+  packages/core: {}
+
+  packages/pixid:
+    dependencies:
+      '@pixid/cli':
+        specifier: workspace:^
+        version: link:../cli
       '@pixid/core':
         specifier: workspace:^
         version: link:../core
@@ -77,8 +91,6 @@ importers:
       '@pixid/svg':
         specifier: workspace:^
         version: link:../svg
-
-  packages/core: {}
 
   packages/png:
     dependencies:

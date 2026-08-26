@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { toPng } from '@pixid/png';
 import { toSvg } from '@pixid/svg';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import pkg from '../package.json' with { type: 'json' };
 
 const CLI = fileURLToPath(new URL('../dist/cli.js', import.meta.url));
 
@@ -33,7 +34,7 @@ afterEach(() => {
   rmSync(cwd, { recursive: true, force: true });
 });
 
-describe('pixid CLI', () => {
+describe('@pixid/cli', () => {
   it('writes a PNG named after the seed by default', () => {
     const stdout = run(['--seed', 'alice']);
     expect(stdout).toContain('alice.png');
@@ -79,7 +80,25 @@ describe('pixid CLI', () => {
 
   it('prints help and version', () => {
     expect(run(['--help'])).toContain('Usage:');
-    expect(run(['--version']).trim()).toMatch(/^\d+\.\d+\.\d+/);
+    expect(run(['--version']).trim()).toBe(pkg.version);
+  });
+
+  it('documents every flag it accepts in --help', () => {
+    const help = run(['--help']);
+    for (const flag of [
+      '-s, --seed',
+      '-o, --out',
+      '-f, --format',
+      '--size',
+      '--scale',
+      '--color',
+      '--bgcolor',
+      '--spotcolor',
+      '-h, --help',
+      '-v, --version',
+    ]) {
+      expect(help).toContain(flag);
+    }
   });
 
   it('rejects unknown formats', () => {
@@ -101,5 +120,31 @@ describe('pixid CLI', () => {
 
   it('rejects invalid colors with a clean error', () => {
     expect(runFail(['--seed', 'x', '--color', 'red'])).toContain('invalid color');
+  });
+});
+
+describe('@pixid/cli programmatic entry', () => {
+  it('exports runCli and the package version', async () => {
+    const mod = (await import(
+      fileURLToPath(new URL('../dist/index.js', import.meta.url))
+    )) as typeof import('./index.js');
+
+    expect(typeof mod.runCli).toBe('function');
+    expect(mod.version).toBe(pkg.version);
+  });
+
+  it('writes a file when called with an explicit argv', () => {
+    const script = [
+      `import { runCli } from ${JSON.stringify(fileURLToPath(new URL('../dist/index.js', import.meta.url)))};`,
+      "runCli(['--seed', 'frank', '-o', 'frank.png']);",
+    ].join('\n');
+
+    execFileSync(process.execPath, ['--input-type=module', '-e', script], {
+      cwd,
+      encoding: 'utf8',
+    });
+    expect(new Uint8Array(readFileSync(join(cwd, 'frank.png')))).toEqual(
+      toPng({ seed: 'frank', scale: 16 }),
+    );
   });
 });

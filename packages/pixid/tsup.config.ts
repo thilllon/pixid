@@ -1,7 +1,4 @@
 import { defineConfig } from 'tsup';
-import pkg from './package.json';
-
-const define = { __PKG_VERSION__: JSON.stringify(pkg.version) };
 
 export default defineConfig([
   {
@@ -11,17 +8,21 @@ export default defineConfig([
     clean: true,
     minify: true,
     target: 'es2022',
-    define,
   },
-  // The executable doubles as the `./run` export subpath: importing it runs
-  // the CLI. Node strips the shebang from any module it loads, so the same
-  // file works as a bin and as an import target.
+  {
+    entry: ['src/index.ts'],
+    format: ['iife'],
+    globalName: 'pixid',
+    noExternal: [/@pixid\//],
+    minify: true,
+    target: 'es2022',
+  },
+  // Bin shim. `@pixid/cli` stays external so the CLI is shared, not duplicated.
   {
     entry: ['src/cli.ts'],
     format: ['esm'],
     minify: true,
     target: 'es2022',
     banner: { js: '#!/usr/bin/env node' },
-    define,
   },
 ]);
