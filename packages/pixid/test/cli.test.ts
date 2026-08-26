@@ -1,0 +1,105 @@
+import { execFileSync } from 'node:child_process';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { toPng } from '@pixid/png';
+import { toSvg } from '@pixid/svg';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
+const CLI = fileURLToPath(new URL('../dist/cli.js', import.meta.url));
+
+let cwd: string;
+
+const run = (args: string[]) =>
+  execFileSync(process.execPath, [CLI, ...args], { cwd, encoding: 'utf8' });
+
+const runFail = (args: string[]) => {
+  try {
+    execFileSync(process.execPath, [CLI, ...args], { cwd, encoding: 'utf8', stdio: 'pipe' });
+    throw new Error('expected the CLI to exit with a non-zero code');
+  } catch (error) {
+    const e = error as { status?: number; stderr?: string };
+    expect(e.status).toBe(1);
+    return e.stderr ?? '';
+  }
+};
+
+beforeEach(() => {
+  cwd = mkdtempSync(join(tmpdir(), 'pixid-cli-'));
+});
+
+afterEach(() => {
+  rmSync(cwd, { recursive: true, force: true });
+});
+
+describe('pixid CLI', () => {
+  it('writes a PNG named after the seed by default', () => {
+    const stdout = run(['--seed', 'alice']);
+    expect(stdout).toContain('alice.png');
+    const bytes = readFileSync(join(cwd, 'alice.png'));
+    expect(new Uint8Array(bytes)).toEqual(toPng({ seed: 'alice', scale: 16 }));
+  });
+
+  it('accepts the seed as a positional argument', () => {
+    run(['bob']);
+    expect(existsSync(join(cwd, 'bob.png'))).toBe(true);
+  });
+
+  it('generates a random seed when none is given', () => {
+    run([]);
+    const files = readdirSync(cwd);
+    expect(files).toHaveLength(1);
+    expect(files[0]).toMatch(/\.png$/);
+  });
+
+  it('writes SVG when requested via --format', () => {
+    run(['--seed', 'carol', '--format', 'svg']);
+    const svg = readFileSync(join(cwd, 'carol.svg'), 'utf8');
+    expect(svg).toBe(toSvg({ seed: 'carol', scale: 16 }));
+  });
+
+  it('infers the format from the output extension', () => {
+    run(['--seed', 'dave', '--out', 'icon.svg']);
+    expect(readFileSync(join(cwd, 'icon.svg'), 'utf8')).toBe(toSvg({ seed: 'dave', scale: 16 }));
+  });
+
+  it('applies size, scale, and color options', () => {
+    run(['--seed', 'erin', '--size', '5', '--scale', '10', '--bgcolor', '#ffffff', '-o', 'e.png']);
+    const bytes = readFileSync(join(cwd, 'e.png'));
+    expect(new Uint8Array(bytes)).toEqual(
+      toPng({ seed: 'erin', size: 5, scale: 10, bgcolor: '#ffffff' }),
+    );
+  });
+
+  it('sanitizes unsafe characters in the default filename', () => {
+    run(['--seed', 'a/b:c']);
+    expect(existsSync(join(cwd, 'a_b_c.png'))).toBe(true);
+  });
+
+  it('prints help and version', () => {
+    expect(run(['--help'])).toContain('Usage:');
+    expect(run(['--version']).trim()).toMatch(/^\d+\.\d+\.\d+/);
+  });
+
+  it('rejects unknown formats', () => {
+    expect(runFail(['--seed', 'x', '--format', 'webp'])).toContain('--format must be');
+  });
+
+  it('rejects seed given both positionally and via flag', () => {
+    expect(runFail(['posix', '--seed', 'flag'])).toContain('not both');
+  });
+
+  it('rejects invalid numeric options', () => {
+    expect(runFail(['--seed', 'x', '--scale', '0'])).toContain('positive integer');
+    expect(runFail(['--seed', 'x', '--size', 'abc'])).toContain('positive integer');
+  });
+
+  it('rejects unknown flags', () => {
+    expect(runFail(['--nope'])).toContain('--nope');
+  });
+
+  it('rejects invalid colors with a clean error', () => {
+    expect(runFail(['--seed', 'x', '--color', 'red'])).toContain('invalid color');
+  });
+});

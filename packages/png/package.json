@@ -1,0 +1,50 @@
+{
+  "name": "@pixid/png",
+  "version": "0.1.0",
+  "description": "Encodes pixid blocky identicons as PNG (Uint8Array or data URL) with a built-in zero-dependency encoder. Works in Node, browsers, and edge runtimes.",
+  "keywords": [
+    "identicon",
+    "blockies",
+    "avatar",
+    "png",
+    "pixel"
+  ],
+  "license": "MIT",
+  "author": "thilllon",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thilllon/blockies-typed.git",
+    "directory": "packages/png"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup"
+  },
+  "dependencies": {
+    "@pixid/core": "workspace:^"
+  },
+  "devDependencies": {
+    "@types/pngjs": "^6.0.5",
+    "pngjs": "^7.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
