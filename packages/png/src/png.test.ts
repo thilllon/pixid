@@ -1,7 +1,7 @@
 import { createIcon } from '@pixid/core';
 import { PNG } from 'pngjs';
 import { describe, expect, it } from 'vitest';
-import { toPng, toPngDataURL } from '../src/index.js';
+import { toPng, toPngDataURL } from './index.js';
 
 /**
  * pngjs acts as an independent decoder oracle: if it can parse our output,

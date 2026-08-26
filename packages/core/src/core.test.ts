@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createIcon, iconRuns, parseColor, rgbToCss } from '../src/index.js';
+import { createIcon, iconRuns, parseColor, rgbToCss } from './index.js';
 
 /**
  * Direct port of the original ethereum-blockies PRNG and grid code

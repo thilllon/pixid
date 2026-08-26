@@ -1,7 +1,7 @@
 import { toSvg } from '@pixid/svg';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { Pixid } from '../src/index.js';
+import { Pixid } from './index.js';
 
 const RECT_RE = /<rect[^>]*\/?>/g;
 const ATTR_RE = /([a-zA-Z-]+)="([^"]*)"/g;

@@ -1,6 +1,6 @@
 import { createIcon, rgbToCss } from '@pixid/core';
 import { describe, expect, it } from 'vitest';
-import { toSvg, toSvgDataURL } from '../src/index.js';
+import { toSvg, toSvgDataURL } from './index.js';
 
 const RECT_RE =
   /<rect(?: x="(\d+)")?(?: y="(\d+)")? width="(\d+)" height="(\d+)" fill="([^"]+)"\/>/g;

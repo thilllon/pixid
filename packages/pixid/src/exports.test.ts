@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import * as pixid from '../src/index.js';
+import * as pixid from './index.js';
 
 describe('pixid meta package', () => {
   it('re-exports the core API', () => {

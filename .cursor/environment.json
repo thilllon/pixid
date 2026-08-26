@@ -1,4 +1,4 @@
 {
-  "name": "blockies-typed",
+  "name": "pixid",
   "install": "pnpm install --frozen-lockfile"
 }

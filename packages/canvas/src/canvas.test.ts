@@ -1,6 +1,6 @@
 import { createIcon, rgbToCss } from '@pixid/core';
 import { describe, expect, it } from 'vitest';
-import { renderToCanvas } from '../src/index.js';
+import { renderToCanvas } from './index.js';
 
 interface FillCall {
   fillStyle: string;
