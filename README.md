@@ -576,7 +576,7 @@ so it is an entry point, not a library function — use `@pixid/png` and
 ```ts
 import { runCli, version } from '@pixid/cli';
 
-console.log(version); // '0.1.0'
+console.log(version); // e.g. '0.1.1'
 runCli(['--seed', 'alice', '-o', 'alice.png']); // writes the file, prints the path
 ```
 

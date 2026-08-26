@@ -1,6 +1,6 @@
 {
   "name": "pixid",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Blocky identicon generator. Deterministic pixel avatars from any seed string, as SVG, PNG, or data URLs, plus a CLI (npx pixid). Tree-shakeable re-export of @pixid/core, @pixid/svg, and @pixid/png.",
   "keywords": [
     "identicon",

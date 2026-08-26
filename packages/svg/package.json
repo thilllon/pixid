@@ -1,6 +1,6 @@
 {
   "name": "@pixid/svg",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Renders pixid blocky identicons as SVG strings or data URLs. Works in any JavaScript runtime.",
   "keywords": [
     "identicon",
