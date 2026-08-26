@@ -9,25 +9,38 @@ concurrency: release-${{ github.ref }}
 permissions:
   contents: write
   pull-requests: write
+  # Required for npm trusted publishing: lets the job mint a GitHub OIDC token
+  # that pnpm exchanges for a short-lived npm publish token.
+  id-token: write
 
 jobs:
   release:
     runs-on: ubuntu-latest
-    env:
-      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
+      # Do NOT set `registry-url` here: setup-node would write an .npmrc with a
+      # NODE_AUTH_TOKEN placeholder that can shadow the OIDC flow
+      # (npm/cli#8730). Node 24 bundles npm >= 11.5.1, the trusted-publishing
+      # minimum, though the publish itself runs through pnpm (see below).
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Publish chain: changesets/action -> `pnpm release` -> `changeset
+      # publish`. @changesets/cli v3 routes the actual publish through the
+      # detected package manager (changesets/changesets#2097), so each package
+      # is published with `pnpm publish`. pnpm 11 implements npm trusted
+      # publishing natively and attempts the OIDC exchange first, falling back
+      # to a static token only when OIDC is not applicable (pnpm/pnpm#11495).
       - name: Create release PR or publish
-        # Skip cleanly when the NPM_TOKEN repo secret is not configured.
-        if: env.NPM_TOKEN != ''
         uses: changesets/action@v1
         with:
           publish: pnpm release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Fallback only. When the NPM_TOKEN secret is unset this is empty and
+          # publishing relies purely on the trusted publisher configured on
+          # npmjs.com for each package.
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
