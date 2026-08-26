@@ -13,6 +13,8 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -22,9 +24,10 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Create release PR or publish
+        # Skip cleanly when the NPM_TOKEN repo secret is not configured.
+        if: env.NPM_TOKEN != ''
         uses: changesets/action@v1
         with:
           publish: pnpm release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

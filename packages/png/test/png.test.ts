@@ -18,16 +18,38 @@ const expectPixelsMatchGrid = (seed: string, size: number, scale: number) => {
   expect(png.width).toBe(px);
   expect(png.height).toBe(px);
 
+  // Build the full expected RGBA buffer and compare in one pass; a per-pixel
+  // expect() would be prohibitively slow for the larger images.
   const palette = [icon.bgcolor, icon.color, icon.spotcolor];
+  const expected = new Uint8Array(px * px * 4);
   for (let y = 0; y < px; y++) {
     for (let x = 0; x < px; x++) {
       const cell = icon.grid[Math.floor(y / scale) * size + Math.floor(x / scale)]!;
-      const expected = palette[cell]!;
+      const [r, g, b] = palette[cell]!;
       const o = (y * px + x) * 4;
-      const actual = [png.data[o], png.data[o + 1], png.data[o + 2], png.data[o + 3]];
-      expect(actual, `pixel (${x},${y})`).toEqual([...expected, 255]);
+      expected[o] = r;
+      expected[o + 1] = g;
+      expected[o + 2] = b;
+      expected[o + 3] = 255;
     }
   }
+
+  const actual = new Uint8Array(png.data.buffer, png.data.byteOffset, png.data.length);
+  let firstMismatch = -1;
+  for (let i = 0; i < expected.length; i++) {
+    if (actual[i] !== expected[i]) {
+      firstMismatch = i;
+      break;
+    }
+  }
+  if (firstMismatch !== -1) {
+    const p = Math.floor(firstMismatch / 4);
+    expect.fail(
+      `pixel (${p % px},${Math.floor(p / px)}) byte ${firstMismatch % 4}: ` +
+        `expected ${expected[firstMismatch]}, got ${actual[firstMismatch]}`,
+    );
+  }
+  expect(actual.length).toBe(expected.length);
 };
 
 describe('toPng', () => {
