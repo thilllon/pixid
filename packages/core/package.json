@@ -13,7 +13,7 @@
   "author": "thilllon",
   "repository": {
     "type": "git",
-    "url": "https://github.com/thilllon/blockies-typed.git",
+    "url": "https://github.com/thilllon/pixid.git",
     "directory": "packages/core"
   },
   "type": "module",

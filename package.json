@@ -6,7 +6,7 @@
   "author": "thilllon",
   "repository": {
     "type": "git",
-    "url": "https://github.com/thilllon/blockies-typed.git"
+    "url": "https://github.com/thilllon/pixid.git"
   },
   "engines": {
     "node": ">=18"

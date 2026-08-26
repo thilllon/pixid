@@ -10,7 +10,7 @@ Every task that changes code or docs MUST end with an open pull request on GitHu
 
    ```sh
    gh auth status   # verify authentication first
-   gh pr create --repo thilllon/blockies-typed --base main --head <branch> --title "<title>" --body "<summary>"
+   gh pr create --repo thilllon/pixid --base main --head <branch> --title "<title>" --body "<summary>"
    ```
 
 4. Report the PR URL to the user. Never merge PRs yourself.
