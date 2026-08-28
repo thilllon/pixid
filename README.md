@@ -32,6 +32,50 @@ Everything is on npm under the `@pixid` scope:
 - [Compatibility](#compatibility)
 - [Development](#development)
 
+## Quickstart
+
+Write a PNG for an Ethereum address, nothing installed:
+
+```
+npx @pixid/cli 0x8ba1f109551bd432803012645ac136ddd64dba72
+# writes 0x8ba1f109551bd432803012645ac136ddd64dba72.png — 128×128 pixels, 4313 bytes
+```
+
+In Node, a file or a data URL for an `<img>`:
+
+```ts
+import { writeFileSync } from 'node:fs';
+import { toPng, toPngDataURL } from '@pixid/png';
+
+const seed = '0x8ba1f109551bd432803012645ac136ddd64dba72';
+writeFileSync('avatar.png', toPng({ seed, scale: 16 })); // 128×128, 4313 bytes
+const src = toPngDataURL({ seed, scale: 16 }); // 'data:image/png;base64,...'
+```
+
+In React, inline SVG with no hooks, so it runs in server components too:
+
+```tsx
+import { Pixid } from '@pixid/react';
+
+export const Avatar = ({ address }: { address: string }) => (
+  <Pixid seed={address} scale={6} role="img" aria-label={address} />
+);
+```
+
+In a browser, no build step:
+
+```html
+<img id="avatar" width="128" height="128" />
+<script type="module">
+  import { toSvgDataURL } from 'https://esm.sh/@pixid/svg';
+  const seed = '0x8ba1f109551bd432803012645ac136ddd64dba72';
+  document.getElementById('avatar').src = toSvgDataURL({ seed, scale: 16 });
+</script>
+```
+
+Same seed, same bytes, on every runtime. Every flag is in [CLI](#cli), every
+function in [API](#api), and the options they all share in [Options](#options).
+
 ## Packages
 
 Every package name below links to its page on npm.
@@ -189,13 +233,14 @@ three functions are re-exported from `pixid`.
 </script>
 ```
 
-`pixid` and `@pixid/canvas` also ship IIFE builds for classic script tags,
-exposing the globals `pixid` and `pixidCanvas`:
+`@pixid/canvas` and `pixid` also ship IIFE builds for classic script tags,
+exposing the globals `pixidCanvas` and `pixid`. Only the scoped one is on a CDN
+today, since `pixid` is not published yet:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/pixid"></script>
+<script src="https://cdn.jsdelivr.net/npm/@pixid/canvas"></script>
 <script>
-  document.getElementById('avatar').src = pixid.toPngDataURL({ seed: 'alice', scale: 16 });
+  document.getElementById('avatar').src = pixidCanvas.toCanvasDataURL({ seed: 'alice', scale: 16 });
 </script>
 ```
 
