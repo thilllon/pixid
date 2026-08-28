@@ -26,13 +26,13 @@ That writes `0x8ba1f109551bd432803012645ac136ddd64dba72.png` (128×128 pixels,
 
 | Package                                                    | What it does                                                                   | Runs in              | Tarball |
 | ---------------------------------------------------------- | ------------------------------------------------------------------------------ | -------------------- | ------- |
-| [`@pixid/core`](https://npmjs.com/package/@pixid/core)     | Seed → pixel grid + color palette. Pure data, no rendering.                    | everywhere           | 3.8 kB  |
-| [`@pixid/svg`](https://npmjs.com/package/@pixid/svg)       | SVG string / `data:image/svg+xml` URL.                                         | everywhere           | 2.3 kB  |
-| [`@pixid/png`](https://npmjs.com/package/@pixid/png)       | PNG file bytes (`Uint8Array`) / `data:image/png` URL, with a built-in encoder. | Node, browsers, edge | 3.5 kB  |
-| [`@pixid/canvas`](https://npmjs.com/package/@pixid/canvas) | Renders to an HTML `<canvas>`.                                                 | browsers             | 3.7 kB  |
-| [`@pixid/react`](https://npmjs.com/package/@pixid/react)   | `<Pixid />` component rendering inline SVG. Works in server components.        | React 17+            | 2.6 kB  |
-| [`@pixid/cli`](https://npmjs.com/package/@pixid/cli)       | The `pixid` command. Writes PNG or SVG files.                                  | Node 18+             | 3.7 kB  |
-| [`pixid`](https://npmjs.com/package/pixid)                 | Meta package. Re-exports core + svg + png and ships the same CLI.              | Node, browsers, edge | 4.3 kB  |
+| [`@pixid/core`](https://npmjs.com/package/@pixid/core)     | Seed → pixel grid + color palette. Pure data, no rendering.                    | everywhere           | 3.4 kB  |
+| [`@pixid/svg`](https://npmjs.com/package/@pixid/svg)       | SVG string / `data:image/svg+xml` URL.                                         | everywhere           | 2.1 kB  |
+| [`@pixid/png`](https://npmjs.com/package/@pixid/png)       | PNG file bytes (`Uint8Array`) / `data:image/png` URL, with a built-in encoder. | Node, browsers, edge | 2.9 kB  |
+| [`@pixid/canvas`](https://npmjs.com/package/@pixid/canvas) | Renders to an HTML `<canvas>`.                                                 | browsers             | 3.4 kB  |
+| [`@pixid/react`](https://npmjs.com/package/@pixid/react)   | `<Pixid />` component rendering inline SVG. Works in server components.        | React 17+            | 2.4 kB  |
+| [`@pixid/cli`](https://npmjs.com/package/@pixid/cli)       | The `pixid` command. Writes PNG or SVG files.                                  | Node 18+             | 3.4 kB  |
+| [`pixid`](https://npmjs.com/package/pixid)                 | Meta package. Re-exports core + svg + png and ships the same CLI.              | Node, browsers, edge | 4.0 kB  |
 
 Tarball sizes are the gzipped published artifacts, measured with `pnpm pack`.
 
@@ -65,8 +65,8 @@ Measured with esbuild (`bundle`, `minify`, `format: esm`), the same way
 | `import { createIcon } from '@pixid/core'`     | 1.8 kB          |
 | `import { toSvg } from '@pixid/svg'`           | 2.5 kB          |
 | `import { toPng } from '@pixid/png'`           | 3.6 kB          |
-| `import { createCanvas } from '@pixid/canvas'` | 2.5 kB          |
-| `import { Pixid } from '@pixid/react'`         | 2.6 kB          |
+| `import { createCanvas } from '@pixid/canvas'` | 2.4 kB          |
+| `import { Pixid } from '@pixid/react'`         | 2.5 kB          |
 | `import { createIcon } from 'pixid'`           | 1.8 kB          |
 | `import { toSvg } from 'pixid'`                | 2.5 kB          |
 | `import { toPng } from 'pixid'`                | 3.6 kB          |
@@ -77,8 +77,8 @@ peer dependencies. Importing a single function from the `pixid` meta package
 costs exactly as much as importing it from the scoped package it comes from,
 because the meta package is a re-export with `sideEffects: false`.
 
-A cold `npx @pixid/cli` downloads four tarballs totaling 13.3 kB. A cold
-`npx pixid` downloads five (the meta package plus the same four), 17.6 kB.
+A cold `npx @pixid/cli` downloads four tarballs totaling 11.8 kB. A cold
+`npx pixid` downloads five (the meta package plus the same four), 15.9 kB.
 Neither pulls in `@pixid/canvas` or `@pixid/react`; `e2e/registry.test.ts`
 publishes everything to a local verdaccio registry and asserts it.
 
@@ -187,8 +187,8 @@ exposing the globals `pixid` and `pixidCanvas`:
 </script>
 ```
 
-The IIFE bundle inlines its `@pixid/*` dependencies: 5.2 kB minified for
-`pixid`, 3.0 kB for `@pixid/canvas`. `@pixid/core`, `@pixid/svg`, `@pixid/png`,
+The IIFE bundle inlines its `@pixid/*` dependencies: 4.8 kB minified for
+`pixid`, 2.6 kB for `@pixid/canvas`. `@pixid/core`, `@pixid/svg`, `@pixid/png`,
 and `@pixid/react` are ESM/CJS only.
 
 ### Canvas
@@ -634,13 +634,19 @@ With [mise](https://mise.jdx.dev) installed, `mise install` sets both up.
 
 ```
 pnpm install
-pnpm build        # tsup, all packages
+pnpm build        # tsdown, all packages
 pnpm test         # unit tests
 pnpm e2e          # tree-shaking checks + publish/npx flow against a local verdaccio registry
 pnpm test:all     # both
 pnpm lint         # eslint
 pnpm format       # prettier --write
 ```
+
+Every package is bundled by [tsdown](https://tsdown.dev) (Rolldown) from its
+own `tsdown.config.ts`, targeting ES2022 with minification and bundled type
+declarations. `@pixid/canvas` and `pixid` add a second, IIFE config that
+inlines the `@pixid/*` graph into `dist/index.global.js`; `@pixid/cli` and
+`pixid` add a Node-platform config for the shebang bin entry.
 
 Layout: one folder per published package, named after what it contains.
 `packages/cli` is `@pixid/cli`; `packages/pixid` is the unscoped `pixid` meta
