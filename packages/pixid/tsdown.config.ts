@@ -19,6 +19,8 @@ export default defineConfig([
     // `jsdelivr` fields point at the tsup-era `index.global.js`.
     outputOptions: { entryFileNames: '[name].global.js' },
     deps: { alwaysBundle: [/@pixid\//] },
+    // Both default to true in tsdown: `dts` because package.json has `types`,
+    // `clean` for every config. The first config above owns them.
     dts: false,
     clean: false,
     minify: true,

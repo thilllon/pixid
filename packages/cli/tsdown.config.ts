@@ -27,6 +27,8 @@ export default defineConfig([
     format: ['esm'],
     platform: 'node',
     fixedExtension,
+    // Both default to true in tsdown: `dts` because package.json has `types`,
+    // `clean` for every config. The first config above owns them.
     dts: false,
     clean: false,
     minify: true,
