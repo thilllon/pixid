@@ -46,7 +46,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup"
+    "build": "tsdown"
   },
   "dependencies": {
     "@pixid/png": "workspace:^",
