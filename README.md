@@ -1,17 +1,27 @@
 # pixid
 
+[![@pixid/cli](https://img.shields.io/npm/v/%40pixid%2Fcli?logo=npm&label=%40pixid%2Fcli)](https://www.npmjs.com/package/@pixid/cli)
+[![@pixid/core](https://img.shields.io/npm/v/%40pixid%2Fcore?logo=npm&label=%40pixid%2Fcore)](https://www.npmjs.com/package/@pixid/core)
+[![@pixid/svg](https://img.shields.io/npm/v/%40pixid%2Fsvg?logo=npm&label=%40pixid%2Fsvg)](https://www.npmjs.com/package/@pixid/svg)
+[![@pixid/png](https://img.shields.io/npm/v/%40pixid%2Fpng?logo=npm&label=%40pixid%2Fpng)](https://www.npmjs.com/package/@pixid/png)
+[![downloads](https://img.shields.io/npm/d18m/%40pixid%2Fcore?logo=npm&label=downloads)](https://www.npmjs.com/package/@pixid/core)
+[![CI](https://img.shields.io/github/actions/workflow/status/thilllon/pixid/ci.yml?branch=main&logo=githubactions&logoColor=white&label=CI)](https://github.com/thilllon/pixid/actions/workflows/ci.yml)
+[![license](https://img.shields.io/npm/l/%40pixid%2Fcore?color=blue)](./LICENSE)
+
 Deterministic blocky identicons from any seed string. Same grid and palette
 algorithm as the original [ethereum-blockies](https://github.com/ethereum/blockies),
 rewritten in TypeScript with zero runtime dependencies, split into small
 packages so you only ship the renderer you actually use.
 
-```
-npx @pixid/cli 0x8ba1f109551bd432803012645ac136ddd64dba72
-```
+Everything is on npm under the `@pixid` scope:
+[`@pixid/cli`](https://www.npmjs.com/package/@pixid/cli) for the command line,
+[`@pixid/core`](https://www.npmjs.com/package/@pixid/core),
+[`@pixid/svg`](https://www.npmjs.com/package/@pixid/svg),
+[`@pixid/png`](https://www.npmjs.com/package/@pixid/png),
+[`@pixid/canvas`](https://www.npmjs.com/package/@pixid/canvas), and
+[`@pixid/react`](https://www.npmjs.com/package/@pixid/react) as libraries.
 
-That writes `0x8ba1f109551bd432803012645ac136ddd64dba72.png` (128×128 pixels,
-4313 bytes) into the current directory.
-
+- [Quickstart](#quickstart)
 - [Packages](#packages)
 - [Size](#size)
 - [How a seed becomes an icon](#how-a-seed-becomes-an-icon)
@@ -24,15 +34,17 @@ That writes `0x8ba1f109551bd432803012645ac136ddd64dba72.png` (128×128 pixels,
 
 ## Packages
 
-| Package                                                    | What it does                                                                   | Runs in              | Tarball |
-| ---------------------------------------------------------- | ------------------------------------------------------------------------------ | -------------------- | ------- |
-| [`@pixid/core`](https://npmjs.com/package/@pixid/core)     | Seed → pixel grid + color palette. Pure data, no rendering.                    | everywhere           | 3.4 kB  |
-| [`@pixid/svg`](https://npmjs.com/package/@pixid/svg)       | SVG string / `data:image/svg+xml` URL.                                         | everywhere           | 2.1 kB  |
-| [`@pixid/png`](https://npmjs.com/package/@pixid/png)       | PNG file bytes (`Uint8Array`) / `data:image/png` URL, with a built-in encoder. | Node, browsers, edge | 2.9 kB  |
-| [`@pixid/canvas`](https://npmjs.com/package/@pixid/canvas) | Renders to an HTML `<canvas>`.                                                 | browsers             | 3.4 kB  |
-| [`@pixid/react`](https://npmjs.com/package/@pixid/react)   | `<Pixid />` component rendering inline SVG. Works in server components.        | React 17+            | 2.4 kB  |
-| [`@pixid/cli`](https://npmjs.com/package/@pixid/cli)       | The `pixid` command. Writes PNG or SVG files.                                  | Node 18+             | 3.4 kB  |
-| [`pixid`](https://npmjs.com/package/pixid)                 | Meta package. Re-exports core + svg + png and ships the same CLI.              | Node, browsers, edge | 4.0 kB  |
+Every package name below links to its page on npm.
+
+| Package                                                        | What it does                                                                                     | Runs in              | Tarball |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------- | ------- |
+| [`@pixid/core`](https://www.npmjs.com/package/@pixid/core)     | Seed → pixel grid + color palette. Pure data, no rendering.                                      | everywhere           | 3.4 kB  |
+| [`@pixid/svg`](https://www.npmjs.com/package/@pixid/svg)       | SVG string / `data:image/svg+xml` URL.                                                           | everywhere           | 2.1 kB  |
+| [`@pixid/png`](https://www.npmjs.com/package/@pixid/png)       | PNG file bytes (`Uint8Array`) / `data:image/png` URL, with a built-in encoder.                   | Node, browsers, edge | 2.9 kB  |
+| [`@pixid/canvas`](https://www.npmjs.com/package/@pixid/canvas) | Renders to an HTML `<canvas>`.                                                                   | browsers             | 3.4 kB  |
+| [`@pixid/react`](https://www.npmjs.com/package/@pixid/react)   | `<Pixid />` component rendering inline SVG. Works in server components.                          | React 17+            | 2.4 kB  |
+| [`@pixid/cli`](https://www.npmjs.com/package/@pixid/cli)       | The `pixid` command. Writes PNG or SVG files.                                                    | Node 18+             | 3.4 kB  |
+| `pixid`                                                        | Meta package. Re-exports core + svg + png and ships the same CLI. Not on npm; name under review. | Node, browsers, edge | 4.0 kB  |
 
 Tarball sizes are the gzipped published artifacts, measured with `pnpm pack`.
 
