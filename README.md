@@ -133,10 +133,11 @@ peer dependencies. Importing a single function from the `pixid` meta package
 costs exactly as much as importing it from the scoped package it comes from,
 because the meta package is a re-export with `sideEffects: false`.
 
-A cold `npx @pixid/cli` downloads four tarballs totaling 11.8 kB. A cold
-`npx pixid` downloads five (the meta package plus the same four), 15.9 kB.
-Neither pulls in `@pixid/canvas` or `@pixid/react`; `e2e/registry.test.ts`
-publishes everything to a local verdaccio registry and asserts it.
+A cold `npx @pixid/cli` downloads four tarballs totaling 11.8 kB. Against the
+local test registry, a cold `npx pixid` downloads five (the meta package plus
+the same four), 15.9 kB. Neither pulls in `@pixid/canvas` or `@pixid/react`;
+`e2e/registry.test.ts` publishes everything to a local verdaccio registry and
+asserts it.
 
 ## How a seed becomes an icon
 
