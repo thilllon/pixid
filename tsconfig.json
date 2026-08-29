@@ -1,15 +1,10 @@
 {
+  // Covers the TypeScript that belongs to the repository rather than to a
+  // published package: the README asset generator and the workspace-level e2e
+  // suite. Each package has its own tsconfig extending the same base.
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "target": "es2016",
-    "module": "commonjs",
-    "outDir": "dist",
-    "lib": ["ESNext", "DOM"],
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "resolveJsonModule": true,
-    "removeComments": false
+    "types": ["node"]
   },
-  "include": ["src"],
-  "exclude": ["dist"]
+  "include": ["assets/**/*.ts", "packages/e2e/**/*.ts"]
 }

@@ -15,7 +15,7 @@ import { fileURLToPath } from 'node:url';
 import { toPng, toSvg } from 'pixid';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-const ROOT = fileURLToPath(new URL('..', import.meta.url));
+const WORKSPACE_ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const PORT = 4873 + Math.floor(Math.random() * 1000);
 const REGISTRY = `http://127.0.0.1:${PORT}/`;
 
@@ -54,8 +54,8 @@ beforeAll(async () => {
     ].join('\n'),
   );
 
-  // Resolve the verdaccio binary from the workspace root's node_modules.
-  const require = createRequire(join(ROOT, 'package.json'));
+  // Resolve the verdaccio binary from this package's own node_modules.
+  const require = createRequire(import.meta.url);
   const verdaccioPkg = require('verdaccio/package.json') as {
     bin: string | Record<string, string>;
   };
@@ -98,10 +98,12 @@ beforeAll(async () => {
     [`registry=${REGISTRY}`, `//127.0.0.1:${PORT}/:_authToken=${token}`, ''].join('\n'),
   );
 
-  // Publish every workspace package to the local registry, exactly like a
-  // real release (workspace: ranges are rewritten by pnpm on publish).
+  // Publish every publishable workspace package to the local registry, exactly
+  // like a real release (workspace: ranges are rewritten by pnpm on publish).
+  // This package is `private`, so pnpm skips it and the suite never publishes
+  // itself.
   execFileSync('pnpm', ['-r', 'publish', '--registry', REGISTRY, '--no-git-checks'], {
-    cwd: ROOT,
+    cwd: WORKSPACE_ROOT,
     env: npmEnv(join(workDir, 'publish-cache')),
     encoding: 'utf8',
   });
@@ -186,7 +188,28 @@ describe('npx against a real registry', () => {
     ]);
   });
 
-  it('keeps the total download for npx under 30 KB of tarballs', () => {
+  it('publishes exactly the public packages and keeps the npx download under 30 KB', () => {
+    // Every published package gets a storage directory named after it. The
+    // private `@pixid/e2e` suite must not appear: `pnpm -r publish` skips
+    // private packages, which is what lets these tests live in a package.
+    const published = readdirSync(storageDir, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .flatMap((entry) =>
+        entry.name === '@pixid'
+          ? readdirSync(join(storageDir, entry.name)).map((scoped) => `@pixid/${scoped}`)
+          : [entry.name],
+      )
+      .sort();
+    expect(published).toEqual([
+      '@pixid/canvas',
+      '@pixid/cli',
+      '@pixid/core',
+      '@pixid/png',
+      '@pixid/react',
+      '@pixid/svg',
+      'pixid',
+    ]);
+
     const tarballs: { name: string; size: number }[] = [];
     const walk = (dir: string) => {
       for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -198,7 +221,7 @@ describe('npx against a real registry', () => {
     };
     walk(storageDir);
 
-    expect(tarballs.length).toBeGreaterThanOrEqual(7);
+    expect(tarballs).toHaveLength(published.length);
     for (const t of tarballs) {
       console.log(`${t.name}: ${t.size} bytes`);
       expect(t.size).toBeLessThan(20 * 1024);

@@ -2,7 +2,9 @@ import { build } from 'esbuild';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
-const ROOT = fileURLToPath(new URL('..', import.meta.url));
+// Bundles resolve `pixid` and `@pixid/svg` from this package's own
+// node_modules, where they are declared as devDependencies.
+const RESOLVE_DIR = fileURLToPath(new URL('.', import.meta.url));
 
 /**
  * Bundles a snippet against the built `pixid` package exactly like a user's
@@ -11,7 +13,7 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
  */
 const bundle = async (source: string): Promise<string> => {
   const result = await build({
-    stdin: { contents: source, resolveDir: ROOT, loader: 'ts' },
+    stdin: { contents: source, resolveDir: RESOLVE_DIR, loader: 'ts' },
     bundle: true,
     minify: true,
     format: 'esm',
