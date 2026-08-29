@@ -113,3 +113,26 @@ with `mise exec --` so the pinned versions are used.
 - Lint and format: `pnpm lint` (`eslint .`), `pnpm format` (`prettier --write`).
 - Versioning: changesets. Add a changeset for any user-visible change
   (`mise exec -- pnpm changeset`); `pixid` and `@pixid/cli` are version-linked.
+
+### Repository root
+
+The root is deliberately small: two content directories (`packages/`, `assets/`) and
+otherwise only files a tool requires to be there. Do not "tidy" it further without a
+concrete reason — everything left is load-bearing:
+
+- `package.json`, `pnpm-workspace.yaml`, `pnpm-lock.yaml` — pnpm defines the workspace
+  from the root manifest and writes the lockfile beside it; CI runs
+  `pnpm install --frozen-lockfile` from here.
+- `.github/`, `.vscode/`, `.cursor/`, `.changeset/` — each tool hard-codes its path.
+- `eslint.config.mjs`, `.prettierrc`, `.prettierignore`, `vitest.config.ts` — resolved
+  from the working directory, and `vitest.config.ts` owns both projects, so it cannot
+  belong to a package. Prettier only reads `.prettierignore` from the cwd.
+- `tsconfig.json` covers repository-owned TypeScript (`assets/`, `packages/e2e/`);
+  `tsconfig.base.json` is what all seven package tsconfigs extend.
+- `mise.toml`, `LICENSE`, `README.md`, `AGENTS.md`, `.gitignore` — convention or
+  detection depends on the root location (`mise` and licence/README detection would
+  both work from a subdirectory, but hiding them costs more than it saves).
+
+Root devDependencies are for repository-wide tooling only. Anything a single package
+needs belongs in that package's manifest, the way `packages/e2e` owns `verdaccio` and
+`esbuild`.
