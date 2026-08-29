@@ -8,10 +8,49 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/thilllon/pixid/ci.yml?branch=main&logo=githubactions&logoColor=white&label=CI)](https://github.com/thilllon/pixid/actions/workflows/ci.yml)
 [![license](https://img.shields.io/npm/l/%40pixid%2Fcore?color=blue)](./LICENSE)
 
-Deterministic blocky identicons from any seed string. Same grid and palette
-algorithm as the original [ethereum-blockies](https://github.com/ethereum/blockies),
-rewritten in TypeScript with zero runtime dependencies, split into small
-packages so you only ship the renderer you actually use.
+## Examples
+
+Deterministic blocky identicons from any seed string. Eight seeds, eight icons —
+128×128 PNGs straight out of `@pixid/png`, shown here at 72 px.
+
+<table>
+  <tr>
+    <td align="center"><img src="https://raw.githubusercontent.com/thilllon/pixid/main/assets/eth-d8da6b.png" width="72" alt="identicon for 0xd8da6bf26964af9d7eed9e03e53415d37aa96045" /></td>
+    <td align="center"><img src="https://raw.githubusercontent.com/thilllon/pixid/main/assets/eth-8ba1f1.png" width="72" alt="identicon for 0x8ba1f109551bd432803012645ac136ddd64dba72" /></td>
+    <td align="center"><img src="https://raw.githubusercontent.com/thilllon/pixid/main/assets/eth-ab5801.png" width="72" alt="identicon for 0xab5801a7d398351b8be11c439e05c5b3259aec9b" /></td>
+    <td align="center"><img src="https://raw.githubusercontent.com/thilllon/pixid/main/assets/uuid-550e8400.png" width="72" alt="identicon for 550e8400-e29b-41d4-a716-446655440000" /></td>
+  </tr>
+  <tr>
+    <td align="center"><sub><code>0xd8da6b…96045</code></sub></td>
+    <td align="center"><sub><code>0x8ba1f1…dba72</code></sub></td>
+    <td align="center"><sub><code>0xab5801…aec9b</code></sub></td>
+    <td align="center"><sub><code>550e8400…440000</code></sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="https://raw.githubusercontent.com/thilllon/pixid/main/assets/pixid.png" width="72" alt="identicon for pixid" /></td>
+    <td align="center"><img src="https://raw.githubusercontent.com/thilllon/pixid/main/assets/alice.png" width="72" alt="identicon for alice" /></td>
+    <td align="center"><img src="https://raw.githubusercontent.com/thilllon/pixid/main/assets/bob.png" width="72" alt="identicon for bob" /></td>
+    <td align="center"><img src="https://raw.githubusercontent.com/thilllon/pixid/main/assets/thilllon.png" width="72" alt="identicon for thilllon" /></td>
+  </tr>
+  <tr>
+    <td align="center"><sub><code>pixid</code></sub></td>
+    <td align="center"><sub><code>alice</code></sub></td>
+    <td align="center"><sub><code>bob</code></sub></td>
+    <td align="center"><sub><code>thilllon</code></sub></td>
+  </tr>
+</table>
+
+Reproduce any cell with one command, or the whole row with one script:
+
+```
+npx @pixid/cli 0xd8da6bf26964af9d7eed9e03e53415d37aa96045 --scale 16
+pnpm assets   # regenerates assets/*.png from the fixed seeds in assets/generate.ts
+```
+
+Same grid and palette algorithm as the original
+[ethereum-blockies](https://github.com/ethereum/blockies), rewritten in
+TypeScript with zero runtime dependencies, split into small packages so you only
+ship the renderer you actually use.
 
 Everything is on npm under the `@pixid` scope:
 [`@pixid/cli`](https://www.npmjs.com/package/@pixid/cli) for the command line,
@@ -21,6 +60,7 @@ Everything is on npm under the `@pixid` scope:
 [`@pixid/canvas`](https://www.npmjs.com/package/@pixid/canvas), and
 [`@pixid/react`](https://www.npmjs.com/package/@pixid/react) as libraries.
 
+- [Examples](#examples)
 - [Quickstart](#quickstart)
 - [Packages](#packages)
 - [Size](#size)
@@ -114,7 +154,7 @@ the name is released; the two CLI entry points run the exact same code.
 ## Size
 
 Measured with esbuild (`bundle`, `minify`, `format: esm`), the same way
-`e2e/treeshake.test.ts` enforces it:
+`packages/e2e/treeshake.test.ts` enforces it:
 
 | Import                                         | Minified bundle |
 | ---------------------------------------------- | --------------- |
@@ -136,7 +176,7 @@ because the meta package is a re-export with `sideEffects: false`.
 A cold `npx @pixid/cli` downloads four tarballs totaling 11.8 kB. Against the
 local test registry, a cold `npx pixid` downloads five (the meta package plus
 the same four), 15.9 kB. Neither pulls in `@pixid/canvas` or `@pixid/react`;
-`e2e/registry.test.ts` publishes everything to a local verdaccio registry and
+`packages/e2e/registry.test.ts` publishes everything to a local verdaccio registry and
 asserts it.
 
 ## How a seed becomes an icon
@@ -698,6 +738,7 @@ pnpm e2e          # tree-shaking checks + publish/npx flow against a local verda
 pnpm test:all     # both
 pnpm lint         # eslint
 pnpm format       # prettier --write
+pnpm assets       # regenerate the README gallery in assets/
 ```
 
 Every package is bundled by [tsdown](https://tsdown.dev) (Rolldown) from its
@@ -706,12 +747,23 @@ declarations. `@pixid/canvas` and `pixid` add a second, IIFE config that
 inlines the `@pixid/*` graph into `dist/index.global.js`; `@pixid/cli` and
 `pixid` add a Node-platform config for the shebang bin entry.
 
-Layout: one folder per published package, named after what it contains.
+Layout: one folder per package under `packages/`, named after what it contains.
 `packages/cli` is `@pixid/cli`; `packages/pixid` is the unscoped `pixid` meta
-package. The e2e suite in `e2e/` runs against real tooling — `e2e/treeshake.test.ts`
-bundles with esbuild and asserts what gets dropped, and `e2e/registry.test.ts`
-spins up verdaccio, publishes every package with `pnpm publish`, then runs
-`npx` from a cold cache.
+package. Unit tests are colocated with the code they cover, in each package's
+`src/`.
+
+`packages/e2e` is the one folder there that is not published: `@pixid/e2e` is
+`"private": true` and owns the tests that belong to no single package, along
+with the `verdaccio` and `esbuild` devDependencies they need.
+`packages/e2e/treeshake.test.ts` bundles the built packages with esbuild and
+asserts what gets dropped; `packages/e2e/registry.test.ts` spins up verdaccio,
+publishes every _publishable_ package with `pnpm publish` (private ones are
+skipped, so the suite never publishes itself), then runs `npx` from a cold
+cache. Both run as the `e2e` vitest project, so `pnpm e2e` is unchanged.
+
+The root `assets/` folder holds the gallery PNGs at the top of this file and
+the `assets/generate.ts` script that produces them (`pnpm assets`). It sits
+outside `packages/`, so no published tarball contains it.
 
 Releases are managed with [changesets](https://github.com/changesets/changesets):
 `pnpm changeset` to record a change, merge the generated "Version Packages"
