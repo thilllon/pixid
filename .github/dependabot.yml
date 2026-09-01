@@ -8,67 +8,67 @@ updates:
   # the one entry. Adding /packages/* as a second directory makes Dependabot
   # raise MisconfiguredTooling, because the lockfile it would have to touch
   # lives in the parent directory (dependabot-core#11487).
-  - package-ecosystem: "npm"
-    directory: "/"
+  - package-ecosystem: 'npm'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "Asia/Seoul"
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'Asia/Seoul'
     # Our manifests carry tight caret floors (`^5.9.3`), so bump the floor
     # instead of the default library behaviour, which would widen `^1.0.0` into
     # `>=1.0.0 <3.0.0` on a major bump.
-    versioning-strategy: "increase"
+    versioning-strategy: 'increase'
     # Two grouped pull requests plus one slot for anything the group rules
     # cannot classify as major/minor/patch.
     open-pull-requests-limit: 3
     commit-message:
-      prefix: "chore"
-      include: "scope"
+      prefix: 'chore'
+      include: 'scope'
     # Order matters: a dependency joins the first group it matches. Both groups
     # are needed -- dependencies matching no group are opened one pull request
     # each, which is exactly what these groups exist to prevent.
     groups:
       npm-minor-and-patch:
         applies-to: version-updates
-        patterns: ["*"]
-        update-types: ["minor", "patch"]
+        patterns: ['*']
+        update-types: ['minor', 'patch']
       npm-major:
         applies-to: version-updates
-        patterns: ["*"]
-        update-types: ["major"]
+        patterns: ['*']
+        update-types: ['major']
     # Belt and braces. Dependabot already skips our own packages twice over: its
     # manifest parser drops any requirement starting with `workspace:`, and it
     # drops any dependency whose name matches the `name` field of a workspace
     # manifest. This rule keeps that guarantee if a `workspace:^` range is ever
     # replaced by a real one -- internal versions belong to changesets.
     ignore:
-      - dependency-name: "pixid"
-      - dependency-name: "@pixid/*"
+      - dependency-name: 'pixid'
+      - dependency-name: '@pixid/*'
 
   # Every `uses:` ref in .github/workflows is pinned to a floating major tag
   # (`actions/checkout@v4`). Dependabot precision-matches the ref it finds, so a
   # one-segment tag can only ever be replaced by another one-segment tag: v4 ->
   # v5, always a major bump. actions-minor-and-patch therefore stays empty until
   # some ref is pinned more precisely (`@v4.3.1`) or to a SHA.
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: 'github-actions'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "Asia/Seoul"
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'Asia/Seoul'
     open-pull-requests-limit: 2
     # github-actions has no dev/prod split, so the scope is spelled out in the
     # prefix rather than left to `include: scope`.
     commit-message:
-      prefix: "ci(deps)"
+      prefix: 'ci(deps)'
     groups:
       actions-minor-and-patch:
         applies-to: version-updates
-        patterns: ["*"]
-        update-types: ["minor", "patch"]
+        patterns: ['*']
+        update-types: ['minor', 'patch']
       actions-major:
         applies-to: version-updates
-        patterns: ["*"]
-        update-types: ["major"]
+        patterns: ['*']
+        update-types: ['major']
