@@ -113,6 +113,29 @@ with `mise exec --` so the pinned versions are used.
 - Versioning: changesets. Add a changeset for any user-visible change
   (`mise exec -- pnpm changeset`).
 
+### Dependency updates
+
+`.github/dependabot.yml` batches every weekly update into at most two pull requests
+per ecosystem: one for all minor and patch bumps, one for all major bumps. Do not
+replace those `patterns: ['*']` groups with per-library groups — dependencies that
+match no group get one pull request each, which is the pile-up the config exists to
+prevent.
+
+- npm targets `/` and nothing else. Dependabot reads the `packages` globs out of
+  `pnpm-workspace.yaml` and reaches `packages/*/package.json` from the root, where the
+  single `pnpm-lock.yaml` lives. Adding `/packages/*` raises `MisconfiguredTooling`.
+- Internal `@pixid/*` and `pixid` deps are never proposed: Dependabot drops any
+  requirement starting with `workspace:`, and any dependency whose name matches a
+  workspace manifest. Internal versions stay the job of changesets.
+- Dependabot pull requests never need a changeset. Every published package has zero
+  external runtime dependencies (all `dependencies` entries are `workspace:^`), so
+  these bumps only ever touch devDependencies and the lockfile.
+- Every `uses:` ref is pinned to a floating major tag (`@v4`), and Dependabot
+  precision-matches the ref, so github-actions can only ever produce major bumps. Pin
+  more precisely (`@v4.3.1`) if you want the minor/patch group to do anything.
+- Dependabot does not know about `mise.toml` or the `packageManager` field. The node
+  and pnpm pins are updated by hand, and the two must be kept in step with each other.
+
 ### Repository root
 
 The root is deliberately small: two content directories (`packages/`, `assets/`) and
