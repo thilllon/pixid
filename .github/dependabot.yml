@@ -4,7 +4,7 @@ updates:
   # pnpm resolves every workspace package through the single root
   # pnpm-lock.yaml, so "/" is the only directory this entry may name.
   # Dependabot reads the `packages` globs out of pnpm-workspace.yaml and pulls
-  # in packages/*/package.json from here, so all eight manifests are covered by
+  # in packages/*/package.json from here, so all nine manifests are covered by
   # the one entry. Adding /packages/* as a second directory makes Dependabot
   # raise MisconfiguredTooling, because the lockfile it would have to touch
   # lives in the parent directory (dependabot-core#11487).
@@ -48,8 +48,8 @@ updates:
 
   # Every `uses:` ref in .github/workflows is pinned to a floating major tag
   # (`actions/checkout@v4`). Dependabot precision-matches the ref it finds, so a
-  # one-segment tag can only ever be replaced by another one-segment tag: v4 ->
-  # v5, always a major bump. actions-minor-and-patch therefore stays empty until
+  # one-segment tag can only ever be replaced by another one-segment tag, which
+  # is always a major bump. actions-minor-and-patch therefore stays empty until
   # some ref is pinned more precisely (`@v4.3.1`) or to a SHA.
   - package-ecosystem: 'github-actions'
     directory: '/'
