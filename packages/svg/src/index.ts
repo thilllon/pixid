@@ -1,12 +1,21 @@
 import { createIcon, iconRuns, rgbToCss, type IconData, type IconOptions } from '@pixid/core';
 
 export interface SvgOptions extends IconOptions {
-  /** Pixels per cell used for the width/height attributes. Defaults to 4. */
+  /**
+   * Pixels per cell used for the width/height attributes. Any finite positive
+   * number, fractions included. Defaults to 4.
+   */
   scale?: number;
 }
 
 /** Renders precomputed icon data as an SVG string. */
 export const iconToSvg = (icon: IconData, scale = 4): string => {
+  // Unlike the PNG and canvas renderers, a fractional scale is fine here:
+  // width and height are SVG lengths, and the viewBox keeps cells exact.
+  if (!Number.isFinite(scale) || scale <= 0) {
+    throw new RangeError(`invalid scale: ${scale} (expected a finite positive number)`);
+  }
+
   const px = icon.size * scale;
   const colors = [rgbToCss(icon.bgcolor), rgbToCss(icon.color), rgbToCss(icon.spotcolor)];
 

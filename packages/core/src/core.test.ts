@@ -72,8 +72,10 @@ describe('createIcon', () => {
   });
 
   it('produces the same grids as the original ethereum-blockies algorithm', () => {
+    // No '' here: the original replaces a falsy seed with a random one
+    // (`opts.seed || random`) before seeding, so it never runs the PRNG on an
+    // empty string. pixid does the same; see the empty-seed test below.
     const seeds = [
-      '',
       'a',
       'pixid',
       '0x8ba1f109551bd432803012645ac136ddd64dba72',
@@ -146,6 +148,37 @@ describe('createIcon', () => {
     expect(a.seed).toBeTruthy();
     expect(createIcon({ seed: a.seed })).toEqual(a);
     expect(a.seed).not.toBe(b.seed);
+  });
+
+  it('treats an empty or null seed like an omitted one, like the original', () => {
+    // An empty string would leave the PRNG unseeded and draw a solid black square.
+    for (const seed of ['', null as never]) {
+      const icon = createIcon({ seed });
+      expect(icon.seed).toMatch(/^[0-9a-f]{14}$/);
+      expect(createIcon({ seed: icon.seed })).toEqual(icon);
+    }
+  });
+
+  it('converts number and bigint seeds with String()', () => {
+    // The PRNG reads string characters, so a raw number used to leave it
+    // unseeded and every numeric seed drew the same all-black icon.
+    const icon = createIcon({ seed: '42' });
+    expect(createIcon({ seed: 42 as never })).toEqual(icon);
+    expect(createIcon({ seed: 42n as never })).toEqual(icon);
+    expect(createIcon({ seed: 1 as never }).grid).not.toEqual(
+      createIcon({ seed: 2 as never }).grid,
+    );
+    // Unlike `opts.seed || random` in the original, 0 is a seed, not a missing one.
+    expect(createIcon({ seed: 0 as never }).seed).toBe('0');
+  });
+
+  it('rejects seeds that are not strings, numbers, or bigints', () => {
+    for (const seed of [true, {}, ['a'], Symbol('seed'), () => 'seed']) {
+      expect(() => createIcon({ seed: seed as never }), typeof seed).toThrow(TypeError);
+    }
+    expect(() => createIcon({ seed: true as never })).toThrow(
+      'invalid seed type: boolean (expected a string, number, or bigint)',
+    );
   });
 
   it('rejects invalid sizes', () => {

@@ -1,7 +1,7 @@
 import { createIcon, iconRuns, rgbToCss, type IconData, type IconOptions } from '@pixid/core';
 
 export interface CanvasOptions extends IconOptions {
-  /** Pixels per cell. Defaults to 4. */
+  /** Pixels per cell, a positive integer. Defaults to 4. */
   scale?: number;
 }
 
@@ -11,6 +11,12 @@ export const renderIconToCanvas = (
   canvas: HTMLCanvasElement,
   scale = 4,
 ): HTMLCanvasElement => {
+  // Canvas dimensions are whole pixels, so cells must be too. Checked before
+  // the canvas is resized, so an invalid scale leaves it untouched.
+  if (!Number.isInteger(scale) || scale < 1) {
+    throw new RangeError(`invalid scale: ${scale} (expected a positive integer)`);
+  }
+
   const px = icon.size * scale;
   canvas.width = px;
   canvas.height = px;

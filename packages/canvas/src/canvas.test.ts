@@ -1,6 +1,6 @@
 import { createIcon, rgbToCss } from '@pixid/core';
-import { describe, expect, it } from 'vitest';
-import { renderToCanvas } from './index.js';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createCanvas, renderIconToCanvas, renderToCanvas, toCanvasDataURL } from './index.js';
 
 interface FillCall {
   fillStyle: string;
@@ -23,9 +23,34 @@ const makeMockCanvas = () => {
     width: 0,
     height: 0,
     getContext: (kind: string) => (kind === '2d' ? ctx : null),
+    toDataURL: (type: string) => `data:${type};mock`,
   };
   return { canvas: canvas as unknown as HTMLCanvasElement, calls };
 };
+
+/**
+ * The unit tests run in Node, which has no `document`. Stubs just enough of
+ * one for createCanvas and toCanvasDataURL and returns the mocks it hands out.
+ */
+const stubDocument = () => {
+  const created: ReturnType<typeof makeMockCanvas>[] = [];
+  vi.stubGlobal('document', {
+    createElement: (tag: string) => {
+      expect(tag).toBe('canvas');
+      const mock = makeMockCanvas();
+      created.push(mock);
+      return mock.canvas;
+    },
+  });
+  return created;
+};
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+/** Scales a canvas cannot be sized from: canvas dimensions are whole pixels. */
+const INVALID_SCALES = [0, -4, 1.5, NaN, Infinity];
 
 describe('renderToCanvas', () => {
   it('sizes the canvas and paints the full background first', () => {
@@ -80,5 +105,54 @@ describe('renderToCanvas', () => {
   it('throws when a 2d context is unavailable', () => {
     const canvas = { width: 0, height: 0, getContext: () => null } as unknown as HTMLCanvasElement;
     expect(() => renderToCanvas(canvas, { seed: 'x' })).toThrow(/2d context/);
+  });
+
+  it('rejects invalid scales before touching the canvas', () => {
+    const { canvas, calls } = makeMockCanvas();
+    canvas.width = 300;
+    canvas.height = 150;
+    for (const scale of INVALID_SCALES) {
+      expect(() => renderToCanvas(canvas, { seed: 'x', scale }), `scale=${scale}`).toThrow(
+        RangeError,
+      );
+    }
+    expect(() => renderToCanvas(canvas, { seed: 'x', scale: 1.5 })).toThrow(
+      'invalid scale: 1.5 (expected a positive integer)',
+    );
+    expect([canvas.width, canvas.height]).toEqual([300, 150]);
+    expect(calls).toEqual([]);
+  });
+});
+
+describe('renderIconToCanvas', () => {
+  it('rejects invalid scales before touching the canvas', () => {
+    const icon = createIcon({ seed: 'x' });
+    const { canvas, calls } = makeMockCanvas();
+    canvas.width = 300;
+    canvas.height = 150;
+    for (const scale of INVALID_SCALES) {
+      expect(() => renderIconToCanvas(icon, canvas, scale), `scale=${scale}`).toThrow(RangeError);
+    }
+    expect([canvas.width, canvas.height]).toEqual([300, 150]);
+    expect(calls).toEqual([]);
+  });
+});
+
+describe('createCanvas and toCanvasDataURL', () => {
+  it('render into a new canvas element', () => {
+    const created = stubDocument();
+    const canvas = createCanvas({ seed: 'fresh', scale: 5 });
+    expect(canvas).toBe(created[0]!.canvas);
+    expect(canvas.width).toBe(40);
+    expect(created[0]!.calls.length).toBeGreaterThan(0);
+    expect(toCanvasDataURL({ seed: 'fresh' })).toBe('data:image/png;mock');
+  });
+
+  it('reject invalid scales', () => {
+    stubDocument();
+    for (const scale of INVALID_SCALES) {
+      expect(() => createCanvas({ seed: 'x', scale }), `scale=${scale}`).toThrow(RangeError);
+      expect(() => toCanvasDataURL({ seed: 'x', scale }), `scale=${scale}`).toThrow(RangeError);
+    }
   });
 });
