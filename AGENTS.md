@@ -124,15 +124,22 @@ prevent.
 - npm targets `/` and nothing else. Dependabot reads the `packages` globs out of
   `pnpm-workspace.yaml` and reaches `packages/*/package.json` from the root, where the
   single `pnpm-lock.yaml` lives. Adding `/packages/*` raises `MisconfiguredTooling`.
-- Internal `@pixid/*` and `pixid` deps are never proposed: Dependabot drops any
-  requirement starting with `workspace:`, and any dependency whose name matches a
-  workspace manifest. Internal versions stay the job of changesets.
-- Dependabot pull requests never need a changeset. Every published package has zero
-  external runtime dependencies (all `dependencies` entries are `workspace:^`), so
-  these bumps only ever touch devDependencies and the lockfile.
-- Every `uses:` ref is pinned to a floating major tag (`@v4`), and Dependabot
-  precision-matches the ref, so github-actions can only ever produce major bumps. Pin
-  more precisely (`@v4.3.1`) if you want the minor/patch group to do anything.
+- Internal `@pixid/*` deps are never proposed: Dependabot drops any requirement
+  starting with `workspace:`, and any dependency whose name matches a workspace
+  manifest. Internal versions stay the job of changesets.
+- A Dependabot pull request needs a changeset only if it changes what gets published.
+  Every published package has zero external runtime dependencies (all `dependencies`
+  entries are `workspace:^`), but build tooling shapes `dist`: a bump of `tsdown` (and
+  the Rolldown it bundles) or of `typescript` (which emits the declarations) can
+  change the tarballs. For those, compare `pnpm pack` output before and after, and add
+  a patch changeset for every package whose `dist` changed. The tsup-to-tsdown switch
+  changed every tarball.
+- TypeScript majors are ignored: typescript-eslint's peer range stops below 6.1, and
+  TypeScript 7 breaks its parser. Upgrade TypeScript by hand once typescript-eslint
+  supports the new major, then drop that rule from `dependabot.yml`.
+- A `uses:` ref on a floating major tag (`@v7`) only ever gets major bumps, because
+  Dependabot precision-matches the ref. A ref pinned to a commit SHA with a
+  `# vX.Y.Z` comment also gets minor and patch bumps.
 - Dependabot does not know about `mise.toml` or the `packageManager` field. The node
   and pnpm pins are updated by hand, and the two must be kept in step with each other.
 
