@@ -1,5 +1,13 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  statSync,
+} from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -77,6 +85,48 @@ describe('@pixid/cli', () => {
   it('sanitizes unsafe characters in the default filename', () => {
     run(['--seed', 'a/b:c']);
     expect(existsSync(join(cwd, 'a_b_c.png'))).toBe(true);
+  });
+
+  it('treats an empty seed like no seed', () => {
+    // Otherwise both runs would write the icon for '' to a hidden `.png`.
+    run(['--seed', '']);
+    run(['']);
+    const files = readdirSync(cwd);
+    expect(files).toHaveLength(2);
+    for (const file of files) {
+      expect(file).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.png$/);
+      expect(new Uint8Array(readFileSync(join(cwd, file)))).toEqual(
+        toPng({ seed: file.slice(0, -'.png'.length), scale: 16 }),
+      );
+    }
+  });
+
+  it('shortens a long seed in the default filename, but not an explicit --out', () => {
+    const seed = 'a/'.repeat(150); // 300 characters
+    run([seed]);
+    const name = `${'a_'.repeat(50)}.png`;
+    expect(readdirSync(cwd)).toEqual([name]);
+    // Only the filename is shortened; the icon still uses the whole seed.
+    expect(new Uint8Array(readFileSync(join(cwd, name)))).toEqual(toPng({ seed, scale: 16 }));
+
+    const out = `${'b'.repeat(150)}.png`;
+    run([seed, '--out', out]);
+    expect(existsSync(join(cwd, out))).toBe(true);
+  });
+
+  it('creates missing parent directories for --out', () => {
+    run(['--seed', 'alice', '--out', 'avatars/2026/alice.svg']);
+    expect(readFileSync(join(cwd, 'avatars/2026/alice.svg'), 'utf8')).toBe(
+      toSvg({ seed: 'alice', scale: 16 }),
+    );
+  });
+
+  it('reports a failed write like invalid input, without a stack trace', () => {
+    mkdirSync(join(cwd, 'taken'));
+    const stderr = runFail(['--seed', 'alice', '--out', 'taken']);
+    expect(stderr).toMatch(/^pixid: EISDIR: /);
+    expect(stderr).not.toMatch(/^\s+at /m);
+    expect(statSync(join(cwd, 'taken')).isDirectory()).toBe(true);
   });
 
   it('prints help and version', () => {

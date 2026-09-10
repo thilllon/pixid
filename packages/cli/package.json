@@ -16,7 +16,7 @@
   "author": "thilllon",
   "repository": {
     "type": "git",
-    "url": "https://github.com/thilllon/pixid.git",
+    "url": "git+https://github.com/thilllon/pixid.git",
     "directory": "packages/cli"
   },
   "homepage": "https://github.com/thilllon/pixid",
@@ -32,9 +32,14 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
     "./run": "./dist/cli.js",
     "./package.json": "./package.json"
@@ -59,6 +64,6 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=18.3.0"
   }
 }

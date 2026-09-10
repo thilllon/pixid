@@ -127,7 +127,7 @@ Every package name below links to its page on npm.
 | [`@pixid/png`](https://www.npmjs.com/package/@pixid/png)       | PNG file bytes (`Uint8Array`) / `data:image/png` URL, with a built-in encoder. | Node, browsers, edge | 2.9 kB  |
 | [`@pixid/canvas`](https://www.npmjs.com/package/@pixid/canvas) | Renders to an HTML `<canvas>`.                                                 | browsers             | 3.4 kB  |
 | [`@pixid/react`](https://www.npmjs.com/package/@pixid/react)   | `<Pixid />` component rendering inline SVG. Works in server components.        | React 17+            | 2.4 kB  |
-| [`@pixid/cli`](https://www.npmjs.com/package/@pixid/cli)       | The `pixid` command. Writes PNG or SVG files.                                  | Node 18+             | 3.4 kB  |
+| [`@pixid/cli`](https://www.npmjs.com/package/@pixid/cli)       | The `pixid` command. Writes PNG or SVG files.                                  | Node 18.3+           | 4.1 kB  |
 
 Tarball sizes are the gzipped published artifacts, measured with `pnpm pack`.
 
@@ -372,7 +372,8 @@ RGB tuples are library-only; on the command line colors must be hex strings.
 **Seed.** Pass it positionally or with `--seed`, not both — doing both exits 1
 with `pass the seed either as a positional argument or with --seed, not both`.
 More than one positional argument is also an error. With no seed at all the
-CLI generates a `crypto.randomUUID()` and names the file after it.
+CLI generates a `crypto.randomUUID()` and names the file after it. An empty
+seed (`--seed ''` or `''` as the positional) counts as no seed.
 
 **Format inference.** If `--format` is given it wins. Otherwise, when `--out`
 is given, the format is `svg` if the path ends in `.svg` (case-insensitive)
@@ -380,18 +381,27 @@ and `png` for every other extension — `-o icon.jpeg` writes PNG bytes to
 `icon.jpeg`. With neither flag the format is `png`.
 
 **Default filename.** Without `--out` the file is named after the seed with
-every character outside `[A-Za-z0-9._-]` replaced by `_`, plus the format
-extension. Seed `a/b:c` writes `a_b_c.png`. `--out` is used verbatim and is
-resolved against `process.cwd()`.
+every character outside `[A-Za-z0-9._-]` replaced by `_`, cut to its first
+100 characters, plus the format extension. Seed `a/b:c` writes `a_b_c.png`.
+The cut keeps names well under the 255-byte limit of common filesystems; it
+only affects the filename, not the icon, so seeds that share their first 100
+characters write to the same file. `--out` is used verbatim and is resolved
+against `process.cwd()`.
 
 **Output.** On success the absolute path and size go to stdout —
 `/tmp/x/alice.png (4313 bytes)` — where the size is the PNG byte length, or
-the SVG string length for `--format svg`. Existing files are overwritten.
+the SVG string length for `--format svg`. Missing parent directories are
+created, so `--out avatars/alice.svg` works without an `avatars/` directory.
+Existing files are overwritten.
 
 **Errors.** Every invalid input writes `pixid: <message>` followed by
 `Run "pixid --help" for usage.` to stderr and exits with code 1. That covers
 unknown flags, unknown formats, non-positive-integer `--size`/`--scale`, and
-malformed colors. Nothing is written to disk when an error occurs.
+malformed colors. Nothing is written to disk when an input error occurs. A
+file that cannot be written — `--out` names an existing directory, a
+permission is missing, a name is too long — is reported the same way with the
+system's message, such as
+`pixid: EISDIR: illegal operation on a directory, open '/tmp/x/avatars'`.
 
 ### Examples
 

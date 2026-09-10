@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { toPng } from '@pixid/png';
 import { toSvg } from '@pixid/svg';
@@ -33,6 +33,14 @@ Examples:
   npx @pixid/cli --seed alice --out alice.svg --scale 32
   npx @pixid/cli --format svg --bgcolor "#ffffff"
 `;
+
+/**
+ * How many characters of the sanitized seed a default filename keeps at most.
+ * File names are capped at 255 bytes on common filesystems; 100 ASCII
+ * characters plus the extension stays well inside that and still fits UUIDs
+ * and Ethereum addresses whole.
+ */
+const MAX_SEED_IN_FILENAME = 100;
 
 const fail = (message: string): never => {
   process.stderr.write(`pixid: ${message}\n\nRun "pixid --help" for usage.\n`);
@@ -97,7 +105,9 @@ export const runCli = (argv: string[] = process.argv.slice(2)): void => {
     return fail('pass the seed either as a positional argument or with --seed, not both');
   }
 
-  const seed = values.seed ?? positionals[0] ?? randomUUID();
+  // An empty seed (`--seed ''` or a '' positional) counts as no seed. Used
+  // as is, it would write the same icon to the hidden file `.png` every time.
+  const seed = (values.seed ?? positionals[0]) || randomUUID();
 
   let format = values.format;
   if (format === undefined && values.out !== undefined) {
@@ -108,7 +118,10 @@ export const runCli = (argv: string[] = process.argv.slice(2)): void => {
     return fail(`--format must be "png" or "svg", got ${JSON.stringify(format)}`);
   }
 
-  const out = values.out ?? `${seed.replace(/[^a-zA-Z0-9._-]/g, '_')}.${format}`;
+  // Only the default name is shortened; an explicit --out is used verbatim.
+  const out =
+    values.out ??
+    `${seed.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, MAX_SEED_IN_FILENAME)}.${format}`;
   const size = values.size === undefined ? undefined : parsePositiveInt('size', values.size);
   const scale = values.scale === undefined ? 16 : parsePositiveInt('scale', values.scale);
 
@@ -129,7 +142,14 @@ export const runCli = (argv: string[] = process.argv.slice(2)): void => {
   }
 
   const outPath = resolve(process.cwd(), out);
-  writeFileSync(outPath, data);
+  try {
+    mkdirSync(dirname(outPath), { recursive: true });
+    writeFileSync(outPath, data);
+  } catch (error) {
+    // EISDIR, EACCES, ENAMETOOLONG, ...: report them like invalid input
+    // instead of crashing with a stack trace.
+    return fail(error instanceof Error ? error.message : String(error));
+  }
   process.stdout.write(
     `${outPath} (${typeof data === 'string' ? data.length : data.byteLength} bytes)\n`,
   );
