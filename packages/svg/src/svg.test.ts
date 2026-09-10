@@ -26,6 +26,9 @@ const gridFromSvg = (svg: string, size: number): number[] => {
   return grid;
 };
 
+/** Scales that used to end up verbatim in the width and height attributes. */
+const INVALID_SCALES = [0, -32, NaN, Infinity, -Infinity];
+
 describe('toSvg', () => {
   it('is deterministic for the same options', () => {
     expect(toSvg({ seed: 'stable' })).toBe(toSvg({ seed: 'stable' }));
@@ -82,6 +85,21 @@ describe('toSvg', () => {
     const large = toSvg({ seed: 'scaled', scale: 100 });
     expect(small.replace('width="8" height="8"', 'width="800" height="800"')).toBe(large);
   });
+
+  it('accepts a fractional scale', () => {
+    expect(toSvg({ seed: 'fractional', scale: 1.5 })).toContain(
+      'width="12" height="12" viewBox="0 0 8 8"',
+    );
+  });
+
+  it('rejects scales that are not finite positive numbers', () => {
+    for (const scale of INVALID_SCALES) {
+      expect(() => toSvg({ seed: 'x', scale }), `scale=${scale}`).toThrow(RangeError);
+    }
+    expect(() => toSvg({ seed: 'x', scale: -32 })).toThrow(
+      'invalid scale: -32 (expected a finite positive number)',
+    );
+  });
 });
 
 describe('toSvgDataURL', () => {
@@ -91,6 +109,12 @@ describe('toSvgDataURL', () => {
     const decoded = decodeURIComponent(url.slice('data:image/svg+xml;charset=utf-8,'.length));
     expect(decoded).toBe(toSvg({ seed: 'dataurl' }));
   });
+
+  it('rejects invalid scales', () => {
+    for (const scale of INVALID_SCALES) {
+      expect(() => toSvgDataURL({ seed: 'x', scale }), `scale=${scale}`).toThrow(RangeError);
+    }
+  });
 });
 
 describe('iconToSvg', () => {
@@ -98,5 +122,12 @@ describe('iconToSvg', () => {
     const icon = createIcon({ seed: 'precomputed' });
     expect(iconToSvg(icon)).toBe(toSvg({ seed: 'precomputed' }));
     expect(iconToSvg(icon, 16)).toBe(toSvg({ seed: 'precomputed', scale: 16 }));
+  });
+
+  it('rejects invalid scales', () => {
+    const icon = createIcon({ seed: 'x' });
+    for (const scale of INVALID_SCALES) {
+      expect(() => iconToSvg(icon, scale), `scale=${scale}`).toThrow(RangeError);
+    }
   });
 });

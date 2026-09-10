@@ -4,7 +4,11 @@ export type RGB = readonly [number, number, number];
 export type ColorInput = RGB | string;
 
 export interface IconOptions {
-  /** Any string. The same seed always produces the same icon. Defaults to a random value. */
+  /**
+   * Any string. The same seed always produces the same icon. A random seed is
+   * used when this is omitted or empty. A number or bigint from untyped code
+   * is converted with `String()`; any other non-string throws a `TypeError`.
+   */
   seed?: string;
   /** Number of cells per side. Defaults to 8. */
   size?: number;
@@ -17,6 +21,7 @@ export interface IconOptions {
 }
 
 export interface IconData {
+  /** The seed actually used: the given one as a string, or a generated one. */
   seed: string;
   size: number;
   /**
@@ -149,6 +154,20 @@ const randomSeed = (): string =>
     .toString(16)
     .padStart(14, '0');
 
+/**
+ * Normalizes `options.seed` into the string the PRNG reads. The PRNG only
+ * consumes string characters, so a raw number or an empty string would leave
+ * it unseeded and every such seed would draw the same all-black icon. Numbers
+ * and bigints are converted instead; `null` and `''` count as omitted, as
+ * `opts.seed || random` does in ethereum-blockies.
+ */
+const resolveSeed = (seed: unknown): string => {
+  const type = typeof seed;
+  if (seed == null || seed === '') return randomSeed();
+  if (type === 'string' || type === 'number' || type === 'bigint') return String(seed);
+  throw new TypeError(`invalid seed type: ${type} (expected a string, number, or bigint)`);
+};
+
 /** A horizontal run of adjacent same-colored non-background cells. */
 export interface CellRun {
   x: number;
@@ -194,7 +213,7 @@ export const iconRuns = (icon: IconData): CellRun[] => {
  * skip their PRNG draws, also matching the original behavior.
  */
 export const createIcon = (options: IconOptions = {}): IconData => {
-  const seed = options.seed ?? randomSeed();
+  const seed = resolveSeed(options.seed);
   const size = options.size ?? 8;
 
   if (!Number.isInteger(size) || size < 1) {

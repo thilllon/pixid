@@ -196,7 +196,10 @@ without disturbing the rest of the icon, render the grid yourself from
 Everything else is pure: the same options always produce the same bytes, on
 every runtime, with no global state. When `seed` is omitted, `createIcon`
 generates a random 14-character hex string (the CLI generates a UUID instead)
-and returns it on `IconData.seed`.
+and returns it on `IconData.seed`. An empty string counts as omitted, as it
+does in ethereum-blockies: it has no characters to seed the PRNG with, so the
+state would stay all zero, every draw would be `0`, and the icon would come
+out solid black.
 
 ## Options
 
@@ -213,8 +216,18 @@ options object, and every field is optional:
 | `bgcolor`   | `ColorInput` | derived from seed | Background color (grid value `0`).                             |
 | `spotcolor` | `ColorInput` | derived from seed | Accent color (grid value `2`).                                 |
 
+`seed` is typed as a string, and `''` counts as omitted. JavaScript callers
+may also pass a number or bigint, which is converted with `String()`, so `42`,
+`42n`, and `'42'` give the same icon. A number above `Number.MAX_SAFE_INTEGER`
+may already have lost precision, so pass ids that large as strings. `null`
+counts as omitted too, and any other non-string `seed`, such as a boolean or an
+object, throws a `TypeError`.
+
 `scale` belongs to the renderers (`@pixid/svg`, `@pixid/png`, `@pixid/canvas`,
 `@pixid/react`), not to `@pixid/core`, which is resolution-independent.
+`@pixid/png` and `@pixid/canvas` require a positive integer, since they fill
+whole pixels, and `@pixid/svg` and `@pixid/react` take any finite positive
+number. Each throws a `RangeError` otherwise.
 
 A `ColorInput` is either a hex string or an RGB tuple:
 
@@ -459,7 +472,10 @@ interface CellRun {
 #### `createIcon(options?: IconOptions): IconData`
 
 Computes the grid and palette for a seed. Throws `RangeError` if `size` is not
-a positive integer, and `TypeError` if any color is malformed.
+a positive integer, and `TypeError` if any color is malformed or `seed` is not
+a string, number, or bigint. A number or bigint seed is converted with
+`String()`; an omitted, `null`, or empty (`''`) seed is replaced by a random
+one. Either way, `IconData.seed` is the string that was actually used.
 
 ```ts
 import { createIcon } from '@pixid/core';
@@ -474,6 +490,7 @@ icon.spotcolor; // [198, 2, 10]
 
 createIcon({ size: 5 }).grid.length; // 25
 createIcon({}).seed; // e.g. '001c5f3778786a' — a generated seed, echoed back
+createIcon({ seed: '' }).seed; // e.g. '0b8e2d51f7a3c6' — '' counts as omitted
 ```
 
 #### `iconRuns(icon: IconData): CellRun[]`
@@ -526,6 +543,12 @@ rgbToCss([12, 34, 56]); // 'rgb(12,34,56)'
 | `toSvg(options?: SvgOptions)`               | `string` | Complete `<svg>` document.                                  |
 | `toSvgDataURL(options?: SvgOptions)`        | `string` | `data:image/svg+xml;charset=utf-8,` + `encodeURIComponent`. |
 | `iconToSvg(icon: IconData, scale?: number)` | `string` | Renders precomputed data. `scale` defaults to `4`.          |
+
+All three throw `RangeError` unless `scale` is a finite positive number, so
+`0`, negative, `NaN`, and infinite scales never reach the `width` and `height`
+attributes. Fractions are allowed, because those attributes are SVG lengths,
+not a pixel buffer: `scale: 1.5` on the default 8×8 grid gives a 12×12 image
+with the same `viewBox`.
 
 The output has `width`/`height` in pixels, a `viewBox` in cell units, and
 `shape-rendering="crispEdges"` so cells stay square at any display size:
@@ -588,6 +611,11 @@ same seed gives the same file in Node, a browser, and a Worker.
 | `createCanvas(options?: CanvasOptions)`                                 | a new canvas    | Uses `document.createElement('canvas')`.        |
 | `toCanvasDataURL(options?: CanvasOptions)`                              | `string`        | `createCanvas(...).toDataURL('image/png')`.     |
 | `renderIconToCanvas(icon: IconData, canvas: HTMLCanvasElement, scale?)` | the same canvas | Precomputed data. `scale` defaults to `4`.      |
+
+All four throw `RangeError` unless `scale` is a positive integer, like
+`@pixid/png`: canvas dimensions are whole pixels, so a fractional scale would
+blur the cell edges. The check runs before the canvas is resized, so a canvas
+you pass in is left as it was.
 
 All four throw `Error: could not get a 2d context from the canvas` if
 `getContext('2d')` returns `null`. Unlike `@pixid/png`, the bytes you get from
