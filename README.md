@@ -315,6 +315,10 @@ Given a `seed`, the same props always produce the same markup, so server and
 client renders match and hydration is clean. Omitting `seed` makes the
 component non-deterministic and will cause a hydration mismatch.
 
+One build covers React 17, 18, and 19: refs reach the `<svg>` element on all
+three, and the package loads under Node ESM even with React 17. Details are
+in [`@pixid/react`](#pixidreact).
+
 ### Edge runtimes
 
 `@pixid/core`, `@pixid/svg`, and `@pixid/png` use only `Math`, typed arrays,
@@ -605,20 +609,32 @@ renderIconToCanvas(icon, canvas, 12); // canvas is now 120×120
 import { Pixid, type PixidProps } from '@pixid/react';
 ```
 
-| Prop        | Type                      | Default | Description                             |
-| ----------- | ------------------------- | ------- | --------------------------------------- |
-| `seed`      | `string`                  | random  | Same seed, same icon.                   |
-| `size`      | `number`                  | `8`     | Cells per side.                         |
-| `scale`     | `number`                  | `4`     | Pixels per cell; sets `width`/`height`. |
-| `color`     | `ColorInput`              | seed    | Foreground color.                       |
-| `bgcolor`   | `ColorInput`              | seed    | Background color.                       |
-| `spotcolor` | `ColorInput`              | seed    | Accent color.                           |
-| `...rest`   | `SVGProps<SVGSVGElement>` | —       | Spread onto the root `<svg>`.           |
+| Prop        | Type                      | Default | Description                                                |
+| ----------- | ------------------------- | ------- | ---------------------------------------------------------- |
+| `seed`      | `string`                  | random  | Same seed, same icon.                                      |
+| `size`      | `number`                  | `8`     | Cells per side.                                            |
+| `scale`     | `number`                  | `4`     | Pixels per cell; sets `width`/`height`. Finite and > 0.    |
+| `color`     | `ColorInput`              | seed    | Foreground color.                                          |
+| `bgcolor`   | `ColorInput`              | seed    | Background color.                                          |
+| `spotcolor` | `ColorInput`              | seed    | Accent color.                                              |
+| `ref`       | `Ref<SVGSVGElement>`      | —       | Receives the root `<svg>` element on React 17, 18, and 19. |
+| `...rest`   | `SVGProps<SVGSVGElement>` | —       | Spread onto the root `<svg>`.                              |
 
 `PixidProps` extends `Omit<SVGProps<SVGSVGElement>, 'color' | 'seed'>`, so
-`className`, `style`, `onClick`, `role`, `aria-*`, `data-*`, and refs all work.
+`className`, `style`, `onClick`, `role`, `aria-*`, and `data-*` all work.
 The two omitted names are re-typed as pixid options rather than SVG
 attributes.
+
+`Pixid` is a `forwardRef` component, which is what gets a `ref` to the `<svg>`
+on React 17 and 18: they never pass `ref` to a plain function component.
+`Pixid.displayName` is `'Pixid'`, so React DevTools and React's warnings name
+it even though the build is minified.
+
+`scale` must be a finite positive number; fractions are fine, since the output
+is SVG. Anything else, such as `0`, `-1`, `NaN`, or `Infinity`, throws while
+rendering: `RangeError: invalid scale: -1 (expected a finite positive number)`.
+`size` and the colors are checked by `createIcon`, so they throw the errors
+listed under [`@pixid/core`](#pixidcore).
 
 Passthrough props are spread _after_ the computed attributes, so you can
 override `width`, `height`, or `viewBox` — useful for making the icon fill a
@@ -632,7 +648,10 @@ The rendered markup is the same geometry and palette as `toSvg` with the same
 options (`packages/react/src/react.test.tsx` cross-checks them rect by rect;
 only React's attribute serialization differs). There is no `"use client"`
 directive in the package and no `react-dom` dependency — just `react` as a
-peer dependency at `>=17`.
+peer dependency at `>=17`. The built files import only `react` and
+`@pixid/core`: the elements are made with `createElement` rather than JSX,
+because JSX compiles to imports of `react/jsx-runtime`, a subpath that Node's
+ESM resolver cannot find in React 17, which has no exports map.
 
 ```tsx
 <Pixid seed="alice" size={2} scale={24} className="avatar" role="img" aria-label="alice" />

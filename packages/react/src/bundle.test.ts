@@ -16,7 +16,7 @@ const bundle = async (source: string): Promise<string> => {
     format: 'esm',
     write: false,
     logLevel: 'silent',
-    external: ['react', 'react/jsx-runtime'],
+    external: ['react'],
   });
   return result.outputFiles[0]!.text;
 };
