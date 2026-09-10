@@ -81,6 +81,11 @@ npx @pixid/cli 0x8ba1f109551bd432803012645ac136ddd64dba72
 # writes 0x8ba1f109551bd432803012645ac136ddd64dba72.png — 128×128 pixels, 4313 bytes
 ```
 
+Seeds are case-sensitive. MetaMask and ethereum-blockies-base64 seed with
+`address.toLowerCase()`, so lowercase Ethereum addresses too: a checksummed
+(mixed-case) address gives a completely different icon (see
+[Compatibility](#compatibility)).
+
 In Node, a file or a data URL for an `<img>`:
 
 ```ts
@@ -98,7 +103,7 @@ In React, inline SVG with no hooks, so it runs in server components too:
 import { Pixid } from '@pixid/react';
 
 export const Avatar = ({ address }: { address: string }) => (
-  <Pixid seed={address} scale={6} role="img" aria-label={address} />
+  <Pixid seed={address.toLowerCase()} scale={6} role="img" aria-label={address} />
 );
 ```
 
@@ -122,11 +127,11 @@ Every package name below links to its page on npm.
 
 | Package                                                        | What it does                                                                   | Runs in              | Tarball |
 | -------------------------------------------------------------- | ------------------------------------------------------------------------------ | -------------------- | ------- |
-| [`@pixid/core`](https://www.npmjs.com/package/@pixid/core)     | Seed → pixel grid + color palette. Pure data, no rendering.                    | everywhere           | 3.4 kB  |
-| [`@pixid/svg`](https://www.npmjs.com/package/@pixid/svg)       | SVG string / `data:image/svg+xml` URL.                                         | everywhere           | 2.1 kB  |
-| [`@pixid/png`](https://www.npmjs.com/package/@pixid/png)       | PNG file bytes (`Uint8Array`) / `data:image/png` URL, with a built-in encoder. | Node, browsers, edge | 2.9 kB  |
-| [`@pixid/canvas`](https://www.npmjs.com/package/@pixid/canvas) | Renders to an HTML `<canvas>`.                                                 | browsers             | 3.4 kB  |
-| [`@pixid/react`](https://www.npmjs.com/package/@pixid/react)   | `<Pixid />` component rendering inline SVG. Works in server components.        | React 17+            | 2.4 kB  |
+| [`@pixid/core`](https://www.npmjs.com/package/@pixid/core)     | Seed → pixel grid + color palette. Pure data, no rendering.                    | everywhere           | 4.0 kB  |
+| [`@pixid/svg`](https://www.npmjs.com/package/@pixid/svg)       | SVG string / `data:image/svg+xml` URL.                                         | everywhere           | 2.5 kB  |
+| [`@pixid/png`](https://www.npmjs.com/package/@pixid/png)       | PNG file bytes (`Uint8Array`) / `data:image/png` URL, with a built-in encoder. | Node, browsers, edge | 3.3 kB  |
+| [`@pixid/canvas`](https://www.npmjs.com/package/@pixid/canvas) | Renders to an HTML `<canvas>`.                                                 | browsers             | 3.9 kB  |
+| [`@pixid/react`](https://www.npmjs.com/package/@pixid/react)   | `<Pixid />` component rendering inline SVG. Works in server components.        | React 17+            | 2.9 kB  |
 | [`@pixid/cli`](https://www.npmjs.com/package/@pixid/cli)       | The `pixid` command. Writes PNG or SVG files.                                  | Node 18.3+           | 4.1 kB  |
 
 Tarball sizes are the gzipped published artifacts, measured with `pnpm pack`.
@@ -147,16 +152,15 @@ package's `src/bundle.test.ts` enforces its budget:
 
 | Import                                         | Minified bundle |
 | ---------------------------------------------- | --------------- |
-| `import { createIcon } from '@pixid/core'`     | 1.8 kB          |
-| `import { toSvg } from '@pixid/svg'`           | 2.5 kB          |
-| `import { toPng } from '@pixid/png'`           | 3.6 kB          |
-| `import { createCanvas } from '@pixid/canvas'` | 2.4 kB          |
-| `import { Pixid } from '@pixid/react'`         | 2.5 kB          |
+| `import { createIcon } from '@pixid/core'`     | 2.0 kB          |
+| `import { toSvg } from '@pixid/svg'`           | 2.8 kB          |
+| `import { toPng } from '@pixid/png'`           | 3.8 kB          |
+| `import { createCanvas } from '@pixid/canvas'` | 2.7 kB          |
+| `import { Pixid } from '@pixid/react'`         | 2.9 kB          |
 
-The `@pixid/react` figure excludes `react` and `react/jsx-runtime`, which are
-peer dependencies.
+The `@pixid/react` figure excludes `react`, which is a peer dependency.
 
-A cold `npx @pixid/cli` downloads four tarballs totaling 11.8 kB and does not
+A cold `npx @pixid/cli` downloads four tarballs totaling 13.9 kB and does not
 pull in `@pixid/canvas` or `@pixid/react`;
 `packages/cli/src/registry.e2e.test.ts` publishes everything to a local
 verdaccio registry and asserts it.
@@ -278,7 +282,7 @@ global `pixidCanvas`:
 </script>
 ```
 
-The IIFE bundle inlines its `@pixid/*` dependencies and is 2.6 kB minified.
+The IIFE bundle inlines its `@pixid/*` dependencies and is 2.9 kB minified.
 `@pixid/core`, `@pixid/svg`, `@pixid/png`, and `@pixid/react` are ESM/CJS only.
 
 ### Canvas
@@ -306,7 +310,13 @@ These need a DOM. `createCanvas` and `toCanvasDataURL` call
 import { Pixid } from '@pixid/react';
 
 export const Avatar = ({ address }: { address: string }) => (
-  <Pixid seed={address} scale={6} className="avatar" role="img" aria-label={address} />
+  <Pixid
+    seed={address.toLowerCase()}
+    scale={6}
+    className="avatar"
+    role="img"
+    aria-label={address}
+  />
 );
 ```
 
@@ -344,12 +354,18 @@ import { toPng } from '@pixid/png';
 export default {
   fetch(request: Request) {
     const seed = new URL(request.url).pathname.slice(1);
-    return new Response(toPng({ seed, scale: 16 }), {
+    const png = toPng({ seed, scale: 16 }) as Uint8Array<ArrayBuffer>;
+    return new Response(png, {
       headers: { 'content-type': 'image/png', 'cache-control': 'public, max-age=31536000' },
     });
   },
 };
 ```
+
+The `as Uint8Array<ArrayBuffer>` is needed because `toPng` is typed as a plain
+`Uint8Array`, which the DOM types in TypeScript 5.9 and later reject as a
+`Response` body since it could be backed by a `SharedArrayBuffer`; `toPng`
+always allocates a regular `ArrayBuffer`, so the assertion is safe.
 
 The PNG encoder is synchronous and allocation-light, so there is nothing to
 await and no CPU-time surprise: a 128×128 icon is 4313 bytes.
@@ -379,7 +395,7 @@ always `@pixid/cli`: there is no unscoped `pixid` package on npm, so
 | `--color <color>`      | `#rgb`\|`#rrggbb` | from seed                         | Foreground color.                                                   |
 | `--bgcolor <color>`    | `#rgb`\|`#rrggbb` | from seed                         | Background color.                                                   |
 | `--spotcolor <color>`  | `#rgb`\|`#rrggbb` | from seed                         | Accent color.                                                       |
-| `-h`, `--help`         | boolean           |                                   | Print usage and exit 0. Wins over every other flag.                 |
+| `-h`, `--help`         | boolean           |                                   | Print usage and exit 0. Unknown flags or missing values still fail. |
 | `-v`, `--version`      | boolean           |                                   | Print the `@pixid/cli` version and exit 0.                          |
 
 RGB tuples are library-only; on the command line colors must be hex strings.
@@ -627,7 +643,7 @@ import { createIcon } from '@pixid/core';
 import { renderIconToCanvas } from '@pixid/canvas';
 
 const icon = createIcon({ seed: 'alice', size: 10 });
-const canvas = document.querySelector('canvas');
+const canvas = document.querySelector('canvas')!;
 renderIconToCanvas(icon, canvas, 12); // canvas is now 120×120
 ```
 
@@ -722,24 +738,38 @@ draw-skipping behavior for explicit colors and locked regression vectors.
 Icons for a given seed look the same as classic blockies, including the
 MetaMask-style ones for Ethereum addresses.
 
-This project supersedes
-[`blockies-typed`](https://npmjs.com/package/blockies-typed), whose entire
-public API was `createBuffer` and `createDataURL`:
+To match those, seed with the lowercase address. MetaMask and
+ethereum-blockies-base64 both seed with `address.toLowerCase()`, while pixid
+uses the seed exactly as given. A checksummed (mixed-case) address is a
+different seed: `0x8ba1f109551bD432803012645Ac136ddd64DBA72` and
+`0x8ba1f109551bd432803012645ac136ddd64dba72` give completely different icons,
+palette and grid alike.
 
-| `blockies-typed`                | pixid                                    |
-| ------------------------------- | ---------------------------------------- |
-| `createBuffer(opts)` → `Buffer` | `toPng(opts)` → `Uint8Array`             |
-| `createDataURL(opts)`           | `toPngDataURL(opts)`                     |
-| `fgColor: [r, g, b]`            | `color: [r, g, b]` or `color: '#rrggbb'` |
-| `bgColor` / `spotColor`         | `bgcolor` / `spotcolor`                  |
-| `npx blockies-typed --seed x`   | `npx @pixid/cli --seed x`                |
-| `commander` + `pngjs` deps      | no dependencies outside `@pixid/*`       |
+pixid replaces `blockies-typed`, which lived in this same repository (formerly
+`github.com/thilllon/blockies-typed`). Every `blockies-typed` version has been
+unpublished from npm and this project no longer controls the name, so anything
+published under it later is not from this project: remove it from your
+`package.json` and lockfile, and do not run `npx blockies-typed`. Its last
+source is tagged [`1.0.1`](https://github.com/thilllon/pixid/tree/1.0.1) in
+this repository. Its entire public API was `createBuffer` and `createDataURL`:
+
+| `blockies-typed` 1.0.1                    | pixid                                    |
+| ----------------------------------------- | ---------------------------------------- |
+| `createBuffer(opts)` → `Buffer`           | `toPng(opts)` → `Uint8Array`             |
+| `createDataURL(opts)`                     | `toPngDataURL(opts)`                     |
+| `fgColor: [r, g, b]`                      | `color: [r, g, b]` or `color: '#rrggbb'` |
+| `bgColor` / `spotColor`                   | `bgcolor` / `spotcolor`                  |
+| defaults `size: 7`, `scale: 24` (168×168) | defaults `size: 8`, `scale: 4` (32×32)   |
+| `npx blockies-typed --seed x`             | `npx @pixid/cli --seed x`                |
+| `-o`, `--output <file>`                   | `-o`, `--out <file>`                     |
+| `commander` + `pngjs` deps                | no dependencies outside `@pixid/*`       |
 
 Option names are lowercased, colors accept hex strings as well as tuples, and
 `toPng` returns a `Uint8Array` instead of a Node `Buffer` (`writeFileSync`
-takes both). `blockies-typed` also deviated from the original draw order, so
-icons for the same seed differ between it and pixid. pixid follows the
-original.
+takes both). `blockies-typed` also deviated from the original algorithm (one
+random color shared by foreground and spot, a white background, and PRNG state
+that leaked from one call into the next), so icons for the same seed differ
+between it and pixid. pixid follows the original.
 
 ## Development
 
