@@ -1,6 +1,6 @@
 import { createIcon, rgbToCss } from '@pixid/core';
 import { describe, expect, it } from 'vitest';
-import { toSvg, toSvgDataURL } from './index.js';
+import { iconToSvg, toSvg, toSvgDataURL } from './index.js';
 
 const RECT_RE =
   /<rect(?: x="(\d+)")?(?: y="(\d+)")? width="(\d+)" height="(\d+)" fill="([^"]+)"\/>/g;
@@ -90,5 +90,13 @@ describe('toSvgDataURL', () => {
     expect(url.startsWith('data:image/svg+xml;charset=utf-8,')).toBe(true);
     const decoded = decodeURIComponent(url.slice('data:image/svg+xml;charset=utf-8,'.length));
     expect(decoded).toBe(toSvg({ seed: 'dataurl' }));
+  });
+});
+
+describe('iconToSvg', () => {
+  it('renders precomputed icon data exactly like toSvg', () => {
+    const icon = createIcon({ seed: 'precomputed' });
+    expect(iconToSvg(icon)).toBe(toSvg({ seed: 'precomputed' }));
+    expect(iconToSvg(icon, 16)).toBe(toSvg({ seed: 'precomputed', scale: 16 }));
   });
 });

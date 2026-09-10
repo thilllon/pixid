@@ -12,7 +12,8 @@ import {
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { toPng, toSvg } from 'pixid';
+import { toPng } from '@pixid/png';
+import { toSvg } from '@pixid/svg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const WORKSPACE_ROOT = fileURLToPath(new URL('../..', import.meta.url));
@@ -147,40 +148,25 @@ const installedPackages = (cacheDir: string): string[] => {
 };
 
 describe('npx against a real registry', () => {
-  // Both entry points must work from a cold cache: `@pixid/cli` is the real
-  // CLI package, `pixid` is the meta package whose bin shims into it.
-  const specs = [
-    ['pixid', 'unscoped'],
-    ['@pixid/cli', 'scoped'],
-  ] as const;
-
-  it('runs from a cold cache and writes byte-identical PNGs from both entry points', () => {
-    const expected = toPng({ seed: 'hello', scale: 16 });
-
-    for (const [spec, label] of specs) {
-      const { cwd, stdout } = npx(`${label}-png`, spec, ['--seed', 'hello', '-o', 'out.png']);
-      expect(stdout, spec).toContain('out.png');
-      expect(new Uint8Array(readFileSync(join(cwd, 'out.png'))), spec).toEqual(expected);
-    }
+  it('runs from a cold cache and writes the expected PNG', () => {
+    const { cwd, stdout } = npx('png', '@pixid/cli', ['--seed', 'hello', '-o', 'out.png']);
+    expect(stdout).toContain('out.png');
+    expect(new Uint8Array(readFileSync(join(cwd, 'out.png')))).toEqual(
+      toPng({ seed: 'hello', scale: 16 }),
+    );
   });
 
-  it('reports the same version from both entry points', () => {
-    const unscoped = npx('unscoped-version', 'pixid', ['--version']).stdout;
-    expect(unscoped.trim()).toMatch(/^\d+\.\d+\.\d+/);
-    expect(npx('scoped-version', '@pixid/cli', ['--version']).stdout).toBe(unscoped);
+  it('reports the version of the published CLI package', () => {
+    const { version } = JSON.parse(
+      readFileSync(join(WORKSPACE_ROOT, 'packages/cli/package.json'), 'utf8'),
+    ) as { version: string };
+    expect(npx('version', '@pixid/cli', ['--version']).stdout).toBe(`${version}\n`);
   });
 
   it('installs only the CLI and its runtime packages, nothing else', () => {
-    // The cold-cache runs above populated npx's caches. Renderer packages the
+    // The cold-cache run above populated npx's cache. Renderer packages the
     // CLI does not need (canvas, react) must not have been downloaded.
-    expect(installedPackages(join(workDir, 'cache-unscoped-png'))).toEqual([
-      '@pixid/cli',
-      '@pixid/core',
-      '@pixid/png',
-      '@pixid/svg',
-      'pixid',
-    ]);
-    expect(installedPackages(join(workDir, 'cache-scoped-png'))).toEqual([
+    expect(installedPackages(join(workDir, 'cache-png'))).toEqual([
       '@pixid/cli',
       '@pixid/core',
       '@pixid/png',
@@ -207,7 +193,6 @@ describe('npx against a real registry', () => {
       '@pixid/png',
       '@pixid/react',
       '@pixid/svg',
-      'pixid',
     ]);
 
     const tarballs: { name: string; size: number }[] = [];
@@ -232,30 +217,26 @@ describe('npx against a real registry', () => {
         .filter((t) => names.some((n) => t.name.startsWith(`${n}-`)))
         .reduce((sum, t) => sum + t.size, 0);
 
-    const scoped = download(['cli', 'core', 'svg', 'png']);
-    const unscoped = download(['pixid', 'cli', 'core', 'svg', 'png']);
-    console.log(`npx @pixid/cli total download: ${scoped} bytes`);
-    console.log(`npx pixid total download: ${unscoped} bytes`);
-    expect(unscoped).toBeLessThan(30 * 1024);
+    const total = download(['cli', 'core', 'svg', 'png']);
+    console.log(`npx @pixid/cli total download: ${total} bytes`);
+    expect(total).toBeLessThan(30 * 1024);
   });
 
   it('renders SVG through npx with an inferred format', () => {
-    const expected = toSvg({ seed: 'world', scale: 32 });
-
-    for (const [spec, label] of specs) {
-      const { cwd } = npx(`${label}-svg`, spec, ['world', '--out', 'icon.svg', '--scale', '32']);
-      expect(readFileSync(join(cwd, 'icon.svg'), 'utf8'), spec).toBe(expected);
-    }
+    const { cwd } = npx('svg', '@pixid/cli', ['world', '--out', 'icon.svg', '--scale', '32']);
+    expect(readFileSync(join(cwd, 'icon.svg'), 'utf8')).toBe(toSvg({ seed: 'world', scale: 32 }));
   });
 
-  it('installs the meta package and imports it as a library', () => {
+  it('installs the library packages and imports them', () => {
     const cwd = join(workDir, 'run-lib');
     mkdirSync(cwd);
     writeFileSync(join(cwd, 'package.json'), JSON.stringify({ name: 'consumer', type: 'module' }));
     writeFileSync(
       join(cwd, 'main.mjs'),
       [
-        "import { createIcon, toSvg, toPngDataURL } from 'pixid';",
+        "import { createIcon } from '@pixid/core';",
+        "import { toSvg } from '@pixid/svg';",
+        "import { toPngDataURL } from '@pixid/png';",
         "const icon = createIcon({ seed: 'consumer' });",
         "if (icon.grid.length !== 64) throw new Error('bad grid');",
         "if (!toSvg({ seed: 'consumer' }).startsWith('<svg')) throw new Error('bad svg');",
@@ -265,7 +246,12 @@ describe('npx against a real registry', () => {
     );
 
     const env = npmEnv(join(workDir, 'cache-lib'));
-    execFileSync('npm', ['install', 'pixid'], { cwd, env, encoding: 'utf8', timeout: 120_000 });
+    execFileSync('npm', ['install', '@pixid/core', '@pixid/svg', '@pixid/png'], {
+      cwd,
+      env,
+      encoding: 'utf8',
+      timeout: 120_000,
+    });
     const out = execFileSync(process.execPath, ['main.mjs'], { cwd, encoding: 'utf8' });
     expect(out.trim()).toBe('ok');
   });

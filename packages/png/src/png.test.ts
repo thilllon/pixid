@@ -1,7 +1,7 @@
 import { createIcon } from '@pixid/core';
 import { PNG } from 'pngjs';
 import { describe, expect, it } from 'vitest';
-import { toPng, toPngDataURL } from './index.js';
+import { iconToPng, toPng, toPngDataURL } from './index.js';
 
 /**
  * pngjs acts as an independent decoder oracle: if it can parse our output,
@@ -108,5 +108,19 @@ describe('toPngDataURL', () => {
       expect(b64.length % 4).toBe(0);
       expect(new Uint8Array(Buffer.from(b64, 'base64'))).toEqual(toPng({ seed: 'padding', scale }));
     }
+  });
+});
+
+describe('iconToPng', () => {
+  it('encodes precomputed icon data exactly like toPng', () => {
+    const icon = createIcon({ seed: 'precomputed' });
+    expect(iconToPng(icon)).toEqual(toPng({ seed: 'precomputed' }));
+    expect(iconToPng(icon, 16)).toEqual(toPng({ seed: 'precomputed', scale: 16 }));
+  });
+
+  it('rejects invalid scales', () => {
+    const icon = createIcon({ seed: 'x' });
+    expect(() => iconToPng(icon, 0)).toThrow(RangeError);
+    expect(() => iconToPng(icon, 1.5)).toThrow(RangeError);
   });
 });

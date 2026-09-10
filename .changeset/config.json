@@ -5,6 +5,6 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "linked": [["pixid", "@pixid/cli"]],
+  "linked": [],
   "ignore": []
 }
