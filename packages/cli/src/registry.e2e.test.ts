@@ -15,8 +15,14 @@ import { fileURLToPath } from 'node:url';
 import { toPng } from '@pixid/png';
 import { toSvg } from '@pixid/svg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import pkg from '../package.json' with { type: 'json' };
 
-const WORKSPACE_ROOT = fileURLToPath(new URL('../..', import.meta.url));
+// End-to-end check of how users actually get the CLI: publish the workspace
+// to a throwaway verdaccio registry, then run `npx @pixid/cli` from a cold
+// cache. It publishes every package because the CLI depends on core, svg, and
+// png, so it doubles as the check that the whole release installs.
+
+const WORKSPACE_ROOT = fileURLToPath(new URL('../../..', import.meta.url));
 const PORT = 4873 + Math.floor(Math.random() * 1000);
 const REGISTRY = `http://127.0.0.1:${PORT}/`;
 
@@ -101,8 +107,7 @@ beforeAll(async () => {
 
   // Publish every publishable workspace package to the local registry, exactly
   // like a real release (workspace: ranges are rewritten by pnpm on publish).
-  // This package is `private`, so pnpm skips it and the suite never publishes
-  // itself.
+  // The workspace root is `private`, so pnpm skips it.
   execFileSync('pnpm', ['-r', 'publish', '--registry', REGISTRY, '--no-git-checks'], {
     cwd: WORKSPACE_ROOT,
     env: npmEnv(join(workDir, 'publish-cache')),
@@ -157,10 +162,7 @@ describe('npx against a real registry', () => {
   });
 
   it('reports the version of the published CLI package', () => {
-    const { version } = JSON.parse(
-      readFileSync(join(WORKSPACE_ROOT, 'packages/cli/package.json'), 'utf8'),
-    ) as { version: string };
-    expect(npx('version', '@pixid/cli', ['--version']).stdout).toBe(`${version}\n`);
+    expect(npx('version', '@pixid/cli', ['--version']).stdout).toBe(`${pkg.version}\n`);
   });
 
   it('installs only the CLI and its runtime packages, nothing else', () => {
@@ -175,9 +177,8 @@ describe('npx against a real registry', () => {
   });
 
   it('publishes exactly the public packages and keeps the npx download under 30 KB', () => {
-    // Every published package gets a storage directory named after it. The
-    // private `@pixid/e2e` suite must not appear: `pnpm -r publish` skips
-    // private packages, which is what lets these tests live in a package.
+    // Every published package gets a storage directory named after it, and
+    // nothing outside the `@pixid` scope may appear.
     const published = readdirSync(storageDir, { withFileTypes: true })
       .filter((entry) => entry.isDirectory())
       .flatMap((entry) =>

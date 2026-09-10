@@ -142,8 +142,8 @@ import).
 
 ## Size
 
-Measured with esbuild (`bundle`, `minify`, `format: esm`), the same way
-`packages/e2e/treeshake.test.ts` enforces it:
+Measured with esbuild (`bundle`, `minify`, `format: esm`), the same way each
+package's `src/bundle.test.ts` enforces its budget:
 
 | Import                                         | Minified bundle |
 | ---------------------------------------------- | --------------- |
@@ -157,8 +157,9 @@ The `@pixid/react` figure excludes `react` and `react/jsx-runtime`, which are
 peer dependencies.
 
 A cold `npx @pixid/cli` downloads four tarballs totaling 11.8 kB and does not
-pull in `@pixid/canvas` or `@pixid/react`; `packages/e2e/registry.test.ts`
-publishes everything to a local verdaccio registry and asserts it.
+pull in `@pixid/canvas` or `@pixid/react`;
+`packages/cli/src/registry.e2e.test.ts` publishes everything to a local
+verdaccio registry and asserts it.
 
 ## How a seed becomes an icon
 
@@ -691,8 +692,8 @@ With [mise](https://mise.jdx.dev) installed, `mise install` sets both up.
 ```
 pnpm install
 pnpm build        # tsdown, all packages
-pnpm test         # unit tests
-pnpm e2e          # tree-shaking checks + publish/npx flow against a local verdaccio registry
+pnpm test         # unit tests, including per-package bundle-size checks
+pnpm e2e          # publish/npx flow against a local verdaccio registry
 pnpm test:all     # both
 pnpm lint         # eslint
 pnpm format       # prettier --write
@@ -706,17 +707,15 @@ declarations. `@pixid/canvas` adds a second, IIFE config that inlines the
 config for the shebang bin entry.
 
 Layout: one folder per package under `packages/`, named after what it contains.
-`packages/cli` is `@pixid/cli`. Unit tests are colocated with the code they
-cover, in each package's `src/`.
+`packages/cli` is `@pixid/cli`. Tests are colocated with the code they cover,
+in each package's `src/`.
 
-`packages/e2e` is the one folder there that is not published: `@pixid/e2e` is
-`"private": true` and owns the tests that belong to no single package, along
-with the `verdaccio` and `esbuild` devDependencies they need.
-`packages/e2e/treeshake.test.ts` bundles the built packages with esbuild and
-asserts what gets dropped; `packages/e2e/registry.test.ts` spins up verdaccio,
-publishes every _publishable_ package with `pnpm publish` (private ones are
-skipped, so the suite never publishes itself), then runs `npx` from a cold
-cache. Both run as the `e2e` vitest project, so `pnpm e2e` is unchanged.
+Each library package's `src/bundle.test.ts` bundles the built package with
+esbuild and enforces its budget from [Size](#size).
+`packages/cli/src/registry.e2e.test.ts` spins up verdaccio, publishes every
+package with `pnpm publish`, then runs `npx @pixid/cli` from a cold cache.
+Files named `*.e2e.test.ts` make up the `e2e` vitest project that `pnpm e2e`
+runs; everything else is a unit test.
 
 The root `assets/` folder holds the gallery PNGs at the top of this file and
 the `assets/generate.ts` script that produces them (`pnpm assets`). It sits
