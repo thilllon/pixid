@@ -26,6 +26,9 @@ importers:
       '@types/pngjs':
         specifier: ^6.0.5
         version: 6.0.5
+      esbuild:
+        specifier: ^0.28.2
+        version: 0.28.2
       eslint:
         specifier: ^10.9.1
         version: 10.9.1
@@ -62,26 +65,12 @@ importers:
       '@pixid/svg':
         specifier: workspace:^
         version: link:../svg
-
-  packages/core: {}
-
-  packages/e2e:
     devDependencies:
-      '@pixid/core':
-        specifier: workspace:^
-        version: link:../core
-      '@pixid/png':
-        specifier: workspace:^
-        version: link:../png
-      '@pixid/svg':
-        specifier: workspace:^
-        version: link:../svg
-      esbuild:
-        specifier: ^0.28.2
-        version: 0.28.2
       verdaccio:
         specifier: ^6.10.0
         version: 6.10.0(typanion@3.14.0)
+
+  packages/core: {}
 
   packages/png:
     dependencies:
