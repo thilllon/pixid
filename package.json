@@ -22,10 +22,12 @@
     "e2e": "vitest run --project e2e",
     "test:all": "vitest run",
     "lint": "eslint .",
+    "typecheck": "tsc --noEmit -p tsconfig.json && pnpm -r exec tsc --noEmit -p tsconfig.json",
     "format": "prettier --write --list-different .",
+    "format:check": "prettier --check .",
     "changeset": "changeset",
     "version": "changeset version",
-    "release": "pnpm build && changeset publish"
+    "release": "pnpm build && pnpm lint && pnpm typecheck && pnpm test && changeset publish"
   },
   "packageManager": "pnpm@11.24.0",
   "devDependencies": {

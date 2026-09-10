@@ -38,21 +38,26 @@ suite locally and require it to pass:
 mise exec -- pnpm -r build
 mise exec -- pnpm vitest run        # unit + verdaccio e2e
 mise exec -- pnpm eslint .
+mise exec -- pnpm typecheck         # tsc for the root and every package tsconfig
 mise exec -- pnpm prettier --check .
 ```
 
+CI runs the same checks: build, lint, `pnpm typecheck`, the prettier check
+(`pnpm format:check`), and the unit tests on every leg, plus the e2e suite on Node 24.
 After pushing, confirm CI is green on the Node 22/24/26 matrix
 (`gh run list --branch main --limit 3`).
 
 ### `gh` CLI
 
-`gh` is authenticated here but read-only: `gh pr create` and `gh pr merge` fail with
-`Resource not accessible by integration`. Use it for reads only — `gh run list`,
-`gh run view --log-failed`, `gh pr view`. The binary may be at `/exec-daemon/gh` if
-it is not on `PATH`.
+In the Cursor cloud agent environment, `gh` is authenticated but read-only:
+`gh pr create` and `gh pr merge` fail with `Resource not accessible by integration`.
+Use it there for reads only — `gh run list`, `gh run view --log-failed`,
+`gh pr view` — and create PRs with the agent's own PR tool. The binary may be at
+`/exec-daemon/gh` if it is not on `PATH`.
 
-Create PRs with the agent's own PR tool. When the owner explicitly asks for a merge,
-do it locally:
+Elsewhere `gh` may be authenticated with write access, but merges follow the rules
+above in every environment: never on your own initiative, and when the owner
+explicitly asks for a merge, do it locally:
 
 ```sh
 git checkout main && git merge --no-ff <branch> && git push origin main
@@ -74,6 +79,15 @@ publishing allowed), and a publish fails with an auth error for any package with
 one. `@pixid/cli` still needs that entry, so configure it before merging a "Version
 Packages" PR that bumps `@pixid/cli`. Apart from that, the Release workflow is
 expected to pass on every push to `main`; any other Release failure is a real problem.
+
+The Release workflow runs `changesets/action` v2. While changesets are pending it
+opens or updates the "Version Packages" PR. Once that PR is merged it runs
+`pnpm release`: build, lint, typecheck, and the unit tests, then `changeset publish`,
+so a failing check stops the publish. The verdaccio e2e suite stays out of it because
+it runs `pnpm publish` itself, which does not belong in the OIDC-enabled release job.
+For every package it publishes, the action creates a git tag
+(`@pixid/<name>@<version>`) and a GitHub Release carrying that version's changelog
+entry. Versions up to 0.1.1 predate this and have neither.
 
 ## Development
 
@@ -109,7 +123,10 @@ with `mise exec --` so the pinned versions are used.
   reference them as `https://raw.githubusercontent.com/thilllon/pixid/main/assets/...`,
   never by a relative path: npm renders each package page from the README inside that
   package's tarball, and no tarball contains `assets/`.
-- Lint and format: `pnpm lint` (`eslint .`), `pnpm format` (`prettier --write`).
+- Lint, types, and format: `pnpm lint` (`eslint .`), `pnpm typecheck` (`tsc --noEmit`
+  for the root and every package; run it after `pnpm build`, since packages type-check
+  against their dependencies' `dist/`), `pnpm format` (`prettier --write`), and
+  `pnpm format:check` (`prettier --check`, as CI runs it).
 - Versioning: changesets. Add a changeset for any user-visible change
   (`mise exec -- pnpm changeset`).
 

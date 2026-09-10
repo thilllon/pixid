@@ -7,6 +7,8 @@ on:
 concurrency: release-${{ github.ref }}
 
 permissions:
+  # changesets/action pushes the "Version Packages" branch and opens its PR,
+  # and after a publish creates a git tag and a GitHub Release per package.
   contents: write
   pull-requests: write
   # Required for npm trusted publishing: lets the job mint a GitHub OIDC token
@@ -17,41 +19,42 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # Installs the exact toolchain pinned in mise.toml (node 24.19.0 + pnpm
       # 11.24.0) and prepends the tool paths to GITHUB_PATH, so every later
-      # step -- including changesets/action's `publish: pnpm release` -- uses
-      # the mise-provided node and pnpm. The action caches the installed tools
-      # by default. Unlike actions/setup-node with `registry-url`, mise never
-      # generates an .npmrc, so there is no NODE_AUTH_TOKEN placeholder that
-      # could shadow the OIDC trusted-publishing flow (npm/cli#8730). Node 24
-      # bundles npm >= 11.5.1, the trusted-publishing minimum, though the
-      # publish itself runs through pnpm (see below).
-      - uses: jdx/mise-action@v4
-      # mise-action only caches the tools themselves, so cache the pnpm store
-      # separately to speed up `pnpm install`.
-      - name: Resolve pnpm store path
-        run: echo "STORE_PATH=$(pnpm store path --silent)" >> "$GITHUB_ENV"
-      - uses: actions/cache@v4
+      # step -- including changesets/action's publish script -- uses the
+      # mise-provided node and pnpm. Unlike actions/setup-node with
+      # `registry-url`, mise never generates an .npmrc, so there is no
+      # NODE_AUTH_TOKEN placeholder that could shadow the OIDC trusted-publishing
+      # flow (npm/cli#8730). Node 24 bundles npm >= 11.5.1, the trusted-publishing
+      # minimum, though the publish itself runs through pnpm (see below).
+      #
+      # The job caches nothing (`cache: false` here, no pnpm store cache), per
+      # npm's trusted-publishing guidance to never cache in release builds: a
+      # poisoned cache entry would run with this job's publish permissions.
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+          cache: false
       - run: pnpm install --frozen-lockfile
-      # Publish chain: changesets/action -> `pnpm release` -> `changeset
-      # publish`. @changesets/cli v3 routes the actual publish through the
-      # detected package manager (changesets/changesets#2097), so each package
-      # is published with `pnpm publish`. pnpm 11 implements npm trusted
-      # publishing natively and attempts the OIDC exchange first, falling back
-      # to a static token only when OIDC is not applicable (pnpm/pnpm#11495).
+      # With pending changesets, the action opens or updates the "Version
+      # Packages" PR. Otherwise it runs `pnpm release`: build, lint, typecheck,
+      # and unit tests, then `changeset publish`. The verdaccio e2e suite stays
+      # out of it: it runs `pnpm publish` itself, which does not belong in a job
+      # that can mint npm publish tokens.
+      #
+      # Publishing is OIDC trusted publishing only; there is no NPM_TOKEN
+      # secret. @changesets/cli v3 publishes each package with the detected
+      # package manager (changesets/changesets#2097), and pnpm 11 exchanges the
+      # job's OIDC token for a publish token natively (pnpm/pnpm#11495).
+      #
+      # For every package it publishes, `changeset publish` creates a git tag
+      # and records it in the file named by CHANGESETS_OUTPUT, which the action
+      # sets for the publish script; the action then creates those tags on
+      # GitHub along with a GitHub Release for each. v1 scraped stdout for
+      # "New tag:" lines instead, which CLI v3 no longer prints, so it created
+      # neither. The action's `github-token` input defaults to the job's
+      # GITHUB_TOKEN, so no env block is needed.
       - name: Create release PR or publish
-        uses: changesets/action@v1
+        uses: changesets/action@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
         with:
-          publish: pnpm release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Fallback only. When the NPM_TOKEN secret is unset this is empty and
-          # publishing relies purely on the trusted publisher configured on
-          # npmjs.com for each package.
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          publish-script: pnpm release
