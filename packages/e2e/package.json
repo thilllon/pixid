@@ -12,9 +12,10 @@
   },
   "type": "module",
   "devDependencies": {
+    "@pixid/core": "workspace:^",
+    "@pixid/png": "workspace:^",
     "@pixid/svg": "workspace:^",
     "esbuild": "^0.28.2",
-    "pixid": "workspace:^",
     "verdaccio": "^6.10.0"
   }
 }

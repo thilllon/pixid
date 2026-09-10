@@ -120,15 +120,14 @@ function in [API](#api), and the options they all share in [Options](#options).
 
 Every package name below links to its page on npm.
 
-| Package                                                        | What it does                                                                                     | Runs in              | Tarball |
-| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------- | ------- |
-| [`@pixid/core`](https://www.npmjs.com/package/@pixid/core)     | Seed → pixel grid + color palette. Pure data, no rendering.                                      | everywhere           | 3.4 kB  |
-| [`@pixid/svg`](https://www.npmjs.com/package/@pixid/svg)       | SVG string / `data:image/svg+xml` URL.                                                           | everywhere           | 2.1 kB  |
-| [`@pixid/png`](https://www.npmjs.com/package/@pixid/png)       | PNG file bytes (`Uint8Array`) / `data:image/png` URL, with a built-in encoder.                   | Node, browsers, edge | 2.9 kB  |
-| [`@pixid/canvas`](https://www.npmjs.com/package/@pixid/canvas) | Renders to an HTML `<canvas>`.                                                                   | browsers             | 3.4 kB  |
-| [`@pixid/react`](https://www.npmjs.com/package/@pixid/react)   | `<Pixid />` component rendering inline SVG. Works in server components.                          | React 17+            | 2.4 kB  |
-| [`@pixid/cli`](https://www.npmjs.com/package/@pixid/cli)       | The `pixid` command. Writes PNG or SVG files.                                                    | Node 18+             | 3.4 kB  |
-| `pixid`                                                        | Meta package. Re-exports core + svg + png and ships the same CLI. Not on npm; name under review. | Node, browsers, edge | 4.0 kB  |
+| Package                                                        | What it does                                                                   | Runs in              | Tarball |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------ | -------------------- | ------- |
+| [`@pixid/core`](https://www.npmjs.com/package/@pixid/core)     | Seed → pixel grid + color palette. Pure data, no rendering.                    | everywhere           | 3.4 kB  |
+| [`@pixid/svg`](https://www.npmjs.com/package/@pixid/svg)       | SVG string / `data:image/svg+xml` URL.                                         | everywhere           | 2.1 kB  |
+| [`@pixid/png`](https://www.npmjs.com/package/@pixid/png)       | PNG file bytes (`Uint8Array`) / `data:image/png` URL, with a built-in encoder. | Node, browsers, edge | 2.9 kB  |
+| [`@pixid/canvas`](https://www.npmjs.com/package/@pixid/canvas) | Renders to an HTML `<canvas>`.                                                 | browsers             | 3.4 kB  |
+| [`@pixid/react`](https://www.npmjs.com/package/@pixid/react)   | `<Pixid />` component rendering inline SVG. Works in server components.        | React 17+            | 2.4 kB  |
+| [`@pixid/cli`](https://www.npmjs.com/package/@pixid/cli)       | The `pixid` command. Writes PNG or SVG files.                                  | Node 18+             | 3.4 kB  |
 
 Tarball sizes are the gzipped published artifacts, measured with `pnpm pack`.
 
@@ -140,16 +139,6 @@ as a peer dependency, and `@pixid/cli` is a Node program that imports
 `node:fs`, `node:path`, `node:crypto`, and `node:util` (its `sideEffects` is
 `["./dist/cli.js"]` rather than `false`, because that file is meant to run on
 import).
-
-### Install note about the unscoped `pixid` name
-
-`@pixid/cli` and the five other scoped packages are published. The unscoped
-`pixid` package is not on npm yet: the registry rejects the name as too
-similar to an existing package, and a review request is open with npm support.
-Until that clears, use `@pixid/cli` for the command line and the scoped
-packages (or `@pixid/core` + a renderer) as libraries. Everything documented
-for `pixid` below works today from the workspace and will work from npm once
-the name is released; the two CLI entry points run the exact same code.
 
 ## Size
 
@@ -163,21 +152,13 @@ Measured with esbuild (`bundle`, `minify`, `format: esm`), the same way
 | `import { toPng } from '@pixid/png'`           | 3.6 kB          |
 | `import { createCanvas } from '@pixid/canvas'` | 2.4 kB          |
 | `import { Pixid } from '@pixid/react'`         | 2.5 kB          |
-| `import { createIcon } from 'pixid'`           | 1.8 kB          |
-| `import { toSvg } from 'pixid'`                | 2.5 kB          |
-| `import { toPng } from 'pixid'`                | 3.6 kB          |
-| `import * as pixid from 'pixid'`               | 4.2 kB          |
 
 The `@pixid/react` figure excludes `react` and `react/jsx-runtime`, which are
-peer dependencies. Importing a single function from the `pixid` meta package
-costs exactly as much as importing it from the scoped package it comes from,
-because the meta package is a re-export with `sideEffects: false`.
+peer dependencies.
 
-A cold `npx @pixid/cli` downloads four tarballs totaling 11.8 kB. Against the
-local test registry, a cold `npx pixid` downloads five (the meta package plus
-the same four), 15.9 kB. Neither pulls in `@pixid/canvas` or `@pixid/react`;
-`packages/e2e/registry.test.ts` publishes everything to a local verdaccio registry and
-asserts it.
+A cold `npx @pixid/cli` downloads four tarballs totaling 11.8 kB and does not
+pull in `@pixid/canvas` or `@pixid/react`; `packages/e2e/registry.test.ts`
+publishes everything to a local verdaccio registry and asserts it.
 
 ## How a seed becomes an icon
 
@@ -261,8 +242,7 @@ const url = toPngDataURL({ seed: 'alice', scale: 16 }); // data:image/png;base64
 ```
 
 `toPng` returns a `Uint8Array`. `writeFileSync` accepts it directly; there is
-no `Buffer` anywhere in the encoder. If you prefer a single import, the same
-three functions are re-exported from `pixid`.
+no `Buffer` anywhere in the encoder.
 
 ### Browser, no install
 
@@ -274,9 +254,8 @@ three functions are re-exported from `pixid`.
 </script>
 ```
 
-`@pixid/canvas` and `pixid` also ship IIFE builds for classic script tags,
-exposing the globals `pixidCanvas` and `pixid`. Only the scoped one is on a CDN
-today, since `pixid` is not published yet:
+`@pixid/canvas` also ships an IIFE build for classic script tags, exposing the
+global `pixidCanvas`:
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/@pixid/canvas"></script>
@@ -285,9 +264,8 @@ today, since `pixid` is not published yet:
 </script>
 ```
 
-The IIFE bundle inlines its `@pixid/*` dependencies: 4.8 kB minified for
-`pixid`, 2.6 kB for `@pixid/canvas`. `@pixid/core`, `@pixid/svg`, `@pixid/png`,
-and `@pixid/react` are ESM/CJS only.
+The IIFE bundle inlines its `@pixid/*` dependencies and is 2.6 kB minified.
+`@pixid/core`, `@pixid/svg`, `@pixid/png`, and `@pixid/react` are ESM/CJS only.
 
 ### Canvas
 
@@ -360,18 +338,15 @@ await and no CPU-time surprise: a 128×128 icon is 4313 bytes.
 
 ## CLI
 
-Two published entry points run the same program:
-
 ```
-npx @pixid/cli [seed] [options]     # the CLI package
-npx pixid      [seed] [options]     # the meta package, once the npm name clears
+npx @pixid/cli [seed] [options]
 ```
 
-`@pixid/cli` contains the implementation and installs a `pixid` command
-(`npm i -g @pixid/cli` gives you `pixid` on your `PATH`). The unscoped `pixid`
-package depends on `@pixid/cli` and its `bin` is a two-line shim that imports
-`@pixid/cli/run`, so both paths produce byte-identical output; the e2e suite
-asserts that against a real registry.
+`@pixid/cli` installs a `pixid` command (`npm i -g @pixid/cli` gives you
+`pixid` on your `PATH`). The command is named `pixid`, but the package is
+always `@pixid/cli`: there is no unscoped `pixid` package on npm, so
+`npx pixid` only works where `@pixid/cli` is already installed. Use
+`npx @pixid/cli`.
 
 ### Flags
 
@@ -678,23 +653,6 @@ console.log(version); // e.g. '0.1.1'
 runCli(['--seed', 'alice', '-o', 'alice.png']); // writes the file, prints the path
 ```
 
-### `pixid`
-
-The meta package. `export * from '@pixid/core'`, `'@pixid/svg'`, and
-`'@pixid/png'`, so everything documented above for those three is available
-from one import, tree-shaken to whatever you actually use:
-
-```ts
-import { createIcon, iconRuns, parseColor, rgbToCss } from 'pixid';
-import { toSvg, toSvgDataURL, iconToSvg } from 'pixid';
-import { toPng, toPngDataURL, iconToPng } from 'pixid';
-import type { RGB, ColorInput, IconOptions, IconData, CellRun } from 'pixid';
-```
-
-It also ships the `pixid` bin (a shim over `@pixid/cli`) and the IIFE build
-used by the jsdelivr script tag above. It deliberately does **not** re-export
-`@pixid/canvas` or `@pixid/react`, which have DOM and React requirements.
-
 ## Compatibility
 
 The PRNG (xorshift seeded from the string), the draw order (foreground,
@@ -743,14 +701,13 @@ pnpm assets       # regenerate the README gallery in assets/
 
 Every package is bundled by [tsdown](https://tsdown.dev) (Rolldown) from its
 own `tsdown.config.ts`, targeting ES2022 with minification and bundled type
-declarations. `@pixid/canvas` and `pixid` add a second, IIFE config that
-inlines the `@pixid/*` graph into `dist/index.global.js`; `@pixid/cli` and
-`pixid` add a Node-platform config for the shebang bin entry.
+declarations. `@pixid/canvas` adds a second, IIFE config that inlines the
+`@pixid/*` graph into `dist/index.global.js`; `@pixid/cli` adds a Node-platform
+config for the shebang bin entry.
 
 Layout: one folder per package under `packages/`, named after what it contains.
-`packages/cli` is `@pixid/cli`; `packages/pixid` is the unscoped `pixid` meta
-package. Unit tests are colocated with the code they cover, in each package's
-`src/`.
+`packages/cli` is `@pixid/cli`. Unit tests are colocated with the code they
+cover, in each package's `src/`.
 
 `packages/e2e` is the one folder there that is not published: `@pixid/e2e` is
 `"private": true` and owns the tests that belong to no single package, along
@@ -767,9 +724,7 @@ outside `packages/`, so no published tarball contains it.
 
 Releases are managed with [changesets](https://github.com/changesets/changesets):
 `pnpm changeset` to record a change, merge the generated "Version Packages"
-PR to publish. `pixid` and `@pixid/cli` are `linked` in
-`.changeset/config.json`, so `pixid --version` and `@pixid/cli --version`
-always report the same number.
+PR to publish.
 
 ## License
 

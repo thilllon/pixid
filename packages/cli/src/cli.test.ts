@@ -1,5 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -81,6 +82,18 @@ describe('@pixid/cli', () => {
   it('prints help and version', () => {
     expect(run(['--help'])).toContain('Usage:');
     expect(run(['--version']).trim()).toBe(pkg.version);
+  });
+
+  it('shows npx examples under the scoped package name', () => {
+    // There is no unscoped `pixid` package on npm, so `npx pixid` would not
+    // fetch this CLI.
+    const help = run(['--help']);
+    expect(help).toContain('npx @pixid/cli');
+    expect(help).not.toContain('npx pixid');
+  });
+
+  it('exposes the bin through the ./run export subpath', () => {
+    expect(createRequire(import.meta.url).resolve('@pixid/cli/run')).toBe(CLI);
   });
 
   it('documents every flag it accepts in --help', () => {

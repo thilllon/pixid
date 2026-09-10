@@ -28,10 +28,10 @@ Options:
   -v, --version           show the version
 
 Examples:
-  npx pixid
-  npx pixid 0x8ba1f109551bd432803012645ac136ddd64dba72
-  npx pixid --seed alice --out alice.svg --scale 32
-  npx pixid --format svg --bgcolor "#ffffff"
+  npx @pixid/cli
+  npx @pixid/cli 0x8ba1f109551bd432803012645ac136ddd64dba72
+  npx @pixid/cli --seed alice --out alice.svg --scale 32
+  npx @pixid/cli --format svg --bgcolor "#ffffff"
 `;
 
 const fail = (message: string): never => {

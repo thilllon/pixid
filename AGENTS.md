@@ -61,24 +61,23 @@ git push origin --delete <branch> && git branch -d <branch>
 
 ## Release status
 
-The Release workflow currently fails on every push to `main`, at exactly one step:
+Every package is published under the `@pixid` scope. There is no unscoped `pixid`
+package and there will not be one: npm's automated typosquat check rejects the name as
+too similar to `pinia`, and npm support declined to override it (2026-09-03). The meta
+package that was waiting for that name has been removed. Do not reintroduce an
+unscoped package, and do not document `npx pixid`: the CLI is `npx @pixid/cli`.
 
-```
-pixid@<version>
-└ E404: 404 Not Found - PUT https://registry.npmjs.org/pixid - Not found
-```
-
-npm rejects the unscoped name `pixid` as too similar to `pinia`; a support request is
-pending. The six `@pixid/*` packages are reported as already published and skipped.
-That single failure is expected — do not investigate it. Any other Release failure is
-a real problem.
-
-`@pixid/cli` still needs a trusted-publisher entry on npmjs.com before it can be
-released over OIDC.
+The Release workflow publishes over OIDC trusted publishing only; the repository has
+no `NPM_TOKEN` secret. Every package it publishes therefore needs a trusted publisher
+on npmjs.com (GitHub Actions, repository `thilllon/pixid`, workflow `release.yml`,
+publishing allowed), and a publish fails with an auth error for any package without
+one. `@pixid/cli` still needs that entry, so configure it before merging a "Version
+Packages" PR that bumps `@pixid/cli`. Apart from that, the Release workflow is
+expected to pass on every push to `main`; any other Release failure is a real problem.
 
 ## Development
 
-pnpm workspace with 7 published packages plus one private test package:
+pnpm workspace with 6 published packages plus one private test package:
 
 | Package         | Path              | Notes                                        |
 | --------------- | ----------------- | -------------------------------------------- |
@@ -88,7 +87,6 @@ pnpm workspace with 7 published packages plus one private test package:
 | `@pixid/canvas` | `packages/canvas` |                                              |
 | `@pixid/react`  | `packages/react`  |                                              |
 | `@pixid/cli`    | `packages/cli`    |                                              |
-| `pixid`         | `packages/pixid`  | meta package, unscoped name still blocked    |
 | `@pixid/e2e`    | `packages/e2e`    | `"private": true`, never published, no build |
 
 The toolchain is pinned by `mise.toml` (node 24.19.0, pnpm 11.24.0). Prefix commands
@@ -112,7 +110,7 @@ with `mise exec --` so the pinned versions are used.
   so the images also render on npm package pages.
 - Lint and format: `pnpm lint` (`eslint .`), `pnpm format` (`prettier --write`).
 - Versioning: changesets. Add a changeset for any user-visible change
-  (`mise exec -- pnpm changeset`); `pixid` and `@pixid/cli` are version-linked.
+  (`mise exec -- pnpm changeset`).
 
 ### Repository root
 
@@ -128,7 +126,7 @@ concrete reason — everything left is load-bearing:
   from the working directory, and `vitest.config.ts` owns both projects, so it cannot
   belong to a package. Prettier only reads `.prettierignore` from the cwd.
 - `tsconfig.json` covers repository-owned TypeScript (`assets/`, `packages/e2e/`);
-  `tsconfig.base.json` is what all seven package tsconfigs extend.
+  `tsconfig.base.json` is what all six package tsconfigs extend.
 - `mise.toml`, `LICENSE`, `README.md`, `AGENTS.md`, `.gitignore` — convention or
   detection depends on the root location (`mise` and licence/README detection would
   both work from a subdirectory, but hiding them costs more than it saves).
