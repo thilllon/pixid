@@ -1,2 +1,5 @@
 dist
 pnpm-lock.yaml
+# Local oh-my-claudecode state. It is untracked, but hidden only by a global
+# gitignore, and Prettier reads ignore files from the working directory only.
+.omc/

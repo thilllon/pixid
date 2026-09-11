@@ -783,7 +783,9 @@ pnpm test         # unit tests, including per-package bundle-size checks
 pnpm e2e          # publish/npx flow against a local verdaccio registry
 pnpm test:all     # both
 pnpm lint         # eslint
+pnpm typecheck    # tsc --noEmit, root and every package (after pnpm build)
 pnpm format       # prettier --write
+pnpm format:check # prettier --check, as CI runs it
 pnpm assets       # regenerate the README gallery in assets/
 ```
 

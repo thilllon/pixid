@@ -5,6 +5,10 @@ on:
     branches: [main]
   pull_request:
 
+# CI only reads the repository, so the GITHUB_TOKEN gets no write scopes.
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -17,17 +21,21 @@ jobs:
         # dev version in mise.toml), and 26 (Current, LTS in Oct 2026).
         node: [22, 24, 26]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # Resolves the pnpm version from the `packageManager` field in
       # package.json (pnpm 11.24.0).
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: pnpm lint
+      # The package tsconfigs resolve `@pixid/*` imports to the declarations in
+      # each dependency's built `dist/`, so type-checking runs after the build.
+      - run: pnpm typecheck
+      - run: pnpm format:check
       - run: pnpm test
       # The verdaccio-backed e2e suite is the slowest part of CI, so it runs
       # only on the Active LTS leg (node 24) to keep total matrix time down.
