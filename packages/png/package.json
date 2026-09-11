@@ -1,6 +1,6 @@
 {
   "name": "@pixid/png",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Encodes pixid blocky identicons as PNG (Uint8Array or data URL) with a built-in zero-dependency encoder. Works in Node, browsers, and edge runtimes.",
   "keywords": [
     "identicon",

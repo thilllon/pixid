@@ -1,6 +1,6 @@
 {
   "name": "@pixid/react",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "React component for pixid blocky identicons. Renders inline SVG, works in server components, no client-side requirements.",
   "keywords": [
     "identicon",
