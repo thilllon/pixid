@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { createIcon, iconRuns, parseColor, rgbToCss } from './index.js';
 
 /**
- * Direct port of the original ethereum-blockies PRNG and grid code
+ * Direct port of the original ethereum-blockies PRNG, color, and grid code
  * (https://github.com/ethereum/blockies, MIT). Used as an independent oracle
  * to verify that the rewritten, instance-based implementation consumes the
- * PRNG in exactly the same order and produces identical grids.
+ * PRNG in exactly the same order and produces identical grids and colors.
  */
 const oracle = (() => {
   const randseed = new Array<number>(4);
@@ -26,10 +26,13 @@ const oracle = (() => {
     return (randseed[3]! >>> 0) / ((1 << 31) >>> 0);
   };
 
-  const createColor = () => {
-    const h = rand();
-    const s = rand() * 0.6 + 0.4;
-    const l = (rand() + rand() + rand() + rand()) / 4;
+  // The original's color draws, verbatim: a whole-degree hue and percentage
+  // saturation and lightness. The original formats them into a CSS hsl()
+  // string for the browser; see oracleRgb below for the conversion.
+  const createColor = (): Hsl => {
+    const h = Math.floor(rand() * 360);
+    const s = rand() * 60 + 40;
+    const l = (rand() + rand() + rand() + rand()) * 25;
     return [h, s, l];
   };
 
@@ -57,12 +60,38 @@ const oracle = (() => {
   return (seed: string, size: number) => {
     seedrand(seed);
     // The original draws the three colors before the grid.
-    createColor();
-    createColor();
-    createColor();
-    return createImageData(size);
+    const color = createColor();
+    const bgcolor = createColor();
+    const spotcolor = createColor();
+    return { color, bgcolor, spotcolor, grid: createImageData(size) };
   };
 })();
+
+/** Hue in degrees, saturation and lightness in percent, as the original draws them. */
+type Hsl = [number, number, number];
+
+/**
+ * Converts the oracle's HSL to RGB the way ethereum-blockies-base64 does:
+ * scale to 0..1, then the standard HSL formula with Math.round per channel.
+ * The original leaves this step to the browser's CSS hsl() parser instead.
+ */
+const oracleRgb = ([h, s, l]: Hsl): number[] => {
+  const hue = h / 360;
+  const sat = s / 100;
+  const light = l / 100;
+  if (sat === 0) return [light, light, light].map((v) => Math.round(v * 255));
+  const q = light < 0.5 ? light * (1 + sat) : light + sat - light * sat;
+  const p = 2 * light - q;
+  const channel = (t: number) => {
+    if (t < 0) t += 1;
+    if (t > 1) t -= 1;
+    if (t < 1 / 6) return p + (q - p) * 6 * t;
+    if (t < 1 / 2) return q;
+    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+    return p;
+  };
+  return [channel(hue + 1 / 3), channel(hue), channel(hue - 1 / 3)].map((v) => Math.round(v * 255));
+};
 
 describe('createIcon', () => {
   it('is deterministic for the same seed', () => {
@@ -71,7 +100,7 @@ describe('createIcon', () => {
     expect(a).toEqual(b);
   });
 
-  it('produces the same grids as the original ethereum-blockies algorithm', () => {
+  it('produces the same grids and colors as the original ethereum-blockies algorithm', () => {
     // No '' here: the original replaces a falsy seed with a random one
     // (`opts.seed || random`) before seeding, so it never runs the PRNG on an
     // empty string. pixid does the same; see the empty-seed test below.
@@ -86,18 +115,76 @@ describe('createIcon', () => {
     ];
     for (const seed of seeds) {
       for (const size of [5, 8, 15]) {
-        expect(createIcon({ seed, size }).grid, `seed=${seed} size=${size}`).toEqual(
-          oracle(seed, size),
-        );
+        const icon = createIcon({ seed, size });
+        const expected = oracle(seed, size);
+        expect(icon.grid, `seed=${seed} size=${size}`).toEqual(expected.grid);
+        expect([icon.color, icon.bgcolor, icon.spotcolor], `seed=${seed}`).toEqual([
+          oracleRgb(expected.color),
+          oracleRgb(expected.bgcolor),
+          oracleRgb(expected.spotcolor),
+        ]);
       }
+    }
+  });
+
+  it('produces the same palettes as ethereum-blockies-base64', () => {
+    // [bgcolor, color, spotcolor], read from the PLTE chunk of the PNGs that
+    // ethereum-blockies-base64 1.0.2 (the MetaMask-style implementation)
+    // renders for these seeds. It lowercases its input, so the seeds are
+    // lowercase already.
+    const reference: [string, [number, number, number][]][] = [
+      [
+        '0x8ba1f109551bd432803012645ac136ddd64dba72',
+        [
+          [181, 1, 151],
+          [165, 95, 38],
+          [221, 76, 13],
+        ],
+      ],
+      [
+        'pixid',
+        [
+          [120, 71, 167],
+          [107, 47, 46],
+          [148, 71, 166],
+        ],
+      ],
+      [
+        'alice',
+        [
+          [44, 38, 18],
+          [27, 12, 11],
+          [198, 2, 12],
+        ],
+      ],
+      [
+        'thilllon',
+        [
+          [54, 157, 45],
+          [115, 50, 49],
+          [72, 107, 175],
+        ],
+      ],
+      [
+        '한글시드',
+        [
+          [112, 193, 25],
+          [137, 81, 56],
+          [89, 177, 57],
+        ],
+      ],
+    ];
+    for (const [seed, palette] of reference) {
+      const icon = createIcon({ seed });
+      expect([icon.bgcolor, icon.color, icon.spotcolor], seed).toEqual(palette);
     }
   });
 
   it('matches locked regression vectors', () => {
     const a = createIcon({ seed: 'pixid' });
     expect(a.color).toEqual([107, 47, 46]);
-    expect(a.bgcolor).toEqual([121, 71, 167]);
-    expect(a.spotcolor).toEqual([150, 71, 166]);
+    expect(a.bgcolor).toEqual([120, 71, 167]);
+    expect(a.spotcolor).toEqual([148, 71, 166]);
     expect(a.grid).toEqual([
       1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 2, 0, 1, 2, 2, 1, 0, 2, 0, 1, 2, 1, 1, 2, 1,
       0, 0, 1, 0, 2, 2, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 2, 2, 1, 1, 2,
@@ -105,9 +192,9 @@ describe('createIcon', () => {
     ]);
 
     const b = createIcon({ seed: '0x8ba1f109551bd432803012645ac136ddd64dba72', size: 5 });
-    expect(b.color).toEqual([165, 96, 38]);
-    expect(b.bgcolor).toEqual([181, 1, 149]);
-    expect(b.spotcolor).toEqual([221, 79, 13]);
+    expect(b.color).toEqual([165, 95, 38]);
+    expect(b.bgcolor).toEqual([181, 1, 151]);
+    expect(b.spotcolor).toEqual([221, 76, 13]);
     expect(b.grid).toEqual([
       1, 1, 1, 1, 1, 0, 2, 0, 2, 0, 2, 1, 1, 1, 2, 1, 0, 1, 0, 1, 1, 2, 1, 2, 1,
     ]);

@@ -13,7 +13,8 @@
   React 17 because it has no exports map, so the import failed with
   `ERR_MODULE_NOT_FOUND`. The component now calls `createElement` and imports
   nothing from React but `react` itself. React 19 logs no outdated-JSX-transform
-  warning, and the rendered markup, SSR, and server components are unchanged.
+  warning, and switching away from JSX changes neither the rendered markup nor
+  how SSR and server components work.
 - A `scale` that is not a finite positive number throws
   `RangeError: invalid scale: -1 (expected a finite positive number)` instead of
   rendering `width="-8"` or passing `NaN` and `Infinity` through.

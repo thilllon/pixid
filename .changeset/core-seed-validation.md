@@ -15,6 +15,6 @@ icon:
 - Any other non-string seed, such as a boolean or an object, throws a
   `TypeError`. `undefined` and `null` still mean no seed.
 
-Icons for non-empty string seeds are unchanged. The renderers all call
-`createIcon`, so this applies to `@pixid/svg`, `@pixid/png`, `@pixid/canvas`,
-and `@pixid/react` too.
+This seed handling does not affect non-empty string seeds. The renderers all
+call `createIcon`, so it applies to `@pixid/svg`, `@pixid/png`,
+`@pixid/canvas`, and `@pixid/react` too.
