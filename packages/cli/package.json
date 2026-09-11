@@ -58,7 +58,7 @@
     "@pixid/svg": "workspace:^"
   },
   "devDependencies": {
-    "verdaccio": "^6.10.0"
+    "verdaccio": "^6.10.3"
   },
   "publishConfig": {
     "access": "public"
