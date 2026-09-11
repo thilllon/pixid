@@ -86,13 +86,18 @@ const hslToRgb = (h: number, s: number, l: number): RGB => {
   ];
 };
 
+// Same arithmetic as the original ethereum/blockies (whole-degree hue,
+// percentage saturation and lightness) and ethereum-blockies-base64. A
+// fractional hue shifts channels by up to 4. Algebraically equivalent forms
+// such as `rng.next() * 0.6 + 0.4` can round differently in floating point,
+// so keep these expressions verbatim to stay bit-for-bit identical.
 const createColor = (rng: Xorshift): RGB => {
-  // Hue covers the whole spectrum.
-  const h = rng.next();
-  // Saturation between 0.4 and 1 avoids greyish colors.
-  const s = rng.next() * 0.6 + 0.4;
-  // Lightness follows a bell curve around 0.5.
-  const l = (rng.next() + rng.next() + rng.next() + rng.next()) / 4;
+  // Hue covers the whole spectrum, in whole degrees.
+  const h = Math.floor(rng.next() * 360) / 360;
+  // Saturation between 40% and 100% avoids greyish colors.
+  const s = (rng.next() * 60 + 40) / 100;
+  // Lightness follows a bell curve around 50%.
+  const l = ((rng.next() + rng.next() + rng.next() + rng.next()) * 25) / 100;
   return hslToRgb(h, s, l);
 };
 

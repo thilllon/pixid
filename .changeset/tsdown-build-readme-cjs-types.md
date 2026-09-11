@@ -5,8 +5,8 @@
 '@pixid/canvas': patch
 ---
 
-Rebuilt with tsdown instead of tsup. The API, and the output for any given
-options, are unchanged.
+Rebuilt with tsdown instead of tsup. The rebuild itself changes neither the API
+nor the output for any given options.
 
 - The CommonJS build is smaller: `dist/index.cjs` shrinks by 16–40% (for
   `@pixid/core`, from 2620 to 2166 bytes), and the `@pixid/canvas` IIFE build

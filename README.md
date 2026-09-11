@@ -152,10 +152,10 @@ package's `src/bundle.test.ts` enforces its budget:
 
 | Import                                         | Minified bundle |
 | ---------------------------------------------- | --------------- |
-| `import { createIcon } from '@pixid/core'`     | 2.0 kB          |
+| `import { createIcon } from '@pixid/core'`     | 2.1 kB          |
 | `import { toSvg } from '@pixid/svg'`           | 2.8 kB          |
 | `import { toPng } from '@pixid/png'`           | 3.8 kB          |
-| `import { createCanvas } from '@pixid/canvas'` | 2.7 kB          |
+| `import { createCanvas } from '@pixid/canvas'` | 2.8 kB          |
 | `import { Pixid } from '@pixid/react'`         | 2.9 kB          |
 
 The `@pixid/react` figure excludes `react`, which is a peer dependency.
@@ -170,7 +170,7 @@ verdaccio registry and asserts it.
 `createIcon` seeds a xorshift PRNG from the seed string, then makes draws in a
 fixed order:
 
-1. foreground `color` — 6 draws (hue, saturation, and four lightness samples averaged into a bell curve)
+1. foreground `color` — 6 draws (a hue in whole degrees, saturation, and four lightness samples averaged into a bell curve)
 2. `bgcolor` — 6 draws
 3. `spotcolor` — 6 draws
 4. the grid — `size * ceil(size / 2)` draws, one per cell of the left half
@@ -502,7 +502,7 @@ icon.grid.length; // 64
 icon.grid.slice(0, 8); // [1, 0, 1, 2, 2, 1, 0, 1]
 icon.color; // [27, 12, 11]
 icon.bgcolor; // [44, 38, 18]
-icon.spotcolor; // [198, 2, 10]
+icon.spotcolor; // [198, 2, 12]
 
 createIcon({ size: 5 }).grid.length; // 25
 createIcon({}).seed; // e.g. '001c5f3778786a' — a generated seed, echoed back
@@ -730,15 +730,24 @@ runCli(['--seed', 'alice', '-o', 'alice.png']); // writes the file, prints the p
 ## Compatibility
 
 The PRNG (xorshift seeded from the string), the draw order (foreground,
-background, spot color, then grid), the `Math.floor(rand() * 2.3)` cell
+background, spot color, then grid), the color arithmetic (a whole-degree hue,
+percentage saturation and lightness), the `Math.floor(rand() * 2.3)` cell
 distribution, and the mirroring rules are identical to ethereum-blockies.
 `packages/core/src/core.test.ts` keeps a direct port of the original code as
-an independent oracle and asserts grid-for-grid equality, including the
-draw-skipping behavior for explicit colors and locked regression vectors.
-Icons for a given seed look the same as classic blockies, including the
-MetaMask-style ones for Ethereum addresses.
+an independent oracle and asserts grid-for-grid and color-for-color equality,
+including the draw-skipping behavior for explicit colors and locked regression
+vectors, and it checks palettes against PNGs rendered by
+ethereum-blockies-base64.
 
-To match those, seed with the lowercase address. MetaMask and
+Grids always match. Colors match ethereum-blockies-base64, and MetaMask
+Mobile's Blockies (a port of it), down to the RGB value. The original
+ethereum-blockies hands CSS `hsl()` strings to the browser, whose rounding can
+differ by one step on rare seeds (about 1 in 10,000 in Chromium). MetaMask's
+browser extension draws Blockies with `blo`, which drops the fractions of
+saturation and lightness, so its colors can differ by a few steps even though
+the hue and the grid are the same.
+
+To match any of them for an Ethereum address, seed with the lowercase address. MetaMask and
 ethereum-blockies-base64 both seed with `address.toLowerCase()`, while pixid
 uses the seed exactly as given. A checksummed (mixed-case) address is a
 different seed: `0x8ba1f109551bD432803012645Ac136ddd64DBA72` and
