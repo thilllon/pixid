@@ -35,12 +35,15 @@ This applies to direct pushes exactly as it applies to PR branches. Run the full
 suite locally and require it to pass:
 
 ```sh
-mise exec -- pnpm --recursive build
-mise exec -- pnpm vitest run        # unit + verdaccio e2e
-mise exec -- pnpm eslint .
-mise exec -- pnpm typecheck         # tsc for the root and every package tsconfig
-mise exec -- pnpm prettier --check .
+mise exec -- pnpm check    # build, then lint + typecheck + unit tests + prettier in parallel
+mise exec -- pnpm e2e      # the verdaccio suite, which `check` leaves out
 ```
+
+`pnpm check` builds first because the package tsconfigs and the unit tests read each
+dependency's `dist/`, then runs the four checks with
+`pnpm --workspace-root run --parallel`, which prefixes each line with the script that
+wrote it. Run the pieces on their own (`pnpm lint`, `pnpm typecheck`, ...) when you want
+one tool's output unmixed.
 
 CI runs the same checks: build, lint, `pnpm typecheck`, the prettier check
 (`pnpm format:check`), and the unit tests on every leg, plus the e2e suite on Node 24.
@@ -91,9 +94,10 @@ any Release failure is a real problem.
 
 The Release workflow runs `changesets/action` v2. While changesets are pending it
 opens or updates the "Version Packages" PR. Once that PR is merged it runs
-`pnpm release`: build, lint, typecheck, and the unit tests, then `changeset publish`,
-so a failing check stops the publish. The verdaccio e2e suite stays out of it because
-it runs `pnpm publish` itself, which does not belong in the OIDC-enabled release job.
+`pnpm release`, which is `pnpm check` (build, then lint, typecheck, unit tests, and the
+prettier check) followed by `changeset publish`, so a failing check stops the publish.
+The verdaccio e2e suite stays out of it because it runs `pnpm publish` itself, which
+does not belong in the OIDC-enabled release job.
 For every package it publishes, the action pushes a git tag (`@pixid/<name>@<version>`);
 versions up to 0.1.1 predate this and have none. GitHub Releases are deliberately off
 (`create-github-releases: false`): they would repeat each package's CHANGELOG.md, and
