@@ -1,0 +1,64 @@
+{
+  "name": "@pixid/vue",
+  "version": "0.2.0",
+  "description": "Vue 3 component for pixid blocky identicons. Renders inline SVG, works with SSR, no client-side requirements.",
+  "keywords": [
+    "identicon",
+    "blockies",
+    "avatar",
+    "vue",
+    "pixel"
+  ],
+  "license": "MIT",
+  "author": "thilllon",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thilllon/pixid.git",
+    "directory": "packages/vue"
+  },
+  "homepage": "https://github.com/thilllon/pixid",
+  "bugs": {
+    "url": "https://github.com/thilllon/pixid/issues"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown"
+  },
+  "dependencies": {
+    "@pixid/core": "workspace:^"
+  },
+  "peerDependencies": {
+    "vue": ">=3.2.40"
+  },
+  "devDependencies": {
+    "@pixid/svg": "workspace:^",
+    "@vue/server-renderer": "^3.5.42",
+    "vue": "^3.5.42"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

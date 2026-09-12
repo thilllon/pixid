@@ -167,7 +167,7 @@ describe('npx against a real registry', () => {
 
   it('installs only the CLI and its runtime packages, nothing else', () => {
     // The cold-cache run above populated npx's cache. Renderer packages the
-    // CLI does not need (canvas, react) must not have been downloaded.
+    // CLI does not need (canvas, react, vue) must not have been downloaded.
     expect(installedPackages(join(workDir, 'cache-png'))).toEqual([
       '@pixid/cli',
       '@pixid/core',
@@ -194,6 +194,7 @@ describe('npx against a real registry', () => {
       '@pixid/png',
       '@pixid/react',
       '@pixid/svg',
+      '@pixid/vue',
     ]);
 
     const tarballs: { name: string; size: number }[] = [];
