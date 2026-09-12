@@ -896,6 +896,7 @@ With [mise](https://mise.jdx.dev) installed, `mise install` sets both up.
 
 ```
 pnpm install
+pnpm check        # build, then lint + typecheck + tests + prettier in parallel
 pnpm build        # tsdown, all packages
 pnpm test         # unit tests, including per-package bundle-size checks
 pnpm e2e          # publish/npx flow against a local verdaccio registry
