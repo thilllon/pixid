@@ -57,8 +57,9 @@ Everything is on npm under the `@pixid` scope:
 [`@pixid/core`](https://www.npmjs.com/package/@pixid/core),
 [`@pixid/svg`](https://www.npmjs.com/package/@pixid/svg),
 [`@pixid/png`](https://www.npmjs.com/package/@pixid/png),
-[`@pixid/canvas`](https://www.npmjs.com/package/@pixid/canvas), and
-[`@pixid/react`](https://www.npmjs.com/package/@pixid/react) as libraries.
+[`@pixid/canvas`](https://www.npmjs.com/package/@pixid/canvas),
+[`@pixid/react`](https://www.npmjs.com/package/@pixid/react), and
+[`@pixid/vue`](https://www.npmjs.com/package/@pixid/vue) as libraries.
 
 - [Examples](#examples)
 - [Quickstart](#quickstart)
@@ -132,6 +133,7 @@ Every package name below links to its page on npm.
 | [`@pixid/png`](https://www.npmjs.com/package/@pixid/png)       | PNG file bytes (`Uint8Array`) / `data:image/png` URL, with a built-in encoder. | Node, browsers, edge | 3.3 kB  |
 | [`@pixid/canvas`](https://www.npmjs.com/package/@pixid/canvas) | Renders to an HTML `<canvas>`.                                                 | browsers             | 3.9 kB  |
 | [`@pixid/react`](https://www.npmjs.com/package/@pixid/react)   | `<Pixid />` component rendering inline SVG. Works in server components.        | React 17+            | 2.9 kB  |
+| [`@pixid/vue`](https://www.npmjs.com/package/@pixid/vue)       | `<Pixid />` component rendering inline SVG. Works with SSR.                    | Vue 3.2.40+          | 3.3 kB  |
 | [`@pixid/cli`](https://www.npmjs.com/package/@pixid/cli)       | The `pixid` command. Writes PNG or SVG files.                                  | Node 18.3+           | 4.1 kB  |
 
 Tarball sizes are the gzipped published artifacts, measured with `pnpm pack`.
@@ -139,11 +141,11 @@ Tarball sizes are the gzipped published artifacts, measured with `pnpm pack`.
 Every package is ESM + CJS, fully typed, and side-effect free. Nothing here
 depends on `Buffer`, `fs`, `canvas`, or any npm package outside the `@pixid/*`
 graph, so the same code runs in Node, browsers, and edge runtimes such as
-Cloudflare Workers. Two documented exceptions: `@pixid/react` has `react >=17`
-as a peer dependency, and `@pixid/cli` is a Node program that imports
-`node:fs`, `node:path`, `node:crypto`, and `node:util` (its `sideEffects` is
-`["./dist/cli.js"]` rather than `false`, because that file is meant to run on
-import).
+Cloudflare Workers. Three documented exceptions: `@pixid/react` has `react >=17`
+as a peer dependency, `@pixid/vue` has `vue >=3.2.40`, and `@pixid/cli` is a
+Node program that imports `node:fs`, `node:path`, `node:crypto`, and
+`node:util` (its `sideEffects` is `["./dist/cli.js"]` rather than `false`,
+because that file is meant to run on import).
 
 ## Size
 
@@ -157,11 +159,13 @@ package's `src/bundle.test.ts` enforces its budget:
 | `import { toPng } from '@pixid/png'`           | 3.8 kB          |
 | `import { createCanvas } from '@pixid/canvas'` | 2.8 kB          |
 | `import { Pixid } from '@pixid/react'`         | 2.9 kB          |
+| `import { Pixid } from '@pixid/vue'`           | 3.1 kB          |
 
-The `@pixid/react` figure excludes `react`, which is a peer dependency.
+The `@pixid/react` and `@pixid/vue` figures exclude `react` and `vue`, which
+are peer dependencies.
 
 A cold `npx @pixid/cli` downloads four tarballs totaling 13.9 kB and does not
-pull in `@pixid/canvas` or `@pixid/react`;
+pull in `@pixid/canvas`, `@pixid/react`, or `@pixid/vue`;
 `packages/cli/src/registry.e2e.test.ts` publishes everything to a local
 verdaccio registry and asserts it.
 
@@ -228,10 +232,11 @@ counts as omitted too, and any other non-string `seed`, such as a boolean or an
 object, throws a `TypeError`.
 
 `scale` belongs to the renderers (`@pixid/svg`, `@pixid/png`, `@pixid/canvas`,
-`@pixid/react`), not to `@pixid/core`, which is resolution-independent.
-`@pixid/png` and `@pixid/canvas` require a positive integer, since they fill
-whole pixels, and `@pixid/svg` and `@pixid/react` take any finite positive
-number. Each throws a `RangeError` otherwise.
+`@pixid/react`, `@pixid/vue`), not to `@pixid/core`, which is
+resolution-independent. `@pixid/png` and `@pixid/canvas` require a positive
+integer, since they fill whole pixels, and `@pixid/svg`, `@pixid/react`, and
+`@pixid/vue` take any finite positive number. Each throws a `RangeError`
+otherwise.
 
 A `ColorInput` is either a hex string or an RGB tuple:
 
@@ -283,7 +288,8 @@ global `pixidCanvas`:
 ```
 
 The IIFE bundle inlines its `@pixid/*` dependencies and is 2.9 kB minified.
-`@pixid/core`, `@pixid/svg`, `@pixid/png`, and `@pixid/react` are ESM/CJS only.
+`@pixid/core`, `@pixid/svg`, `@pixid/png`, `@pixid/react`, and `@pixid/vue` are
+ESM/CJS only.
 
 ### Canvas
 
@@ -341,6 +347,44 @@ component non-deterministic and will cause a hydration mismatch.
 One build covers React 17, 18, and 19: refs reach the `<svg>` element on all
 three, and the package loads under Node ESM even with React 17. Details are
 in [`@pixid/react`](#pixidreact).
+
+### Vue
+
+```vue
+<script setup lang="ts">
+import { Pixid } from '@pixid/vue';
+
+const props = defineProps<{ address: string }>();
+</script>
+
+<template>
+  <Pixid
+    :seed="props.address.toLowerCase()"
+    :scale="6"
+    class="avatar"
+    role="img"
+    :aria-label="props.address"
+  />
+</template>
+```
+
+The component is written with Vue's `h()` render function, so the package ships
+plain JavaScript and needs no Vue compiler — an app without a build step can
+import it too. It uses no lifecycle hooks and no browser APIs, so it renders
+under `@vue/server-renderer` as happily as in the browser:
+
+```ts
+import { Pixid } from '@pixid/vue';
+import { renderToString } from '@vue/server-renderer';
+import { createSSRApp } from 'vue';
+
+const markup = await renderToString(createSSRApp(Pixid, { seed: 'alice', scale: 8 }));
+```
+
+Given a `seed`, the same props always produce the same markup, so server and
+client renders match and hydration is clean. Omitting `seed` makes the
+component non-deterministic and will cause a hydration mismatch. Details are in
+[`@pixid/vue`](#pixidvue).
 
 ### Edge runtimes
 
@@ -703,6 +747,71 @@ ESM resolver cannot find in React 17, which has no exports map.
 //   shape-rendering="crispEdges" class="avatar" role="img" aria-label="alice">
 //   <rect width="2" height="2" fill="rgb(44,38,18)"></rect>
 //   <rect x="0" y="0" width="2" height="1" fill="rgb(27,12,11)"></rect></svg>
+```
+
+### `@pixid/vue`
+
+```ts
+import { Pixid, type PixidProps } from '@pixid/vue';
+```
+
+| Prop        | Type         | Default | Description                                             |
+| ----------- | ------------ | ------- | ------------------------------------------------------- |
+| `seed`      | `string`     | random  | Same seed, same icon.                                   |
+| `size`      | `number`     | `8`     | Cells per side.                                         |
+| `scale`     | `number`     | `4`     | Pixels per cell; sets `width`/`height`. Finite and > 0. |
+| `color`     | `ColorInput` | seed    | Foreground color.                                       |
+| `bgcolor`   | `ColorInput` | seed    | Background color.                                       |
+| `spotcolor` | `ColorInput` | seed    | Accent color.                                           |
+
+Those six are the component's declared props; everything else a parent passes
+is a fallthrough attribute, so `class`, `style`, `role`, `aria-*`, `data-*`,
+and listeners all work. A template `ref` on `<Pixid>` gives the component
+instance, whose `$el` is the root `<svg>` element.
+
+`Pixid` is declared with `name: 'Pixid'`, so Vue DevTools and Vue's warnings
+name it even though the build is minified.
+
+`scale` must be a finite positive number; fractions are fine, since the output
+is SVG. Anything else, such as `0`, `-1`, `NaN`, or `Infinity`, throws while
+rendering: `RangeError: invalid scale: -1 (expected a finite positive number)`.
+`size` and the colors are checked by `createIcon`, so they throw the errors
+listed under [`@pixid/core`](#pixidcore).
+
+Vue merges `$attrs` onto the root element _after_ the render function's own
+attributes, so you can override `width`, `height`, or `viewBox` — useful for
+making the icon fill a CSS-sized box:
+
+```vue
+<Pixid seed="alice" width="100%" height="100%" />
+```
+
+`class` and `style` are the exception Vue makes to that rule: it combines them
+rather than replacing. The component sets neither, so there is nothing to
+combine with and yours is what lands on the `<svg>`.
+
+The rendered markup is the same geometry and palette as `toSvg` with the same
+options (`packages/vue/src/vue.test.ts` cross-checks them rect by rect), and
+byte for byte what `@pixid/react` renders. The component uses no lifecycle
+hooks and no browser APIs, so `@vue/server-renderer` renders it on the server;
+`vue >=3.2.40` is the only peer dependency, and the built files import nothing
+but `vue` and `@pixid/core`. There is no single-file component and no JSX in
+the package — the elements are made with `h()`, so the package ships plain
+JavaScript and needs no Vue compiler.
+
+The peer range starts at 3.2.40 rather than 3, because `@vue/server-renderer`
+lowercased every camelCase attribute name before that release. SVG attribute
+names are case-sensitive, so the `viewBox` this component emits would be
+serialized as `viewbox`, the browser would ignore it, and the icon — drawn in
+cell units — would render as a speck in the top-left corner of the `<svg>`.
+Hydration does not repair it, and client-only rendering was never affected.
+
+```vue
+<Pixid seed="alice" :size="2" :scale="24" class="avatar" role="img" aria-label="alice" />
+<!-- <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 2 2"
+       shape-rendering="crispEdges" class="avatar" role="img" aria-label="alice">
+       <rect width="2" height="2" fill="rgb(44,38,18)"></rect>
+       <rect x="0" y="0" width="2" height="1" fill="rgb(27,12,11)"></rect></svg> -->
 ```
 
 ### `@pixid/cli`

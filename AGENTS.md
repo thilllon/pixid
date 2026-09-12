@@ -80,8 +80,11 @@ one. The six packages released in 0.2.0 have theirs. npm can only configure a tr
 publisher for a package that already exists, so a brand-new package has to be published
 by hand once (`npm publish` with 2FA, npm 11.15+), after which
 `npm trust github @pixid/<name> --file release.yml --repo thilllon/pixid --allow-publish`
-hands it to CI. The Release workflow is expected to pass on every push to `main`; any
-Release failure is a real problem.
+hands it to CI. `@pixid/vue` is the first package to go through that, and note the
+timing: `changeset publish` ships any package whose version is missing from the
+registry, so a new package publishes on the very next push to `main`, with no "Version
+Packages" PR in between to warn you. The Release workflow is expected to pass on every
+push to `main`; any Release failure is a real problem.
 
 The Release workflow runs `changesets/action` v2. While changesets are pending it
 opens or updates the "Version Packages" PR. Once that PR is merged it runs
@@ -96,7 +99,7 @@ in `packages/*/CHANGELOG.md`, and npm carries the published artifact.
 
 ## Development
 
-pnpm workspace with 6 published packages:
+pnpm workspace with 7 published packages:
 
 | Package         | Path              |
 | --------------- | ----------------- |
@@ -105,6 +108,7 @@ pnpm workspace with 6 published packages:
 | `@pixid/png`    | `packages/png`    |
 | `@pixid/canvas` | `packages/canvas` |
 | `@pixid/react`  | `packages/react`  |
+| `@pixid/vue`    | `packages/vue`    |
 | `@pixid/cli`    | `packages/cli`    |
 
 The toolchain is pinned by `mise.toml` (node 24.19.0, pnpm 11.24.0). Prefix commands
@@ -179,7 +183,7 @@ concrete reason — everything left is load-bearing:
   from the working directory, and `vitest.config.ts` owns both projects, so it cannot
   belong to a package. Prettier only reads `.prettierignore` from the cwd.
 - `tsconfig.json` covers repository-owned TypeScript (`assets/`); `tsconfig.base.json`
-  is what all six package tsconfigs extend, and those cover each package's tests.
+  is what all seven package tsconfigs extend, and those cover each package's tests.
 - `mise.toml`, `LICENSE`, `README.md`, `AGENTS.md`, `.gitignore` — convention or
   detection depends on the root location (`mise` and licence/README detection would
   both work from a subdirectory, but hiding them costs more than it saves).
