@@ -23,7 +23,7 @@
     "e2e": "vitest run --project e2e",
     "test:all": "vitest run",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit -p tsconfig.json && pnpm --recursive exec tsc --noEmit -p tsconfig.json",
+    "typecheck": "tsc --noEmit --project tsconfig.json && pnpm --recursive exec tsc --noEmit --project tsconfig.json",
     "format": "prettier --write --list-different .",
     "format:check": "prettier --check .",
     "check": "pnpm build && pnpm --workspace-root run --parallel \"/^(lint|typecheck|test|format:check)$/\"",
