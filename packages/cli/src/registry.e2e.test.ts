@@ -108,7 +108,7 @@ beforeAll(async () => {
   // Publish every publishable workspace package to the local registry, exactly
   // like a real release (workspace: ranges are rewritten by pnpm on publish).
   // The workspace root is `private`, so pnpm skips it.
-  execFileSync('pnpm', ['-r', 'publish', '--registry', REGISTRY, '--no-git-checks'], {
+  execFileSync('pnpm', ['--recursive', 'publish', '--registry', REGISTRY, '--no-git-checks'], {
     cwd: WORKSPACE_ROOT,
     env: npmEnv(join(workDir, 'publish-cache')),
     encoding: 'utf8',
