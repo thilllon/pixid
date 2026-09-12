@@ -1,6 +1,6 @@
 {
   "name": "@pixid/cli",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Command-line blocky identicon generator. Writes deterministic PNG or SVG identicons from any seed string (npx @pixid/cli).",
   "keywords": [
     "identicon",

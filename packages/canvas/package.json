@@ -1,6 +1,6 @@
 {
   "name": "@pixid/canvas",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Renders pixid blocky identicons to an HTML canvas element in the browser.",
   "keywords": [
     "identicon",
