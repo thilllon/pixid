@@ -76,18 +76,23 @@ The Release workflow publishes over OIDC trusted publishing only; the repository
 no `NPM_TOKEN` secret. Every package it publishes therefore needs a trusted publisher
 on npmjs.com (GitHub Actions, repository `thilllon/pixid`, workflow `release.yml`,
 publishing allowed), and a publish fails with an auth error for any package without
-one. `@pixid/cli` still needs that entry, so configure it before merging a "Version
-Packages" PR that bumps `@pixid/cli`. Apart from that, the Release workflow is
-expected to pass on every push to `main`; any other Release failure is a real problem.
+one. The six packages released in 0.2.0 have theirs. npm can only configure a trusted
+publisher for a package that already exists, so a brand-new package has to be published
+by hand once (`npm publish` with 2FA, npm 11.15+), after which
+`npm trust github @pixid/<name> --file release.yml --repo thilllon/pixid --allow-publish`
+hands it to CI. The Release workflow is expected to pass on every push to `main`; any
+Release failure is a real problem.
 
 The Release workflow runs `changesets/action` v2. While changesets are pending it
 opens or updates the "Version Packages" PR. Once that PR is merged it runs
 `pnpm release`: build, lint, typecheck, and the unit tests, then `changeset publish`,
 so a failing check stops the publish. The verdaccio e2e suite stays out of it because
 it runs `pnpm publish` itself, which does not belong in the OIDC-enabled release job.
-For every package it publishes, the action creates a git tag
-(`@pixid/<name>@<version>`) and a GitHub Release carrying that version's changelog
-entry. Versions up to 0.1.1 predate this and have neither.
+For every package it publishes, the action pushes a git tag (`@pixid/<name>@<version>`);
+versions up to 0.1.1 predate this and have none. GitHub Releases are deliberately off
+(`create-github-releases: false`): they would repeat each package's CHANGELOG.md, and
+every version bump would create one release per published package. The changelog lives
+in `packages/*/CHANGELOG.md`, and npm carries the published artifact.
 
 ## Development
 

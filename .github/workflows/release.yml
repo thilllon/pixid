@@ -8,7 +8,7 @@ concurrency: release-${{ github.ref }}
 
 permissions:
   # changesets/action pushes the "Version Packages" branch and opens its PR,
-  # and after a publish creates a git tag and a GitHub Release per package.
+  # and after a publish pushes a git tag per package.
   contents: write
   pull-requests: write
   # Required for npm trusted publishing: lets the job mint a GitHub OIDC token
@@ -49,12 +49,16 @@ jobs:
       #
       # For every package it publishes, `changeset publish` creates a git tag
       # and records it in the file named by CHANGESETS_OUTPUT, which the action
-      # sets for the publish script; the action then creates those tags on
-      # GitHub along with a GitHub Release for each. v1 scraped stdout for
-      # "New tag:" lines instead, which CLI v3 no longer prints, so it created
-      # neither. The action's `github-token` input defaults to the job's
-      # GITHUB_TOKEN, so no env block is needed.
+      # sets for the publish script; the action then pushes those tags. v1
+      # scraped stdout for "New tag:" lines instead, which CLI v3 no longer
+      # prints, so it pushed none. The action's `github-token` input defaults to
+      # the job's GITHUB_TOKEN, so no env block is needed.
+      #
+      # GitHub Releases stay off. Each one would repeat the changelog that
+      # already sits in the package's CHANGELOG.md, and every version bump
+      # would create one release per published package.
       - name: Create release PR or publish
         uses: changesets/action@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
         with:
           publish-script: pnpm release
+          create-github-releases: false
