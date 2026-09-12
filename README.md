@@ -944,9 +944,13 @@ Merging a pull request publishes nothing. Releasing a change takes a
    package whose version is not on npm yet, over OIDC trusted publishing with
    provenance, then pushes a `@pixid/<name>@<version>` tag.
 
-So a PR without a changeset lands on `main` and ships nothing, which is what
-you want for tests, CI, or repository docs. Only the packages named in a
-changeset get a new version; the rest stay where they are.
+So a PR without a changeset lands on `main` and ships nothing. Only the
+packages named in a changeset get a new version; the rest stay where they are.
+
+Forgetting one is the easy mistake, so CI's `changeset` job fails a pull
+request that touches a package without adding a changeset. When the change
+genuinely must not be released — tests, CI, repository docs — record that on
+purpose with `pnpm changeset add --empty`.
 
 A brand-new package is the one exception to step 1: it has no published
 version, so step 3 picks it up with no changeset at all. Its first version has
