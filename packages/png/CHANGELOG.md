@@ -1,5 +1,12 @@
 # @pixid/png
 
+## 0.2.1
+
+### Patch Changes
+
+- 0fb8f55: The npm README spells out Node.js rather than "Node", which reads as the
+  package name `node` to some.
+
 ## 0.2.0
 
 ### Minor Changes
