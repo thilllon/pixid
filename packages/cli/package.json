@@ -25,7 +25,8 @@
   },
   "type": "module",
   "sideEffects": [
-    "./dist/cli.js"
+    "./dist/cli.js",
+    "./dist/cli.cjs"
   ],
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -41,8 +42,24 @@
         "default": "./dist/index.cjs"
       }
     },
-    "./run": "./dist/cli.js",
+    "./run": {
+      "import": {
+        "types": "./dist/cli.d.ts",
+        "default": "./dist/cli.js"
+      },
+      "require": {
+        "types": "./dist/cli.d.cts",
+        "default": "./dist/cli.cjs"
+      }
+    },
     "./package.json": "./package.json"
+  },
+  "typesVersions": {
+    "*": {
+      "run": [
+        "./dist/cli.d.ts"
+      ]
+    }
   },
   "bin": {
     "pixid": "./dist/cli.js"

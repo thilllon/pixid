@@ -142,8 +142,23 @@ describe('@pixid/cli', () => {
     expect(help).not.toContain('npx pixid');
   });
 
-  it('exposes the bin through the ./run export subpath', () => {
-    expect(createRequire(import.meta.url).resolve('@pixid/cli/run')).toBe(CLI);
+  it('exposes the bin through the ./run export subpath, from both module systems', () => {
+    // CommonJS gets the CJS build: requiring the ESM one would throw
+    // ERR_REQUIRE_ESM. ESM gets the same file the `bin` entry points at.
+    expect(createRequire(import.meta.url).resolve('@pixid/cli/run')).toBe(
+      fileURLToPath(new URL('../dist/cli.cjs', import.meta.url)),
+    );
+    const resolvedFromEsm = execFileSync(
+      process.execPath,
+      ['--input-type=module', '-e', "process.stdout.write(import.meta.resolve('@pixid/cli/run'))"],
+      { cwd: fileURLToPath(new URL('..', import.meta.url)), encoding: 'utf8' },
+    );
+    expect(fileURLToPath(resolvedFromEsm)).toBe(CLI);
+
+    // Both conditions carry declarations, which is what attw checks.
+    for (const types of ['../dist/cli.d.ts', '../dist/cli.d.cts']) {
+      expect(existsSync(fileURLToPath(new URL(types, import.meta.url))), types).toBe(true);
+    }
   });
 
   it('documents every flag it accepts in --help', () => {
@@ -175,6 +190,25 @@ describe('@pixid/cli', () => {
   it('rejects invalid numeric options', () => {
     expect(runFail(['--seed', 'x', '--scale', '0'])).toContain('positive integer');
     expect(runFail(['--seed', 'x', '--size', 'abc'])).toContain('positive integer');
+  });
+
+  it('rejects an image wider than 4096 pixels instead of grinding on it', () => {
+    // Without the cap this allocated for minutes: 8 * 100000 is 800000 pixels
+    // per side, 640 billion pixels.
+    expect(runFail(['--seed', 'x', '--scale', '100000'])).toContain(
+      '--size times --scale must be at most 4096 pixels per side, got 800000 (size 8 x scale 100000)',
+    );
+    // One pixel over the line, counted from --size as well as --scale.
+    expect(runFail(['--seed', 'x', '--size', '8', '--scale', '513'])).toContain('got 4104');
+    expect(runFail(['--seed', 'x', '--size', '4097', '--scale', '1'])).toContain('got 4097');
+    expect(readdirSync(cwd)).toHaveLength(0);
+  });
+
+  it('accepts an image exactly at the cap', () => {
+    // SVG, so the assertion costs nothing: the same size as a PNG would be a
+    // 4096x4096 pixel buffer.
+    run(['--seed', 'x', '--size', '8', '--scale', '512', '--out', 'edge.svg']);
+    expect(readFileSync(join(cwd, 'edge.svg'), 'utf8')).toContain('width="4096"');
   });
 
   it('rejects unknown flags', () => {

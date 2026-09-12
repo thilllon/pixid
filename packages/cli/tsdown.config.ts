@@ -21,15 +21,16 @@ export default defineConfig([
   },
   // The executable doubles as the `./run` export subpath: importing it runs
   // the CLI. Node strips the shebang from any module it loads, so the same
-  // file works as a bin and as an import target.
+  // file works as a bin and as an import target. Both formats are built and
+  // typed, so `require('@pixid/cli/run')` gets CommonJS rather than an ESM
+  // file it cannot load.
   {
     entry: ['src/cli.ts'],
-    format: ['esm'],
+    format: ['esm', 'cjs'],
     platform: 'node',
     fixedExtension,
-    // Both default to true in tsdown: `dts` because package.json has `types`,
-    // `clean` for every config. The first config above owns them.
-    dts: false,
+    dts: true,
+    // `clean` defaults to true for every config; the first config above owns it.
     clean: false,
     minify: true,
     target: 'es2022',

@@ -20,7 +20,7 @@ Options:
   -o, --out <file>        output path (default: <seed>.<format>)
   -f, --format <format>   png or svg (default: inferred from --out, else png)
       --size <n>          cells per side (default: 8)
-      --scale <n>         pixels per cell (default: 16)
+      --scale <n>         pixels per cell (default: 16; size x scale <= 4096)
       --color <color>     foreground color, #rgb or #rrggbb
       --bgcolor <color>   background color, #rgb or #rrggbb
       --spotcolor <color> accent color, #rgb or #rrggbb
@@ -41,6 +41,14 @@ Examples:
  * and Ethereum addresses whole.
  */
 const MAX_SEED_IN_FILENAME = 100;
+
+/**
+ * Widest image the CLI will draw, in pixels per side (`size * scale`). The
+ * renderers have no bound of their own, so `--scale 100000` would sit there
+ * allocating for minutes before anything reached disk. 4096 covers every
+ * avatar use and keeps the PNG under about 4 MB.
+ */
+const MAX_EDGE_PIXELS = 4096;
 
 const fail = (message: string): never => {
   process.stderr.write(`pixid: ${message}\n\nRun "pixid --help" for usage.\n`);
@@ -124,6 +132,14 @@ export const runCli = (argv: string[] = process.argv.slice(2)): void => {
     `${seed.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, MAX_SEED_IN_FILENAME)}.${format}`;
   const size = values.size === undefined ? undefined : parsePositiveInt('size', values.size);
   const scale = values.scale === undefined ? 16 : parsePositiveInt('scale', values.scale);
+
+  const edge = (size ?? 8) * scale;
+  if (edge > MAX_EDGE_PIXELS) {
+    return fail(
+      `--size times --scale must be at most ${MAX_EDGE_PIXELS} pixels per side, got ${edge} ` +
+        `(size ${size ?? 8} x scale ${scale})`,
+    );
+  }
 
   const options = {
     seed,
