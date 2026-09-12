@@ -929,9 +929,29 @@ The root `assets/` folder holds the gallery PNGs at the top of this file and
 the `assets/generate.ts` script that produces them (`pnpm assets`). It sits
 outside `packages/`, so no published tarball contains it.
 
-Releases are managed with [changesets](https://github.com/changesets/changesets):
-`pnpm changeset` to record a change, merge the generated "Version Packages"
-PR to publish.
+### Releasing
+
+Merging a pull request publishes nothing. Releasing a change takes a
+[changeset](https://github.com/changesets/changesets) and a second merge:
+
+1. **In your PR, record the change:** run `pnpm changeset`, pick the packages
+   and the bump (patch, minor, major), write the note that becomes the
+   changelog entry, and commit the generated `.changeset/*.md`.
+2. **Merge the PR.** The Release workflow opens or updates a "Version
+   Packages" pull request that applies the bumps, moves your note into each
+   `CHANGELOG.md`, and deletes the changeset files.
+3. **Merge that pull request.** CI runs `pnpm release` and publishes every
+   package whose version is not on npm yet, over OIDC trusted publishing with
+   provenance, then pushes a `@pixid/<name>@<version>` tag.
+
+So a PR without a changeset lands on `main` and ships nothing, which is what
+you want for tests, CI, or repository docs. Only the packages named in a
+changeset get a new version; the rest stay where they are.
+
+A brand-new package is the one exception to step 1: it has no published
+version, so step 3 picks it up with no changeset at all. Its first version has
+to be published by hand, because npm only accepts a trusted publisher for a
+package that already exists. AGENTS.md has that recipe.
 
 ## License
 
