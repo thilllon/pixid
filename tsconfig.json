@@ -1,10 +1,11 @@
 {
   // Covers the TypeScript that belongs to the repository rather than to a
-  // published package: the README asset generator. Each package has its own
-  // tsconfig extending the same base, which also covers its tests.
+  // published package: the README asset generator and the root config files.
+  // Each package has its own tsconfig extending the same base, which also
+  // covers its tests.
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "types": ["node"]
   },
-  "include": ["assets/**/*.ts"]
+  "include": ["assets/**/*.ts", "eslint.config.mts", "vitest.config.ts"]
 }
