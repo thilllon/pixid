@@ -20,6 +20,7 @@ iconRuns(icon).length; // 29 horizontal runs, one shape each when rendered
 
 To draw icons, use [`@pixid/svg`](https://www.npmjs.com/package/@pixid/svg),
 [`@pixid/png`](https://www.npmjs.com/package/@pixid/png),
-[`@pixid/canvas`](https://www.npmjs.com/package/@pixid/canvas), or
-[`@pixid/react`](https://www.npmjs.com/package/@pixid/react). Full API:
+[`@pixid/canvas`](https://www.npmjs.com/package/@pixid/canvas),
+[`@pixid/react`](https://www.npmjs.com/package/@pixid/react), or
+[`@pixid/vue`](https://www.npmjs.com/package/@pixid/vue). Full API:
 [`@pixid/core` in the pixid README](https://github.com/thilllon/pixid#pixidcore).
