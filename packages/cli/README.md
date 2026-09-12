@@ -3,7 +3,7 @@
 <img src="https://raw.githubusercontent.com/thilllon/pixid/main/assets/alice.png" width="64" height="64" alt="identicon for alice" />
 
 The `pixid` command: writes a deterministic blocky identicon for any seed
-string as a PNG or SVG file. Needs Node 18.3+.
+string as a PNG or SVG file. Needs Node.js 18.3+.
 
 ```sh
 npm i -g @pixid/cli   # puts `pixid` on your PATH; or run it with npx, no install

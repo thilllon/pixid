@@ -1,9 +1,5 @@
 # pixid
 
-[![@pixid/cli](https://img.shields.io/npm/v/%40pixid%2Fcli?logo=npm&label=%40pixid%2Fcli)](https://www.npmjs.com/package/@pixid/cli)
-[![@pixid/core](https://img.shields.io/npm/v/%40pixid%2Fcore?logo=npm&label=%40pixid%2Fcore)](https://www.npmjs.com/package/@pixid/core)
-[![@pixid/svg](https://img.shields.io/npm/v/%40pixid%2Fsvg?logo=npm&label=%40pixid%2Fsvg)](https://www.npmjs.com/package/@pixid/svg)
-[![@pixid/png](https://img.shields.io/npm/v/%40pixid%2Fpng?logo=npm&label=%40pixid%2Fpng)](https://www.npmjs.com/package/@pixid/png)
 [![downloads](https://img.shields.io/npm/d18m/%40pixid%2Fcore?logo=npm&label=downloads)](https://www.npmjs.com/package/@pixid/core)
 [![CI](https://img.shields.io/github/actions/workflow/status/thilllon/pixid/ci.yml?branch=main&logo=githubactions&logoColor=white&label=CI)](https://github.com/thilllon/pixid/actions/workflows/ci.yml)
 [![license](https://img.shields.io/npm/l/%40pixid%2Fcore?color=blue)](./LICENSE)
@@ -87,7 +83,7 @@ Seeds are case-sensitive. MetaMask and ethereum-blockies-base64 seed with
 (mixed-case) address gives a completely different icon (see
 [Compatibility](#compatibility)).
 
-In Node, a file or a data URL for an `<img>`:
+In Node.js, a file or a data URL for an `<img>`:
 
 ```ts
 import { writeFileSync } from 'node:fs';
@@ -126,26 +122,26 @@ function in [API](#api), and the options they all share in [Options](#options).
 
 Every package name below links to its page on npm.
 
-| Package                                                        | What it does                                                                   | Runs in              | Tarball |
-| -------------------------------------------------------------- | ------------------------------------------------------------------------------ | -------------------- | ------- |
-| [`@pixid/core`](https://www.npmjs.com/package/@pixid/core)     | Seed → pixel grid + color palette. Pure data, no rendering.                    | everywhere           | 4.0 kB  |
-| [`@pixid/svg`](https://www.npmjs.com/package/@pixid/svg)       | SVG string / `data:image/svg+xml` URL.                                         | everywhere           | 2.5 kB  |
-| [`@pixid/png`](https://www.npmjs.com/package/@pixid/png)       | PNG file bytes (`Uint8Array`) / `data:image/png` URL, with a built-in encoder. | Node, browsers, edge | 3.3 kB  |
-| [`@pixid/canvas`](https://www.npmjs.com/package/@pixid/canvas) | Renders to an HTML `<canvas>`.                                                 | browsers             | 3.9 kB  |
-| [`@pixid/react`](https://www.npmjs.com/package/@pixid/react)   | `<Pixid />` component rendering inline SVG. Works in server components.        | React 17+            | 2.9 kB  |
-| [`@pixid/vue`](https://www.npmjs.com/package/@pixid/vue)       | `<Pixid />` component rendering inline SVG. Works with SSR.                    | Vue 3.2.40+          | 3.3 kB  |
-| [`@pixid/cli`](https://www.npmjs.com/package/@pixid/cli)       | The `pixid` command. Writes PNG or SVG files.                                  | Node 18.3+           | 4.1 kB  |
+| Package                                                        | What it does                                                                   | Runs in                 | Tarball |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------ | ----------------------- | ------- |
+| [`@pixid/core`](https://www.npmjs.com/package/@pixid/core)     | Seed → pixel grid + color palette. Pure data, no rendering.                    | everywhere              | 4.0 kB  |
+| [`@pixid/svg`](https://www.npmjs.com/package/@pixid/svg)       | SVG string / `data:image/svg+xml` URL.                                         | everywhere              | 2.5 kB  |
+| [`@pixid/png`](https://www.npmjs.com/package/@pixid/png)       | PNG file bytes (`Uint8Array`) / `data:image/png` URL, with a built-in encoder. | Node.js, browsers, edge | 3.3 kB  |
+| [`@pixid/canvas`](https://www.npmjs.com/package/@pixid/canvas) | Renders to an HTML `<canvas>`.                                                 | browsers                | 3.9 kB  |
+| [`@pixid/react`](https://www.npmjs.com/package/@pixid/react)   | `<Pixid />` component rendering inline SVG. Works in server components.        | React 17+               | 2.9 kB  |
+| [`@pixid/vue`](https://www.npmjs.com/package/@pixid/vue)       | `<Pixid />` component rendering inline SVG. Works with SSR.                    | Vue 3.2.40+             | 3.3 kB  |
+| [`@pixid/cli`](https://www.npmjs.com/package/@pixid/cli)       | The `pixid` command. Writes PNG or SVG files.                                  | Node.js 18.3+           | 4.7 kB  |
 
 Tarball sizes are the gzipped published artifacts, measured with `pnpm pack`.
 
 Every package is ESM + CJS, fully typed, and side-effect free. Nothing here
 depends on `Buffer`, `fs`, `canvas`, or any npm package outside the `@pixid/*`
-graph, so the same code runs in Node, browsers, and edge runtimes such as
+graph, so the same code runs in Node.js, browsers, and edge runtimes such as
 Cloudflare Workers. Three documented exceptions: `@pixid/react` has `react >=17`
 as a peer dependency, `@pixid/vue` has `vue >=3.2.40`, and `@pixid/cli` is a
-Node program that imports `node:fs`, `node:path`, `node:crypto`, and
-`node:util` (its `sideEffects` is `["./dist/cli.js"]` rather than `false`,
-because that file is meant to run on import).
+Node.js program that imports `node:fs`, `node:path`, `node:crypto`, and
+`node:util` (its `sideEffects` lists `./dist/cli.js` and `./dist/cli.cjs`
+rather than being `false`, because those two files run the CLI when imported).
 
 ## Size
 
@@ -251,7 +247,7 @@ Anything else throws a `TypeError` from `parseColor`. Named CSS colors,
 
 ## Usage
 
-### Node
+### Node.js
 
 ```ts
 import { writeFileSync } from 'node:fs';
@@ -308,7 +304,7 @@ document.querySelector('img')!.src = toCanvasDataURL({ seed: 'alice', scale: 8 }
 ```
 
 These need a DOM. `createCanvas` and `toCanvasDataURL` call
-`document.createElement('canvas')`; in Node, use `@pixid/png` instead.
+`document.createElement('canvas')`; in Node.js, use `@pixid/png` instead.
 
 ### React
 
@@ -345,7 +341,7 @@ client renders match and hydration is clean. Omitting `seed` makes the
 component non-deterministic and will cause a hydration mismatch.
 
 One build covers React 17, 18, and 19: refs reach the `<svg>` element on all
-three, and the package loads under Node ESM even with React 17. Details are
+three, and the package loads under Node.js ESM even with React 17. Details are
 in [`@pixid/react`](#pixidreact).
 
 ### Vue
@@ -390,7 +386,7 @@ component non-deterministic and will cause a hydration mismatch. Details are in
 
 `@pixid/core`, `@pixid/svg`, and `@pixid/png` use only `Math`, typed arrays,
 and `DataView`. No `Buffer`, no `fs`, no `zlib`, no dynamic `require`, no
-Node built-ins at all:
+Node.js built-ins at all:
 
 ```ts
 import { toPng } from '@pixid/png';
@@ -434,7 +430,7 @@ always `@pixid/cli`: there is no unscoped `pixid` package on npm, so
 | `-s`, `--seed <seed>`  | string            | random UUID                       | The seed, as a flag.                                                |
 | `-o`, `--out <file>`   | path              | `<sanitized-seed>.<format>`       | Output path, resolved against the current directory.                |
 | `-f`, `--format <fmt>` | `png`\|`svg`      | inferred from `--out`, else `png` | Output format.                                                      |
-| `--size <n>`           | integer ≥ 1       | `8`                               | Cells per side.                                                     |
+| `--size <n>`           | integer ≥ 1       | `8`                               | Cells per side. `size × scale` must be at most 4096.                |
 | `--scale <n>`          | integer ≥ 1       | `16`                              | Pixels per cell. Note this differs from the library default of `4`. |
 | `--color <color>`      | `#rgb`\|`#rrggbb` | from seed                         | Foreground color.                                                   |
 | `--bgcolor <color>`    | `#rgb`\|`#rrggbb` | from seed                         | Background color.                                                   |
@@ -471,10 +467,15 @@ the SVG string length for `--format svg`. Missing parent directories are
 created, so `--out avatars/alice.svg` works without an `avatars/` directory.
 Existing files are overwritten.
 
+**Size limit.** The rendered image is capped at 4096 pixels per side, so
+`--size × --scale` may not exceed 4096 — `--scale 100000` exits 1 rather than
+spending minutes allocating a 640-billion-pixel image. The library functions
+take any size you ask for; only the command line draws the line.
+
 **Errors.** Every invalid input writes `pixid: <message>` followed by
 `Run "pixid --help" for usage.` to stderr and exits with code 1. That covers
-unknown flags, unknown formats, non-positive-integer `--size`/`--scale`, and
-malformed colors. Nothing is written to disk when an input error occurs. A
+unknown flags, unknown formats, non-positive-integer `--size`/`--scale`, an
+image over the size limit, and malformed colors. Nothing is written to disk when an input error occurs. A
 file that cannot be written — `--out` names an existing directory, a
 permission is missing, a name is too long — is reported the same way with the
 system's message, such as
@@ -659,7 +660,7 @@ The encoder writes indexed-color PNGs: a three-entry `PLTE` palette and two
 bits per pixel, wrapped in zlib _stored_ (uncompressed) deflate blocks with a
 real Adler-32 and CRC-32. That is spec-valid everywhere, needs no compression
 library, is synchronous, and produces identical bytes on every runtime — the
-same seed gives the same file in Node, a browser, and a Worker.
+same seed gives the same file in Node.js, a browser, and a Worker.
 
 ### `@pixid/canvas`
 
@@ -738,7 +739,7 @@ only React's attribute serialization differs). There is no `"use client"`
 directive in the package and no `react-dom` dependency — just `react` as a
 peer dependency at `>=17`. The built files import only `react` and
 `@pixid/core`: the elements are made with `createElement` rather than JSX,
-because JSX compiles to imports of `react/jsx-runtime`, a subpath that Node's
+because JSX compiles to imports of `react/jsx-runtime`, a subpath that Node.js's
 ESM resolver cannot find in React 17, which has no exports map.
 
 ```tsx
@@ -829,6 +830,10 @@ surface:
 so it is an entry point, not a library function — use `@pixid/png` and
 `@pixid/svg` directly if you want values back.
 
+`@pixid/cli/run` ships in both module formats with declarations, so
+`import '@pixid/cli/run'` and `require('@pixid/cli/run')` both work and both
+type-check.
+
 ```ts
 import { runCli, version } from '@pixid/cli';
 
@@ -883,7 +888,7 @@ this repository. Its entire public API was `createBuffer` and `createDataURL`:
 | `commander` + `pngjs` deps                | no dependencies outside `@pixid/*`       |
 
 Option names are lowercased, colors accept hex strings as well as tuples, and
-`toPng` returns a `Uint8Array` instead of a Node `Buffer` (`writeFileSync`
+`toPng` returns a `Uint8Array` instead of a Node.js `Buffer` (`writeFileSync`
 takes both). `blockies-typed` also deviated from the original algorithm (one
 random color shared by foreground and spot, a white background, and PRNG state
 that leaked from one call into the next), so icons for the same seed differ
@@ -891,7 +896,7 @@ between it and pixid. pixid follows the original.
 
 ## Development
 
-Node.js and pnpm versions are pinned in `mise.toml` (Node 24 LTS, pnpm 11).
+Node.js and pnpm versions are pinned in `mise.toml` (Node.js 24 LTS, pnpm 11).
 With [mise](https://mise.jdx.dev) installed, `mise install` sets both up.
 
 ```
@@ -911,7 +916,7 @@ pnpm assets       # regenerate the README gallery in assets/
 Every package is bundled by [tsdown](https://tsdown.dev) (Rolldown) from its
 own `tsdown.config.ts`, targeting ES2022 with minification and bundled type
 declarations. `@pixid/canvas` adds a second, IIFE config that inlines the
-`@pixid/*` graph into `dist/index.global.js`; `@pixid/cli` adds a Node-platform
+`@pixid/*` graph into `dist/index.global.js`; `@pixid/cli` adds a Node.js-platform
 config for the shebang bin entry.
 
 Layout: one folder per package under `packages/`, named after what it contains.

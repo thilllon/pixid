@@ -4,7 +4,7 @@
 
 Encodes deterministic blocky identicons as PNG bytes or `data:image/png` URLs
 with a built-in encoder: no `Buffer`, no zlib, nothing outside `@pixid/core`,
-so it runs in Node, browsers, and edge runtimes alike.
+so it runs in Node.js, browsers, and edge runtimes alike.
 
 ```sh
 npm i @pixid/png
