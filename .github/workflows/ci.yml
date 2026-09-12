@@ -41,3 +41,30 @@ jobs:
       # only on the Active LTS leg (node 24) to keep total matrix time down.
       - run: pnpm e2e
         if: matrix.node == 24
+
+  # Catches the easy mistake: changing a published package and forgetting the
+  # changeset, which would leave the change on `main` with no release. Only
+  # pull requests run it, since `main` is where the merged result lands.
+  changeset:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # `changeset status --since` diffs against the base branch, so it
+          # needs the history, not just the pull request's own commits.
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # A change that must not be released — tests, CI, repository docs — gets
+      # an empty changeset (`pnpm changeset add --empty`) to say so on purpose.
+      - name: Require a changeset for package changes
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git fetch --no-tags origin "$BASE_REF"
+          pnpm changeset status --since="origin/$BASE_REF"

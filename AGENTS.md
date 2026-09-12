@@ -165,7 +165,10 @@ or `types` mapping stops being caught, and vitest and any bundler need the same 
   against their dependencies' `dist/`), `pnpm format` (`prettier --write`), and
   `pnpm format:check` (`prettier --check`, as CI runs it).
 - Versioning: changesets. Add a changeset for any user-visible change
-  (`mise exec -- pnpm changeset`).
+  (`mise exec -- pnpm changeset`). CI enforces it: the `changeset` job runs
+  `changeset status --since=origin/<base>` on every pull request and fails when a
+  package changed without one. When the change must not be released — tests, CI,
+  repository docs — say so on purpose with `mise exec -- pnpm changeset add --empty`.
 
 ### Dependency updates
 
@@ -207,7 +210,7 @@ concrete reason — everything left is load-bearing:
   from the root manifest and writes the lockfile beside it; CI runs
   `pnpm install --frozen-lockfile` from here.
 - `.github/`, `.vscode/`, `.cursor/`, `.changeset/` — each tool hard-codes its path.
-- `eslint.config.mts`, `.prettierrc`, `.prettierignore`, `vitest.config.ts` — resolved
+- `eslint.config.mts`, `.prettierrc.json`, `.prettierignore`, `vitest.config.ts` — resolved
   from the working directory, and `vitest.config.ts` owns both projects, so it cannot
   belong to a package. Prettier only reads `.prettierignore` from the cwd. ESLint loads
   the TypeScript config through `jiti`, which is why that devDependency exists.
