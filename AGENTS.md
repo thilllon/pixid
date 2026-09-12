@@ -79,18 +79,19 @@ The Release workflow publishes over OIDC trusted publishing only; the repository
 no `NPM_TOKEN` secret. Every package it publishes therefore needs a trusted publisher
 on npmjs.com (GitHub Actions, repository `thilllon/pixid`, workflow `release.yml`,
 publishing allowed), and a publish fails with an auth error for any package without
-one. The six packages released in 0.2.0 have theirs. npm can only configure a trusted
-publisher for a package that already exists, so a brand-new package has to be published
-by hand once, after which
+one. All seven packages have theirs. npm can only configure a trusted publisher for a
+package that already exists, so a brand-new package has to be published by hand once,
+after which
 `npm trust github @pixid/<name> --file release.yml --repo thilllon/pixid --allow-publish`
 hands it to CI. `@pixid/vue` went through that for its 0.2.0: `pnpm --filter <pkg> pack`
 writes the tarball with `workspace:^` already rewritten, and `npm publish <tarball>` then
-uploads it (npm handles browser/passkey 2FA, pnpm only prompts for a code). Its trusted
-publisher has to exist before the first version CI publishes for it. Note the timing for
-any new package: `changeset publish` ships any package whose version is missing from the
-registry, so it publishes on the very next push to `main`, with no "Version Packages" PR
-in between to warn you. The Release workflow is expected to pass on every push to `main`;
-any Release failure is a real problem.
+uploads it (npm handles browser/passkey 2FA, pnpm only prompts for a code); its trusted
+publisher was registered right after, so CI publishes every version from 0.2.1 on. Note
+the timing for any new package: `changeset publish` ships any package whose version is
+missing from the registry, so it publishes on the very next push to `main`, with no
+"Version Packages" PR in between to warn you, and a package without a trusted publisher
+fails that run. The Release workflow is expected to pass on every push to `main`; any
+Release failure is a real problem.
 
 The Release workflow runs `changesets/action` v2. While changesets are pending it
 opens or updates the "Version Packages" PR. Once that PR is merged it runs
