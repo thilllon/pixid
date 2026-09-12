@@ -1,5 +1,12 @@
 # @pixid/core
 
+## 0.2.1
+
+### Patch Changes
+
+- 88ba607: The npm README now lists `@pixid/vue` among the renderers that draw the icons
+  `@pixid/core` computes.
+
 ## 0.2.0
 
 ### Minor Changes
