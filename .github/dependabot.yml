@@ -25,6 +25,12 @@ updates:
     commit-message:
       prefix: 'chore'
       include: 'scope'
+    # These pull requests merge themselves once CI is green (see
+    # workflows/dependabot-auto-merge.yml), so no human looks at a bump before
+    # it lands. A week's cooldown after each npm release gives the ecosystem time
+    # to catch a compromised or yanked version before it is even proposed here.
+    cooldown:
+      default-days: 7
     # Order matters: a dependency joins the first group it matches. Both groups
     # are needed -- dependencies matching no group are opened one pull request
     # each, which is exactly what these groups exist to prevent.
@@ -68,6 +74,10 @@ updates:
     # prefix rather than left to `include: scope`.
     commit-message:
       prefix: 'ci(deps)'
+    # Actions auto-merge too. Dependabot's own default is three days; it is
+    # written out so the choice is visible next to npm's seven.
+    cooldown:
+      default-days: 3
     groups:
       actions-minor-and-patch:
         applies-to: version-updates

@@ -955,7 +955,9 @@ packages named in a changeset get a new version; the rest stay where they are.
 Forgetting one is the easy mistake, so CI's `changeset` job fails a pull
 request that touches a package without adding a changeset. When the change
 genuinely must not be released — tests, CI, repository docs — record that on
-purpose with `pnpm changeset add --empty`.
+purpose with `pnpm changeset add --empty`. Dependabot's pull requests are
+exempt: they only move devDependencies, which no tarball contains, and they
+merge on their own once CI is green.
 
 A brand-new package is the one exception to step 1: it has no published
 version, so step 3 picks it up with no changeset at all. Its first version has

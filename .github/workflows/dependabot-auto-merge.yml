@@ -1,0 +1,66 @@
+name: Dependabot auto-merge
+
+# Flags every Dependabot pull request for auto-merge as soon as it opens, and
+# again on every push to it, since Dependabot's rebases re-trigger this.
+# GitHub then squash-merges it the moment the checks that main's branch
+# protection requires have passed: the three CI `test` legs and `changeset`
+# (skipped for Dependabot, which counts as passed). A red check leaves the pull
+# request open for a human.
+#
+# The branch protection is load-bearing. `gh pr merge --auto` only enables
+# auto-merge when something blocks the merge; on an unprotected branch it
+# merges at once, before CI has run. The guard step refuses to go on when main
+# requires no status checks, so losing the rule cannot turn this into
+# merge-on-open. "Dependency updates" in AGENTS.md has the rule and the recipe
+# to recreate it.
+on: pull_request
+
+# Dependabot-triggered workflows get a read-only GITHUB_TOKEN unless the
+# workflow asks for more, and they see Dependabot secrets only, never Actions
+# secrets. `pull-requests` enables auto-merge; `contents` is for the merge.
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    # The user.login check keeps this to Dependabot's own pull requests, and
+    # the repository check keeps forks from flagging their copies.
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'thilllon/pixid'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require status checks on the base branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          required=$(gh api "repos/$GITHUB_REPOSITORY/branches/$BASE_REF" \
+            --jq '[.protection.required_status_checks.contexts // [] | .[]] | length')
+          if [ "$required" -eq 0 ]; then
+            echo "::error::$BASE_REF requires no status checks, so auto-merge would merge before CI runs. Restore the branch protection (AGENTS.md, Dependency updates)."
+            exit 1
+          fi
+          echo "$BASE_REF requires $required status checks"
+      # Exposes what the pull request bumps (update-type, dependency-group,
+      # package-ecosystem, dependency-names, ...) as step outputs, so the
+      # policy below can be narrowed without any other change.
+      - id: metadata
+        uses: dependabot/fetch-metadata@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      # Policy: every update type merges once CI is green. CI builds, lints,
+      # type-checks, runs the unit suite on Node 22/24/26 and the verdaccio e2e
+      # suite on 24, which is the same bar a hand-merged bump clears. To hold
+      # majors for a human, give this step
+      #   if: steps.metadata.outputs.update-type != 'version-update:semver-major'
+      #
+      # Token: the DEPENDABOT_AUTOMERGE_TOKEN Dependabot secret when it exists,
+      # GITHUB_TOKEN otherwise. A merge that GitHub performs on behalf of
+      # GITHUB_TOKEN creates no workflow runs, so CI and Release skip that
+      # commit on main; a fine-grained PAT (Contents and Pull requests, read
+      # and write) makes the merge an ordinary user event and both run.
+      - name: Enable auto-merge
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.DEPENDABOT_AUTOMERGE_TOKEN || secrets.GITHUB_TOKEN }}
+        run: gh pr merge --auto --squash "$PR_URL"
