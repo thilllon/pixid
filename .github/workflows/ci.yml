@@ -45,8 +45,21 @@ jobs:
   # Catches the easy mistake: changing a published package and forgetting the
   # changeset, which would leave the change on `main` with no release. Only
   # pull requests run it, since `main` is where the merged result lands.
+  #
+  # Two bots are exempt. Dependabot only moves dependency ranges in a
+  # package.json and the lockfile, and nothing it can touch ships: every
+  # published package's runtime dependencies are `workspace:^`, so its bumps
+  # land in devDependencies, which are not part of the tarball. (Build-tooling
+  # bumps can still change `dist`; see "Dependency updates" in AGENTS.md.)
+  # The "Version Packages" pull request from changesets/action consumes the
+  # changesets by design, so it can never carry one. A skipped job reports
+  # `skipped`, which satisfies the required check in main's branch protection,
+  # so neither bot's pull request is held up by it.
   changeset:
-    if: github.event_name == 'pull_request'
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.user.login != 'dependabot[bot]' &&
+      github.event.pull_request.user.login != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

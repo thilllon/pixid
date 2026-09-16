@@ -60,7 +60,9 @@ Use it there for reads only — `gh run list`, `gh run view --log-failed`,
 
 Elsewhere `gh` may be authenticated with write access, but merges follow the rules
 above in every environment: never on your own initiative, and when the owner
-explicitly asks for a merge, do it locally:
+explicitly asks for a merge, do it locally. `main` is protected by required status
+checks (see "Dependency updates"), but the rule does not apply to admins, so the
+owner's push goes through as before:
 
 ```sh
 git checkout main && git merge --no-ff <branch> && git push origin main
@@ -185,13 +187,70 @@ prevent.
 - Internal `@pixid/*` deps are never proposed: Dependabot drops any requirement
   starting with `workspace:`, and any dependency whose name matches a workspace
   manifest. Internal versions stay the job of changesets.
-- A Dependabot pull request needs a changeset only if it changes what gets published.
-  Every published package has zero external runtime dependencies (all `dependencies`
-  entries are `workspace:^`), but build tooling shapes `dist`: a bump of `tsdown` (and
-  the Rolldown it bundles) or of `typescript` (which emits the declarations) can
-  change the tarballs. For those, compare `pnpm pack` output before and after, and add
-  a patch changeset for every package whose `dist` changed. The tsup-to-tsdown switch
-  changed every tarball.
+- Dependabot pull requests are exempt from CI's `changeset` job, and so is the
+  `github-actions[bot]` "Version Packages" pull request, which consumes changesets by
+  design. Nothing Dependabot can touch ships: every published package's runtime
+  dependencies are `workspace:^`, so its bumps land in devDependencies, which are not
+  part of any tarball. Build tooling is the one grey area: a bump of `tsdown` (and the
+  Rolldown it bundles) or of `typescript` (which emits the declarations) can change
+  `dist`, and it merges without a changeset. That output ships with each package's next
+  release anyway; if a tooling bump should ship on its own, compare `pnpm pack` output
+  before and after and add a patch changeset for every package whose `dist` changed.
+  The tsup-to-tsdown switch changed every tarball.
+- Dependabot pull requests merge themselves. `.github/workflows/dependabot-auto-merge.yml`
+  runs on every Dependabot pull request and enables GitHub auto-merge (squash); GitHub
+  merges once the checks that `main`'s branch protection requires are green:
+  `test (22)`, `test (24)`, `test (26)` and `changeset` (a skipped job counts as
+  passed). A red check leaves the pull request open for a human. Every update type is
+  merged; to hold majors for review, add
+  `steps.metadata.outputs.update-type != 'version-update:semver-major'` to the merge
+  step's `if`, as the workflow comment shows.
+- `main` carries a classic branch protection rule for that reason: required status
+  checks only, `strict` off, admins not enforced. It exists so that auto-merge has
+  something to wait for; without it `gh pr merge --auto` merges a pull request at once,
+  before CI has finished. Admins are exempt, so the local merge recipe above is
+  unaffected. Do not delete the rule. To recreate it:
+
+  ```sh
+  gh api --method PUT repos/thilllon/pixid/branches/main/protection --input - <<'EOF'
+  {
+    "required_status_checks": {
+      "strict": false,
+      "checks": [
+        { "context": "test (22)", "app_id": 15368 },
+        { "context": "test (24)", "app_id": 15368 },
+        { "context": "test (26)", "app_id": 15368 },
+        { "context": "changeset", "app_id": 15368 }
+      ]
+    },
+    "enforce_admins": false,
+    "required_pull_request_reviews": null,
+    "restrictions": null
+  }
+  EOF
+  ```
+
+  `15368` is the GitHub Actions app id; a check name only counts when that app reports
+  it. Adding a CI job that must gate the merge means adding it here too.
+
+- The auto-merge step signs in with the `DEPENDABOT_AUTOMERGE_TOKEN` Dependabot secret
+  when it exists and with `GITHUB_TOKEN` otherwise. The difference matters: a merge that
+  GitHub performs on behalf of `GITHUB_TOKEN` creates no workflow runs, so neither CI
+  nor Release runs on `main` for that commit. Nothing is published from such a commit
+  anyway, but the "Version Packages" pull request is not refreshed until the next
+  push to `main`. A fine-grained personal access token (repository `thilllon/pixid`;
+  Contents: read and write; Pull requests: read and write) stored as a Dependabot
+  secret makes the merge an ordinary user event and both workflows run. It has to be a
+  Dependabot secret: workflows that Dependabot triggers see only those, never the
+  Actions secrets.
+
+  ```sh
+  gh secret set DEPENDABOT_AUTOMERGE_TOKEN --app dependabot --repo thilllon/pixid
+  ```
+
+- Dependabot waits seven days after an npm release before proposing it (`cooldown`),
+  so a compromised or yanked version is usually caught by the ecosystem before it can
+  auto-merge here. GitHub Actions bumps use a three-day cooldown.
 - TypeScript majors are ignored: typescript-eslint's peer range stops below 6.1, and
   TypeScript 7 breaks its parser. Upgrade TypeScript by hand once typescript-eslint
   supports the new major, then drop that rule from `dependabot.yml`.
