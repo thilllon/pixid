@@ -12,6 +12,16 @@ workflow changes, test infrastructure.
 2. Open a PR targeting `main` with a clear title and a summary of the changes.
 3. Report the PR URL. Do not merge on your own initiative.
 
+### Code review
+
+CodeRabbit automatically reviews every pull request except Dependabot and "Version
+Packages" (`.coderabbit.yaml` tunes it). It reads this file as its guidelines, so
+repository rules belong here, not in that config. Treat its comments like a reviewer's:
+fix what is right, answer what is not, and do not ask for a merge over an open finding
+without saying why. `@coderabbitai review` in a comment re-runs it after a push.
+`@coderabbitai full review` can review the entire pull request, including pull requests
+from those excluded authors.
+
 ### Exceptions: direct pushes to `main` allowed without a PR
 
 - Documentation-only changes: `README.md`, `AGENTS.md`, hand-written notes and
