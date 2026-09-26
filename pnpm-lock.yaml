@@ -14,18 +14,12 @@ importers:
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.10.0(jiti@2.7.0))
-      '@pixid/core':
-        specifier: workspace:^
-        version: link:packages/core
       '@pixid/png':
         specifier: workspace:^
         version: link:packages/png
       '@types/node':
         specifier: ^26.5.0
         version: 26.5.1
-      '@types/pngjs':
-        specifier: ^6.0.5
-        version: 6.0.5
       esbuild:
         specifier: ^0.28.2
         version: 0.28.2
@@ -35,9 +29,6 @@ importers:
       jiti:
         specifier: ^2.7.0
         version: 2.7.0
-      pngjs:
-        specifier: ^7.0.0
-        version: 7.0.0
       prettier:
         specifier: ^3.9.6
         version: 3.9.6
