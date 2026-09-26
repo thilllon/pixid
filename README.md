@@ -134,6 +134,28 @@ Every package name below links to its page on npm.
 
 Tarball sizes are the gzipped published artifacts, measured with `pnpm pack`.
 
+How the packages depend on each other at runtime. An arrow points from a package
+to one it installs; dashed arrows are peer dependencies that you install yourself.
+
+```mermaid
+flowchart TD
+  cli["@pixid/cli"] --> svg["@pixid/svg"]
+  cli --> png["@pixid/png"]
+  svg --> core["@pixid/core"]
+  png --> core
+  canvas["@pixid/canvas"] --> core
+  react["@pixid/react"] --> core
+  vue["@pixid/vue"] --> core
+  react -. peer .-> reactPeer(["react >=17"])
+  vue -. peer .-> vuePeer(["vue >=3.2.40"])
+  classDef external stroke-dasharray: 4 4
+  class reactPeer,vuePeer external
+```
+
+`@pixid/react` and `@pixid/vue` build their inline SVG straight from
+`@pixid/core`'s data. `@pixid/svg` is only a devDependency of theirs: their tests
+check that they draw the same rects as `toSvg`.
+
 Every package is ESM + CJS, fully typed, and side-effect free. Nothing here
 depends on `Buffer`, `fs`, `canvas`, or any npm package outside the `@pixid/*`
 graph, so the same code runs in Node.js, browsers, and edge runtimes such as
