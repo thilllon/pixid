@@ -1,5 +1,13 @@
 # @pixid/cli
 
+## 0.2.2
+
+### Patch Changes
+
+- ee2baa7: Depend on `@pixid/core` alone, which now renders SVG and PNG itself. A cold `npx @pixid/cli` downloads two packages instead of four. Output is unchanged.
+- Updated dependencies [ee2baa7]
+  - @pixid/core@0.2.2
+
 ## 0.2.1
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "@pixid/core",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Blocky identicon generator. Turns a seed string into a deterministic pixel grid and color palette, and renders it as SVG or PNG. Zero dependencies.",
   "keywords": [
     "identicon",
