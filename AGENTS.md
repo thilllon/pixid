@@ -288,10 +288,9 @@ concrete reason — everything left is load-bearing:
   and `vitest.config.ts`, so `pnpm typecheck` checks the config files too.
   `tsconfig.base.json` is what all seven package tsconfigs extend, and those cover each
   package's tests.
-- `mise.toml`, `LICENSE`, `README.md`, `AGENTS.md`, `CLAUDE.md`, `.gitignore` —
-  convention or detection depends on the root location (`mise` and licence/README
-  detection would both work from a subdirectory, but hiding them costs more than it
-  saves). `CLAUDE.md` only imports `AGENTS.md`, so the rules live in one file.
+- `mise.toml`, `LICENSE`, `README.md`, `AGENTS.md`, `.gitignore` — convention or
+  detection depends on the root location (`mise` and licence/README detection would
+  both work from a subdirectory, but hiding them costs more than it saves).
 
 Root devDependencies are for repository-wide tooling only, such as `vitest` and the
 `esbuild` that the per-package bundle tests share. Anything a single package needs
