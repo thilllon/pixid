@@ -932,19 +932,22 @@ published under it later is not from this project: remove it from your
 source is tagged [`1.0.1`](https://github.com/thilllon/pixid/tree/1.0.1) in
 this repository. Its entire public API was `createBuffer` and `createDataURL`:
 
-| `blockies-typed` 1.0.1                    | pixid                                           |
-| ----------------------------------------- | ----------------------------------------------- |
-| `createBuffer(opts)` → `Buffer`           | `toPng(createIcon(opts), scale)` → `Uint8Array` |
-| `createDataURL(opts)`                     | `toPngDataURL(createIcon(opts), scale)`         |
-| `fgColor: [r, g, b]`                      | `color: [r, g, b]` or `color: '#rrggbb'`        |
-| `bgColor` / `spotColor`                   | `bgcolor` / `spotcolor`                         |
-| defaults `size: 7`, `scale: 24` (168×168) | defaults `size: 8`, `scale: 4` (32×32)          |
-| `npx blockies-typed --seed x`             | `npx @pixid/cli --seed x`                       |
-| `-o`, `--output <file>`                   | `-o`, `--out <file>`                            |
-| `commander` + `pngjs` deps                | no dependencies outside `@pixid/*`              |
+| `blockies-typed` 1.0.1                    | pixid                                              |
+| ----------------------------------------- | -------------------------------------------------- |
+| `createBuffer(opts)` → `Buffer`           | `toPng(createIcon(options), scale)` → `Uint8Array` |
+| `createDataURL(opts)`                     | `toPngDataURL(createIcon(options), scale)`         |
+| `fgColor: [r, g, b]`                      | `color: [r, g, b]` or `color: '#rrggbb'`           |
+| `bgColor` / `spotColor`                   | `bgcolor` / `spotcolor`                            |
+| defaults `size: 7`, `scale: 24` (168×168) | defaults `size: 8`, `scale: 4` (32×32)             |
+| `npx blockies-typed --seed x`             | `npx @pixid/cli --seed x`                          |
+| `-o`, `--output <file>`                   | `-o`, `--out <file>`                               |
+| `commander` + `pngjs` deps                | no dependencies outside `@pixid/*`                 |
 
-Option names are lowercased, colors accept hex strings as well as tuples,
-`scale` is the second argument of `toPng` rather than an option, and `toPng`
+Option names are lowercased, so rename `fgColor`, `bgColor`, and `spotColor`
+before passing the old options to `createIcon`: it ignores the old names, and
+an unrenamed object keeps the seed's own colors without an error. Colors
+accept hex strings as well as tuples, `scale` is the second argument of
+`toPng` rather than an option, and `toPng`
 returns a `Uint8Array` instead of a Node.js `Buffer` (`writeFileSync` takes
 both). `blockies-typed` also deviated from the original algorithm (one
 random color shared by foreground and spot, a white background, and PRNG state
