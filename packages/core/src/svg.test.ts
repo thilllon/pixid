@@ -113,6 +113,9 @@ describe('toSvg input', () => {
     expect(() => toSvg({ seed: 'alice' } as never)).toThrow(
       'toSvg: expected icon data from createIcon()',
     );
+    expect(() => toSvgDataURL({ seed: 'alice' } as never)).toThrow(
+      'toSvgDataURL: expected icon data from createIcon()',
+    );
   });
 
   it('renders icon data with a replaced palette entry', () => {

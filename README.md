@@ -228,10 +228,10 @@ out solid black.
 
 `renderToCanvas`, `createCanvas`, and `toCanvasDataURL` from `@pixid/canvas`,
 and the `@pixid/react` and `@pixid/vue` components, accept all of these options
-in one object, and every field is
-optional. `createIcon` takes the same object without `scale`; the functions
-that render the `IconData` it returns (`toSvg`, `toSvgDataURL`, `toPng`,
-`toPngDataURL`, `renderIconToCanvas`) take `scale` as an argument of their own:
+in one object, and every field is optional. `createIcon` takes the same object
+without `scale`; the functions that render the `IconData` it returns (`toSvg`,
+`toSvgDataURL`, `toPng`, `toPngDataURL`, `renderIconToCanvas`) take `scale` as
+an argument of their own:
 
 | Option      | Type         | Default           | Description                                                    |
 | ----------- | ------------ | ----------------- | -------------------------------------------------------------- |

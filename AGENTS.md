@@ -311,6 +311,7 @@ Root devDependencies are for repository-wide tooling only, such as `vitest` and 
 `esbuild` that the per-package bundle tests share. Anything a single package needs
 belongs in that package's manifest, the way `@pixid/cli` owns `verdaccio` and
 `@pixid/core` owns `pngjs` (its PNG tests decode with it). The one workspace package the
-root lists is `@pixid/core`, which `assets/generate.ts` imports. Nothing else at the root needs a `@pixid/*` link:
-each bundle test imports its own package by name, which resolves through the package's
-own `exports` (self-reference), not through the root `node_modules`.
+root lists is `@pixid/core`, which `assets/generate.ts` imports. Nothing else at the root
+needs a `@pixid/*` link: each bundle test imports its own package by name, which resolves
+through the package's own `exports` (self-reference), not through the root
+`node_modules`.

@@ -104,6 +104,9 @@ describe('toPng input', () => {
     expect(() => toPng({ seed: 'alice' } as never)).toThrow(
       'toPng: expected icon data from createIcon()',
     );
+    expect(() => toPngDataURL({ seed: 'alice' } as never)).toThrow(
+      'toPngDataURL: expected icon data from createIcon()',
+    );
   });
 
   it('writes valid CRCs on the first call in a fresh module, when the table is built', async () => {

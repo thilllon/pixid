@@ -170,5 +170,7 @@ const toBase64 = (bytes: Uint8Array): string => {
 };
 
 /** Encodes icon data from `createIcon()` as a `data:image/png;base64` URL. */
-export const toPngDataURL = (icon: IconData, scale = 4): string =>
-  `data:image/png;base64,${toBase64(toPng(icon, scale))}`;
+export const toPngDataURL = (icon: IconData, scale = 4): string => {
+  assertIconData(icon, 'toPngDataURL');
+  return `data:image/png;base64,${toBase64(toPng(icon, scale))}`;
+};

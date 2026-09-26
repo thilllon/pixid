@@ -35,5 +35,7 @@ export const toSvg = (icon: IconData, scale = 4): string => {
 };
 
 /** Renders icon data from `createIcon()` as a `data:image/svg+xml` URL. */
-export const toSvgDataURL = (icon: IconData, scale = 4): string =>
-  `data:image/svg+xml;charset=utf-8,${encodeURIComponent(toSvg(icon, scale))}`;
+export const toSvgDataURL = (icon: IconData, scale = 4): string => {
+  assertIconData(icon, 'toSvgDataURL');
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(toSvg(icon, scale))}`;
+};
