@@ -136,10 +136,7 @@ to one it installs; dashed arrows are peer dependencies that you install yoursel
 
 ```mermaid
 flowchart TD
-  cli["@pixid/cli"] --> svg["@pixid/svg"]
-  cli --> png["@pixid/png"]
-  svg --> core["@pixid/core"]
-  png --> core
+  cli["@pixid/cli"] --> core["@pixid/core"]
   canvas["@pixid/canvas"] --> core
   react["@pixid/react"] --> core
   vue["@pixid/vue"] --> core
@@ -150,8 +147,8 @@ flowchart TD
 ```
 
 `@pixid/react` and `@pixid/vue` build their inline SVG straight from
-`@pixid/core`'s data. `@pixid/svg` is only a devDependency of theirs: their tests
-check that they draw the same rects as `toSvg`.
+`@pixid/core`'s data rather than calling its `toSvg`; their tests check that
+they draw the same rects as `toSvg`.
 
 Every package is ESM + CJS, fully typed, and side-effect free. Nothing here
 depends on `Buffer`, `fs`, `canvas`, or any npm package outside the `@pixid/*`
