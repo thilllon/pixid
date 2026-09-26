@@ -1,5 +1,5 @@
 {
-  "name": "pixid-monorepo",
+  "name": "pixid-packages",
   "private": true,
   "type": "module",
   "license": "MIT",
