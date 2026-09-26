@@ -1,23 +1,30 @@
-import { createIcon, type IconData, type IconOptions } from '@pixid/core';
+import { assertIconData } from './guard.js';
+import type { IconData } from './icon.js';
 
-export interface PngOptions extends IconOptions {
-  /** Pixels per cell. Defaults to 4. */
-  scale?: number;
-}
+let crcTable: Uint32Array | undefined;
 
-const CRC_TABLE = new Uint32Array(256);
-for (let n = 0; n < 256; n++) {
-  let c = n;
-  for (let k = 0; k < 8; k++) {
-    c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+// Built on first use, not at module load. A loop at the top of the module is
+// code a bundler has to keep even with `sideEffects: false`, and this module
+// shares a bundled file with the rest of @pixid/core, so every createIcon- or
+// toSvg-only bundle would carry it.
+const getCrcTable = (): Uint32Array => {
+  if (crcTable) return crcTable;
+  const table = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) {
+      c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    }
+    table[n] = c >>> 0;
   }
-  CRC_TABLE[n] = c >>> 0;
-}
+  return (crcTable = table);
+};
 
 const crc32 = (bytes: Uint8Array): number => {
+  const table = getCrcTable();
   let crc = 0xffffffff;
   for (let i = 0; i < bytes.length; i++) {
-    crc = CRC_TABLE[(crc ^ bytes[i]!) & 0xff]! ^ (crc >>> 8);
+    crc = table[(crc ^ bytes[i]!) & 0xff]! ^ (crc >>> 8);
   }
   return (crc ^ 0xffffffff) >>> 0;
 };
@@ -90,12 +97,14 @@ const chunk = (type: string, data: Uint8Array): Uint8Array => {
 const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 
 /**
- * Encodes precomputed icon data as a PNG file.
+ * Encodes icon data from `createIcon()` as a PNG file.
  *
- * Uses an indexed-color PNG (3-entry palette, 2 bits per pixel), so files
- * stay small without a compression library.
+ * `scale` is the pixels per cell, a positive integer. Defaults to 4. Uses an
+ * indexed-color PNG (3-entry palette, 2 bits per pixel), so files stay small
+ * without a compression library.
  */
-export const iconToPng = (icon: IconData, scale = 4): Uint8Array => {
+export const toPng = (icon: IconData, scale = 4): Uint8Array => {
+  assertIconData(icon, 'toPng');
   if (!Number.isInteger(scale) || scale < 1) {
     throw new RangeError(`invalid scale: ${scale} (expected a positive integer)`);
   }
@@ -144,10 +153,6 @@ export const iconToPng = (icon: IconData, scale = 4): Uint8Array => {
   return out;
 };
 
-/** Generates an icon and encodes it as a PNG file. */
-export const toPng = (options: PngOptions = {}): Uint8Array =>
-  iconToPng(createIcon(options), options.scale ?? 4);
-
 const BASE64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 const toBase64 = (bytes: Uint8Array): string => {
@@ -164,6 +169,8 @@ const toBase64 = (bytes: Uint8Array): string => {
   return out;
 };
 
-/** Generates an icon and encodes it as a `data:image/png;base64` URL. */
-export const toPngDataURL = (options: PngOptions = {}): string =>
-  `data:image/png;base64,${toBase64(toPng(options))}`;
+/** Encodes icon data from `createIcon()` as a `data:image/png;base64` URL. */
+export const toPngDataURL = (icon: IconData, scale = 4): string => {
+  assertIconData(icon, 'toPngDataURL');
+  return `data:image/png;base64,${toBase64(toPng(icon, scale))}`;
+};

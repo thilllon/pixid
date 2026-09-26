@@ -1,13 +1,15 @@
 {
   "name": "@pixid/core",
   "version": "0.2.1",
-  "description": "Blocky identicon generator core. Turns a seed string into a deterministic pixel grid and color palette. Zero dependencies.",
+  "description": "Blocky identicon generator. Turns a seed string into a deterministic pixel grid and color palette, and renders it as SVG or PNG. Zero dependencies.",
   "keywords": [
     "identicon",
     "blockies",
     "avatar",
     "ethereum",
-    "pixel"
+    "pixel",
+    "svg",
+    "png"
   ],
   "license": "MIT",
   "author": "thilllon",
@@ -43,6 +45,10 @@
   ],
   "scripts": {
     "build": "tsdown"
+  },
+  "devDependencies": {
+    "@types/pngjs": "^6.0.5",
+    "pngjs": "^7.0.0"
   },
   "publishConfig": {
     "access": "public"

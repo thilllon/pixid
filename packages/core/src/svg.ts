@@ -1,15 +1,14 @@
-import { createIcon, iconRuns, rgbToCss, type IconData, type IconOptions } from '@pixid/core';
+import { assertIconData } from './guard.js';
+import { iconRuns, rgbToCss, type IconData } from './icon.js';
 
-export interface SvgOptions extends IconOptions {
-  /**
-   * Pixels per cell used for the width/height attributes. Any finite positive
-   * number, fractions included. Defaults to 4.
-   */
-  scale?: number;
-}
-
-/** Renders precomputed icon data as an SVG string. */
-export const iconToSvg = (icon: IconData, scale = 4): string => {
+/**
+ * Renders icon data from `createIcon()` as an SVG string.
+ *
+ * `scale` is the pixels per cell used for the width/height attributes: any
+ * finite positive number, fractions included. Defaults to 4.
+ */
+export const toSvg = (icon: IconData, scale = 4): string => {
+  assertIconData(icon, 'toSvg');
   // Unlike the PNG and canvas renderers, a fractional scale is fine here:
   // width and height are SVG lengths, and the viewBox keeps cells exact.
   if (!Number.isFinite(scale) || scale <= 0) {
@@ -35,10 +34,8 @@ export const iconToSvg = (icon: IconData, scale = 4): string => {
   );
 };
 
-/** Generates an icon and renders it as an SVG string. */
-export const toSvg = (options: SvgOptions = {}): string =>
-  iconToSvg(createIcon(options), options.scale ?? 4);
-
-/** Generates an icon and renders it as a `data:image/svg+xml` URL. */
-export const toSvgDataURL = (options: SvgOptions = {}): string =>
-  `data:image/svg+xml;charset=utf-8,${encodeURIComponent(toSvg(options))}`;
+/** Renders icon data from `createIcon()` as a `data:image/svg+xml` URL. */
+export const toSvgDataURL = (icon: IconData, scale = 4): string => {
+  assertIconData(icon, 'toSvgDataURL');
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(toSvg(icon, scale))}`;
+};

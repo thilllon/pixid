@@ -7,7 +7,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { toPng } from '@pixid/png';
+import { createIcon, toPng } from '@pixid/core';
 
 /** 8 cells per side * scale 16 = 128x128 px, displayed at 72 px in the README. */
 const SCALE = 16;
@@ -28,7 +28,7 @@ const SAMPLES = [
 mkdirSync(OUT_DIR, { recursive: true });
 
 for (const { seed, file } of SAMPLES) {
-  const png = toPng({ seed, scale: SCALE });
+  const png = toPng(createIcon({ seed }), SCALE);
   writeFileSync(join(OUT_DIR, file), png);
   console.log(`${file.padEnd(20)} ${String(png.length).padStart(5)} bytes  seed=${seed}`);
 }

@@ -1,4 +1,4 @@
-import { toSvg } from '@pixid/svg';
+import { createIcon, toSvg } from '@pixid/core';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { createRef, type ForwardRefRenderFunction, type ReactElement } from 'react';
@@ -37,10 +37,10 @@ describe('Pixid', () => {
     expect(markup.endsWith('</svg>')).toBe(true);
   });
 
-  it('renders the same rects as @pixid/svg for identical options', () => {
+  it('renders the same rects as toSvg for identical options', () => {
     for (const seed of ['react-cross-1', 'react-cross-2']) {
       const markup = renderToStaticMarkup(<Pixid seed={seed} size={9} scale={6} />);
-      const reference = toSvg({ seed, size: 9, scale: 6 });
+      const reference = toSvg(createIcon({ seed, size: 9 }), 6);
 
       expect(normalizeRects(markup)).toEqual(normalizeRects(reference));
 

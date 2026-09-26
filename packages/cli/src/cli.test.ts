@@ -12,8 +12,7 @@ import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { toPng } from '@pixid/png';
-import { toSvg } from '@pixid/svg';
+import { createIcon, toPng, toSvg } from '@pixid/core';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import pkg from '../package.json' with { type: 'json' };
 
@@ -48,7 +47,7 @@ describe('@pixid/cli', () => {
     const stdout = run(['--seed', 'alice']);
     expect(stdout).toContain('alice.png');
     const bytes = readFileSync(join(cwd, 'alice.png'));
-    expect(new Uint8Array(bytes)).toEqual(toPng({ seed: 'alice', scale: 16 }));
+    expect(new Uint8Array(bytes)).toEqual(toPng(createIcon({ seed: 'alice' }), 16));
   });
 
   it('accepts the seed as a positional argument', () => {
@@ -66,19 +65,21 @@ describe('@pixid/cli', () => {
   it('writes SVG when requested via --format', () => {
     run(['--seed', 'carol', '--format', 'svg']);
     const svg = readFileSync(join(cwd, 'carol.svg'), 'utf8');
-    expect(svg).toBe(toSvg({ seed: 'carol', scale: 16 }));
+    expect(svg).toBe(toSvg(createIcon({ seed: 'carol' }), 16));
   });
 
   it('infers the format from the output extension', () => {
     run(['--seed', 'dave', '--out', 'icon.svg']);
-    expect(readFileSync(join(cwd, 'icon.svg'), 'utf8')).toBe(toSvg({ seed: 'dave', scale: 16 }));
+    expect(readFileSync(join(cwd, 'icon.svg'), 'utf8')).toBe(
+      toSvg(createIcon({ seed: 'dave' }), 16),
+    );
   });
 
   it('applies size, scale, and color options', () => {
     run(['--seed', 'erin', '--size', '5', '--scale', '10', '--bgcolor', '#ffffff', '-o', 'e.png']);
     const bytes = readFileSync(join(cwd, 'e.png'));
     expect(new Uint8Array(bytes)).toEqual(
-      toPng({ seed: 'erin', size: 5, scale: 10, bgcolor: '#ffffff' }),
+      toPng(createIcon({ seed: 'erin', size: 5, bgcolor: '#ffffff' }), 10),
     );
   });
 
@@ -96,7 +97,7 @@ describe('@pixid/cli', () => {
     for (const file of files) {
       expect(file).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.png$/);
       expect(new Uint8Array(readFileSync(join(cwd, file)))).toEqual(
-        toPng({ seed: file.slice(0, -'.png'.length), scale: 16 }),
+        toPng(createIcon({ seed: file.slice(0, -'.png'.length) }), 16),
       );
     }
   });
@@ -107,7 +108,7 @@ describe('@pixid/cli', () => {
     const name = `${'a_'.repeat(50)}.png`;
     expect(readdirSync(cwd)).toEqual([name]);
     // Only the filename is shortened; the icon still uses the whole seed.
-    expect(new Uint8Array(readFileSync(join(cwd, name)))).toEqual(toPng({ seed, scale: 16 }));
+    expect(new Uint8Array(readFileSync(join(cwd, name)))).toEqual(toPng(createIcon({ seed }), 16));
 
     const out = `${'b'.repeat(150)}.png`;
     run([seed, '--out', out]);
@@ -117,7 +118,7 @@ describe('@pixid/cli', () => {
   it('creates missing parent directories for --out', () => {
     run(['--seed', 'alice', '--out', 'avatars/2026/alice.svg']);
     expect(readFileSync(join(cwd, 'avatars/2026/alice.svg'), 'utf8')).toBe(
-      toSvg({ seed: 'alice', scale: 16 }),
+      toSvg(createIcon({ seed: 'alice' }), 16),
     );
   });
 
@@ -241,7 +242,7 @@ describe('@pixid/cli programmatic entry', () => {
       encoding: 'utf8',
     });
     expect(new Uint8Array(readFileSync(join(cwd, 'frank.png')))).toEqual(
-      toPng({ seed: 'frank', scale: 16 }),
+      toPng(createIcon({ seed: 'frank' }), 16),
     );
   });
 });

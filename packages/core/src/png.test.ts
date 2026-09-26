@@ -1,7 +1,6 @@
-import { createIcon } from '@pixid/core';
 import { PNG } from 'pngjs';
-import { describe, expect, it } from 'vitest';
-import { iconToPng, toPng, toPngDataURL } from './index.js';
+import { describe, expect, it, vi } from 'vitest';
+import { createIcon, toPng, toPngDataURL } from './index.js';
 
 /**
  * pngjs acts as an independent decoder oracle: if it can parse our output,
@@ -12,7 +11,7 @@ const decode = (bytes: Uint8Array) => PNG.sync.read(Buffer.from(bytes));
 
 const expectPixelsMatchGrid = (seed: string, size: number, scale: number) => {
   const icon = createIcon({ seed, size });
-  const png = decode(toPng({ seed, size, scale }));
+  const png = decode(toPng(icon, scale));
   const px = size * scale;
 
   expect(png.width).toBe(px);
@@ -54,12 +53,14 @@ const expectPixelsMatchGrid = (seed: string, size: number, scale: number) => {
 
 describe('toPng', () => {
   it('starts with the PNG signature', () => {
-    const bytes = toPng({ seed: 'signature' });
+    const bytes = toPng(createIcon({ seed: 'signature' }));
     expect([...bytes.slice(0, 8)]).toEqual([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
   });
 
-  it('is deterministic for the same options', () => {
-    expect(toPng({ seed: 'stable', scale: 7 })).toEqual(toPng({ seed: 'stable', scale: 7 }));
+  it('is deterministic for the same icon data', () => {
+    expect(toPng(createIcon({ seed: 'stable' }), 7)).toEqual(
+      toPng(createIcon({ seed: 'stable' }), 7),
+    );
   });
 
   it('decodes to exactly the upscaled core grid (default options)', () => {
@@ -79,48 +80,67 @@ describe('toPng', () => {
   });
 
   it('honors explicit colors in the decoded pixels', () => {
-    const png = decode(toPng({ seed: 'explicit', bgcolor: '#ffffff', scale: 1 }));
     const icon = createIcon({ seed: 'explicit', bgcolor: '#ffffff' });
+    const png = decode(toPng(icon, 1));
     const first = icon.grid.indexOf(0);
     const o = first * 4;
     expect([png.data[o], png.data[o + 1], png.data[o + 2]]).toEqual([255, 255, 255]);
   });
 
   it('rejects invalid scales', () => {
-    expect(() => toPng({ seed: 'x', scale: 0 })).toThrow(RangeError);
-    expect(() => toPng({ seed: 'x', scale: 1.5 })).toThrow(RangeError);
+    const icon = createIcon({ seed: 'x' });
+    expect(() => toPng(icon, 0)).toThrow(RangeError);
+    expect(() => toPng(icon, 1.5)).toThrow(RangeError);
+  });
+});
+
+describe('toPng input', () => {
+  it('rejects options and anything else that is not icon data', () => {
+    for (const fn of [toPng, toPngDataURL]) {
+      for (const input of [{ seed: 'alice', scale: 16 }, undefined, null, 'alice']) {
+        expect(() => fn(input as never), `${fn.name}(${JSON.stringify(input)})`).toThrow(TypeError);
+      }
+    }
+    expect(() => toPng({ seed: 'alice' } as never)).toThrow(
+      'toPng: expected icon data from createIcon()',
+    );
+    expect(() => toPngDataURL({ seed: 'alice' } as never)).toThrow(
+      'toPngDataURL: expected icon data from createIcon()',
+    );
+  });
+
+  it('writes valid CRCs on the first call in a fresh module, when the table is built', async () => {
+    // Every other test runs after some earlier toPng call has built and cached
+    // the CRC table, so only a fresh module instance exercises the first build.
+    vi.resetModules();
+    const fresh = await import('./index.js');
+    const icon = fresh.createIcon({ seed: 'first-crc' });
+    const first = fresh.toPng(icon);
+    const second = fresh.toPng(icon);
+    // pngjs verifies every chunk CRC while decoding.
+    expect(() => decode(first)).not.toThrow();
+    expect(first).toEqual(second);
+    expect(first).toEqual(toPng(createIcon({ seed: 'first-crc' })));
   });
 });
 
 describe('toPngDataURL', () => {
   it('encodes the exact toPng bytes as base64', () => {
-    const url = toPngDataURL({ seed: 'dataurl' });
+    const icon = createIcon({ seed: 'dataurl' });
+    const url = toPngDataURL(icon);
     expect(url.startsWith('data:image/png;base64,')).toBe(true);
     const decoded = Buffer.from(url.slice('data:image/png;base64,'.length), 'base64');
-    expect(new Uint8Array(decoded)).toEqual(toPng({ seed: 'dataurl' }));
+    expect(new Uint8Array(decoded)).toEqual(toPng(icon));
   });
 
   it('pads base64 correctly regardless of byte length', () => {
     // Different scales shift the total byte count across all mod-3 cases.
+    const icon = createIcon({ seed: 'padding' });
     for (const scale of [1, 2, 3, 4, 5]) {
-      const url = toPngDataURL({ seed: 'padding', scale });
+      const url = toPngDataURL(icon, scale);
       const b64 = url.slice('data:image/png;base64,'.length);
       expect(b64.length % 4).toBe(0);
-      expect(new Uint8Array(Buffer.from(b64, 'base64'))).toEqual(toPng({ seed: 'padding', scale }));
+      expect(new Uint8Array(Buffer.from(b64, 'base64'))).toEqual(toPng(icon, scale));
     }
-  });
-});
-
-describe('iconToPng', () => {
-  it('encodes precomputed icon data exactly like toPng', () => {
-    const icon = createIcon({ seed: 'precomputed' });
-    expect(iconToPng(icon)).toEqual(toPng({ seed: 'precomputed' }));
-    expect(iconToPng(icon, 16)).toEqual(toPng({ seed: 'precomputed', scale: 16 }));
-  });
-
-  it('rejects invalid scales', () => {
-    const icon = createIcon({ seed: 'x' });
-    expect(() => iconToPng(icon, 0)).toThrow(RangeError);
-    expect(() => iconToPng(icon, 1.5)).toThrow(RangeError);
   });
 });
