@@ -1,4 +1,4 @@
-import { toSvg } from '@pixid/svg';
+import { createIcon, toSvg } from '@pixid/core';
 import { renderToString } from '@vue/server-renderer';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -45,10 +45,10 @@ describe('Pixid', () => {
     expect(markup.endsWith('</svg>')).toBe(true);
   });
 
-  it('renders the same rects as @pixid/svg for identical options', async () => {
+  it('renders the same rects as toSvg for identical options', async () => {
     for (const seed of ['vue-cross-1', 'vue-cross-2']) {
       const markup = await render({ seed, size: 9, scale: 6 });
-      const reference = toSvg({ seed, size: 9, scale: 6 });
+      const reference = toSvg(createIcon({ seed, size: 9 }), 6);
 
       expect(normalizeRects(markup)).toEqual(normalizeRects(reference));
 

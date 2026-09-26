@@ -86,11 +86,27 @@ too similar to `pinia`, and npm support declined to override it (2026-09-03). Th
 package that was waiting for that name has been removed. Do not reintroduce an
 unscoped package, and do not document `npx pixid`: the CLI is `npx @pixid/cli`.
 
+`@pixid/svg` and `@pixid/png` were folded into `@pixid/core` in 0.2.2: their renderers
+are its root exports `toSvg`, `toSvgDataURL`, `toPng` and `toPngDataURL`, each taking
+the `createIcon()` output and an optional scale. `@pixid/svg` 0.2.0 and `@pixid/png`
+0.2.1 are their last versions. Deprecating them on npm is an owner step, run only after
+`@pixid/core` 0.2.2 and `@pixid/cli` 0.2.2 are published (`@pixid/cli` 0.2.1 still
+depends on both, and OIDC trusted publishing cannot run `npm deprecate`):
+
+```sh
+npm deprecate @pixid/svg "Moved into @pixid/core 0.2.2: toSvg(createIcon({ seed }), scale). See https://github.com/thilllon/pixid#pixidsvg"
+npm deprecate @pixid/png "Moved into @pixid/core 0.2.2: toPng(createIcon({ seed }), scale). See https://github.com/thilllon/pixid#pixidpng"
+```
+
+Do not reintroduce them, and do not document them as current packages; the README keeps
+only a migration note for their users, reachable at the old `#pixidsvg` and `#pixidpng`
+anchors that their npm READMEs link to.
+
 The Release workflow publishes over OIDC trusted publishing only; the repository has
 no `NPM_TOKEN` secret. Every package it publishes therefore needs a trusted publisher
 on npmjs.com (GitHub Actions, repository `thilllon/pixid`, workflow `release.yml`,
 publishing allowed), and a publish fails with an auth error for any package without
-one. All seven packages have theirs. npm can only configure a trusted publisher for a
+one. All five packages have theirs. npm can only configure a trusted publisher for a
 package that already exists, so a brand-new package has to be published by hand once,
 after which
 `npm trust github @pixid/<name> --file release.yml --repo thilllon/pixid --allow-publish`
@@ -118,13 +134,11 @@ in `packages/*/CHANGELOG.md`, and npm carries the published artifact.
 
 ## Development
 
-pnpm workspace with 7 published packages:
+pnpm workspace with 5 published packages:
 
 | Package         | Path              |
 | --------------- | ----------------- |
 | `@pixid/core`   | `packages/core`   |
-| `@pixid/svg`    | `packages/svg`    |
-| `@pixid/png`    | `packages/png`    |
 | `@pixid/canvas` | `packages/canvas` |
 | `@pixid/react`  | `packages/react`  |
 | `@pixid/vue`    | `packages/vue`    |
@@ -144,15 +158,16 @@ with `mise exec --` so the pinned versions are used.
   esbuild and enforces the size budgets behind the README's Size table.
 - `packages/cli/src/registry.e2e.test.ts` runs `pnpm --recursive publish` against a throwaway
   verdaccio registry (the private workspace root is skipped), then runs `npx @pixid/cli`
-  from a cold cache. It asserts the exact set of packages that reach the registry.
+  from a cold cache. It asserts the exact set of packages that reach the registry (all
+  five), and that the cold `npx` installs only `@pixid/cli` and `@pixid/core`.
 
 ### Why typecheck needs a build
 
 `tsc --noEmit` checks each package's own `src/`, but the packages import each other by
 name (`import { createIcon } from '@pixid/core'`), never by relative path. TypeScript
-resolves that the way npm does: `packages/svg/node_modules/@pixid/core`, a pnpm symlink
+resolves that the way npm does: `packages/canvas/node_modules/@pixid/core`, a pnpm symlink
 to `packages/core`, then that package's `exports`, then its `types` condition, which is
-`./dist/index.d.ts`. Delete `packages/core/dist` and type-checking `packages/svg` fails
+`./dist/index.d.ts`. Delete `packages/core/dist` and type-checking `packages/canvas` fails
 with `TS2307: Cannot find module '@pixid/core' or its corresponding type declarations`.
 A dependency's declarations exist only after it is built, which is why `pnpm check`
 builds first and CI runs `pnpm typecheck` after `pnpm build`. The unit tests need the
@@ -286,7 +301,7 @@ concrete reason — everything left is load-bearing:
   the TypeScript config through `jiti`, which is why that devDependency exists.
 - `tsconfig.json` covers repository-owned TypeScript: `assets/`, `eslint.config.mts`,
   and `vitest.config.ts`, so `pnpm typecheck` checks the config files too.
-  `tsconfig.base.json` is what all seven package tsconfigs extend, and those cover each
+  `tsconfig.base.json` is what all five package tsconfigs extend, and those cover each
   package's tests.
 - `mise.toml`, `LICENSE`, `README.md`, `AGENTS.md`, `.gitignore` — convention or
   detection depends on the root location (`mise` and licence/README detection would

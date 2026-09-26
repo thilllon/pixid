@@ -2,8 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
-import { toPng } from '@pixid/png';
-import { toSvg } from '@pixid/svg';
+import { createIcon, toPng, toSvg } from '@pixid/core';
 
 declare const __PKG_VERSION__: string;
 
@@ -141,18 +140,16 @@ export const runCli = (argv: string[] = process.argv.slice(2)): void => {
     );
   }
 
-  const options = {
-    seed,
-    size,
-    scale,
-    color: values.color,
-    bgcolor: values.bgcolor,
-    spotcolor: values.spotcolor,
-  };
-
   let data: Uint8Array | string;
   try {
-    data = format === 'png' ? toPng(options) : toSvg(options);
+    const icon = createIcon({
+      seed,
+      size,
+      color: values.color,
+      bgcolor: values.bgcolor,
+      spotcolor: values.spotcolor,
+    });
+    data = format === 'png' ? toPng(icon, scale) : toSvg(icon, scale);
   } catch (error) {
     return fail(error instanceof Error ? error.message : String(error));
   }

@@ -71,8 +71,7 @@
     "build": "tsdown"
   },
   "dependencies": {
-    "@pixid/png": "workspace:^",
-    "@pixid/svg": "workspace:^"
+    "@pixid/core": "workspace:^"
   },
   "devDependencies": {
     "verdaccio": "^6.10.3"

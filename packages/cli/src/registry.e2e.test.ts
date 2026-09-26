@@ -12,15 +12,14 @@ import {
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { toPng } from '@pixid/png';
-import { toSvg } from '@pixid/svg';
+import { createIcon, toPng, toSvg } from '@pixid/core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pkg from '../package.json' with { type: 'json' };
 
 // End-to-end check of how users actually get the CLI: publish the workspace
 // to a throwaway verdaccio registry, then run `npx @pixid/cli` from a cold
-// cache. It publishes every package because the CLI depends on core, svg, and
-// png, so it doubles as the check that the whole release installs.
+// cache. It publishes every package, not just the CLI and core, so it doubles
+// as the check that the whole release installs.
 
 const WORKSPACE_ROOT = fileURLToPath(new URL('../../..', import.meta.url));
 const PORT = 4873 + Math.floor(Math.random() * 1000);
@@ -157,7 +156,7 @@ describe('npx against a real registry', () => {
     const { cwd, stdout } = npx('png', '@pixid/cli', ['--seed', 'hello', '-o', 'out.png']);
     expect(stdout).toContain('out.png');
     expect(new Uint8Array(readFileSync(join(cwd, 'out.png')))).toEqual(
-      toPng({ seed: 'hello', scale: 16 }),
+      toPng(createIcon({ seed: 'hello' }), 16),
     );
   });
 
@@ -166,14 +165,9 @@ describe('npx against a real registry', () => {
   });
 
   it('installs only the CLI and its runtime packages, nothing else', () => {
-    // The cold-cache run above populated npx's cache. Renderer packages the
-    // CLI does not need (canvas, react, vue) must not have been downloaded.
-    expect(installedPackages(join(workDir, 'cache-png'))).toEqual([
-      '@pixid/cli',
-      '@pixid/core',
-      '@pixid/png',
-      '@pixid/svg',
-    ]);
+    // The cold-cache run above populated npx's cache. Packages the CLI does
+    // not need (canvas, react, vue) must not have been downloaded.
+    expect(installedPackages(join(workDir, 'cache-png'))).toEqual(['@pixid/cli', '@pixid/core']);
   });
 
   it('publishes exactly the public packages and keeps the npx download under 30 KB', () => {
@@ -191,9 +185,7 @@ describe('npx against a real registry', () => {
       '@pixid/canvas',
       '@pixid/cli',
       '@pixid/core',
-      '@pixid/png',
       '@pixid/react',
-      '@pixid/svg',
       '@pixid/vue',
     ]);
 
@@ -219,14 +211,16 @@ describe('npx against a real registry', () => {
         .filter((t) => names.some((n) => t.name.startsWith(`${n}-`)))
         .reduce((sum, t) => sum + t.size, 0);
 
-    const total = download(['cli', 'core', 'svg', 'png']);
+    const total = download(['cli', 'core']);
     console.log(`npx @pixid/cli total download: ${total} bytes`);
     expect(total).toBeLessThan(30 * 1024);
   });
 
   it('renders SVG through npx with an inferred format', () => {
     const { cwd } = npx('svg', '@pixid/cli', ['world', '--out', 'icon.svg', '--scale', '32']);
-    expect(readFileSync(join(cwd, 'icon.svg'), 'utf8')).toBe(toSvg({ seed: 'world', scale: 32 }));
+    expect(readFileSync(join(cwd, 'icon.svg'), 'utf8')).toBe(
+      toSvg(createIcon({ seed: 'world' }), 32),
+    );
   });
 
   it('installs the library packages and imports them', () => {
@@ -236,19 +230,17 @@ describe('npx against a real registry', () => {
     writeFileSync(
       join(cwd, 'main.mjs'),
       [
-        "import { createIcon } from '@pixid/core';",
-        "import { toSvg } from '@pixid/svg';",
-        "import { toPngDataURL } from '@pixid/png';",
+        "import { createIcon, toPngDataURL, toSvg } from '@pixid/core';",
         "const icon = createIcon({ seed: 'consumer' });",
         "if (icon.grid.length !== 64) throw new Error('bad grid');",
-        "if (!toSvg({ seed: 'consumer' }).startsWith('<svg')) throw new Error('bad svg');",
-        "if (!toPngDataURL({ seed: 'consumer' }).startsWith('data:image/png;base64,')) throw new Error('bad png');",
+        "if (!toSvg(icon).startsWith('<svg')) throw new Error('bad svg');",
+        "if (!toPngDataURL(icon).startsWith('data:image/png;base64,')) throw new Error('bad png');",
         "console.log('ok');",
       ].join('\n'),
     );
 
     const env = npmEnv(join(workDir, 'cache-lib'));
-    execFileSync('npm', ['install', '@pixid/core', '@pixid/svg', '@pixid/png'], {
+    execFileSync('npm', ['install', '@pixid/core'], {
       cwd,
       env,
       encoding: 'utf8',
