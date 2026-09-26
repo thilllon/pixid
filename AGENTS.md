@@ -30,8 +30,7 @@ from those excluded authors.
 - Release commits produced by `changeset version`: version bumps in `package.json`,
   generated `CHANGELOG.md` files, consumed changeset files.
 - Repository metadata and config touch-ups that cannot break the build, e.g.
-  `.cursor/environment.json`, `.vscode/*`, `.gitignore`, `.prettierignore`, LICENSE
-  and repository-field metadata.
+  `.vscode/*`, `.gitignore`, `.prettierignore`, LICENSE and repository-field metadata.
 - Any change where the owner explicitly asks for a direct push, or explicitly asks
   for a merge, in that session.
 
@@ -279,7 +278,8 @@ concrete reason — everything left is load-bearing:
 - `package.json`, `pnpm-workspace.yaml`, `pnpm-lock.yaml` — pnpm defines the workspace
   from the root manifest and writes the lockfile beside it; CI runs
   `pnpm install --frozen-lockfile` from here.
-- `.github/`, `.vscode/`, `.cursor/`, `.changeset/` — each tool hard-codes its path.
+- `.github/`, `.vscode/`, `.changeset/` — each tool hard-codes its path. `.cursor/` is
+  gitignored: Cursor settings stay local to each checkout.
 - `eslint.config.mts`, `.prettierrc.json`, `.prettierignore`, `vitest.config.ts` — resolved
   from the working directory, and `vitest.config.ts` owns both projects, so it cannot
   belong to a package. Prettier only reads `.prettierignore` from the cwd. ESLint loads
@@ -288,10 +288,15 @@ concrete reason — everything left is load-bearing:
   and `vitest.config.ts`, so `pnpm typecheck` checks the config files too.
   `tsconfig.base.json` is what all seven package tsconfigs extend, and those cover each
   package's tests.
-- `mise.toml`, `LICENSE`, `README.md`, `AGENTS.md`, `.gitignore` — convention or
-  detection depends on the root location (`mise` and licence/README detection would
-  both work from a subdirectory, but hiding them costs more than it saves).
+- `mise.toml`, `LICENSE`, `README.md`, `AGENTS.md`, `CLAUDE.md`, `.gitignore` —
+  convention or detection depends on the root location (`mise` and licence/README
+  detection would both work from a subdirectory, but hiding them costs more than it
+  saves). `CLAUDE.md` only imports `AGENTS.md`, so the rules live in one file.
 
 Root devDependencies are for repository-wide tooling only, such as `vitest` and the
 `esbuild` that the per-package bundle tests share. Anything a single package needs
-belongs in that package's manifest, the way `@pixid/cli` owns `verdaccio`.
+belongs in that package's manifest, the way `@pixid/cli` owns `verdaccio` and
+`@pixid/png` owns `pngjs`. The one workspace package the root lists is `@pixid/png`,
+which `assets/generate.ts` imports. Nothing else at the root needs a `@pixid/*` link:
+each bundle test imports its own package by name, which resolves through the package's
+own `exports` (self-reference), not through the root `node_modules`.
