@@ -15,7 +15,7 @@
   "engines": {
     "node": ">=18"
   },
-  "packageManager": "pnpm@11.24.0",
+  "packageManager": "pnpm@12.8.0",
   "scripts": {
     "build": "pnpm --recursive build",
     "assets": "node assets/generate.ts",

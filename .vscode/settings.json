@@ -1,3 +1,6 @@
 {
-  "typescript.suggest.autoImports": true
+  "js/ts.suggest.autoImports": true,
+  "[yaml]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
 }
