@@ -146,7 +146,10 @@ pnpm workspace with 5 published packages:
 
 The toolchain is pinned by `mise.toml` (node 24.19.0, pnpm 12.8.0), and
 `package.json`'s `packageManager` field carries the same pnpm pin. Commands in
-this file are plain `pnpm`.
+this file are plain `pnpm` and assume mise is activated in the shell
+(`mise activate`), which puts the pinned node and pnpm first on `PATH`.
+`mise install` alone only downloads them; without activation, prefix each command
+with `mise exec --`.
 
 - Build: `tsdown` (migrated from tsup). Each package has its own `build` script;
   `pnpm build` runs `pnpm --recursive build`.

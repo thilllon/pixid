@@ -953,8 +953,10 @@ between it and pixid. pixid follows the original.
 
 ## Development
 
-Node.js and pnpm versions are pinned in `mise.toml` (Node.js 24 LTS, pnpm 11).
-With [mise](https://mise.jdx.dev) installed, `mise install` sets both up.
+Node.js and pnpm versions are pinned in `mise.toml` (Node.js 24 LTS, pnpm 12.8.0).
+With [mise](https://mise.jdx.dev) installed, `mise install` downloads both, and an
+activated shell (`mise activate`) puts them on `PATH`; otherwise run the commands
+below as `mise exec -- pnpm ...`.
 
 ```
 pnpm install
