@@ -44,8 +44,8 @@ This applies to direct pushes exactly as it applies to PR branches. Run the full
 suite locally and require it to pass:
 
 ```sh
-mise exec -- pnpm check    # build, then lint + typecheck + unit tests + prettier in parallel
-mise exec -- pnpm e2e      # the verdaccio suite, which `check` leaves out
+pnpm check    # build, then lint + typecheck + unit tests + prettier in parallel
+pnpm e2e      # the verdaccio suite, which `check` leaves out
 ```
 
 `pnpm check` builds first because the package tsconfigs and the unit tests read each
@@ -144,8 +144,12 @@ pnpm workspace with 5 published packages:
 | `@pixid/vue`    | `packages/vue`    |
 | `@pixid/cli`    | `packages/cli`    |
 
-The toolchain is pinned by `mise.toml` (node 24.19.0, pnpm 11.24.0). Prefix commands
-with `mise exec --` so the pinned versions are used.
+The toolchain is pinned by `mise.toml` (node 24.19.0, pnpm 12.8.0), and
+`package.json`'s `packageManager` field carries the same pnpm pin. Commands in
+this file are plain `pnpm` and assume mise is activated in the shell
+(`mise activate`), which puts the pinned node and pnpm first on `PATH`.
+`mise install` alone only downloads them; without activation, prefix each command
+with `mise exec --`.
 
 - Build: `tsdown` (migrated from tsup). Each package has its own `build` script;
   `pnpm build` runs `pnpm --recursive build`.
@@ -192,18 +196,20 @@ or `types` mapping stops being caught, and vitest and any bundler need the same 
   against their dependencies' `dist/`), `pnpm format` (`prettier --write`), and
   `pnpm format:check` (`prettier --check`, as CI runs it).
 - Versioning: changesets. Add a changeset for any user-visible change
-  (`mise exec -- pnpm changeset`). CI enforces it: the `changeset` job runs
+  (`pnpm changeset`). CI enforces it: the `changeset` job runs
   `changeset status --since=origin/<base>` on every pull request and fails when a
   package changed without one. When the change must not be released — tests, CI,
-  repository docs — say so on purpose with `mise exec -- pnpm changeset add --empty`.
+  repository docs — say so on purpose with `pnpm changeset add --empty`.
 
 ### Dependency updates
 
-`.github/dependabot.yml` batches every weekly update into at most two pull requests
-per ecosystem: one for all minor and patch bumps, one for all major bumps. Do not
-replace those `patterns: ['*']` groups with per-library groups — dependencies that
-match no group get one pull request each, which is the pile-up the config exists to
-prevent.
+`.github/dependabot.yml` groups every weekly update into two pull requests per
+ecosystem: one for all minor and patch bumps, one for all major bumps. npm's
+`open-pull-requests-limit` is 3, leaving one extra slot for an update the groups
+cannot classify as minor, patch, or major. GitHub Actions sets that limit to 2,
+the same as its two groups. Do not replace those `patterns: ['*']` groups with
+per-library groups — dependencies that match no group get one pull request each,
+which is the pile-up the config exists to prevent.
 
 - npm targets `/` and nothing else. Dependabot reads the `packages` globs out of
   `pnpm-workspace.yaml` and reaches `packages/*/package.json` from the root, where the
@@ -293,8 +299,9 @@ concrete reason — everything left is load-bearing:
 - `package.json`, `pnpm-workspace.yaml`, `pnpm-lock.yaml` — pnpm defines the workspace
   from the root manifest and writes the lockfile beside it; CI runs
   `pnpm install --frozen-lockfile` from here.
-- `.github/`, `.vscode/`, `.changeset/` — each tool hard-codes its path. `.cursor/` is
-  gitignored: Cursor settings stay local to each checkout.
+- `.github/`, `.vscode/`, `.changeset/`, `.coderabbit.yaml` — each tool hard-codes its
+  path. `.coderabbit.yaml` only tunes the review; the rules stay in this file.
+  `.cursor/` is gitignored: Cursor settings stay local to each checkout.
 - `eslint.config.mts`, `.prettierrc.json`, `.prettierignore`, `vitest.config.ts` — resolved
   from the working directory, and `vitest.config.ts` owns both projects, so it cannot
   belong to a package. Prettier only reads `.prettierignore` from the cwd. ESLint loads

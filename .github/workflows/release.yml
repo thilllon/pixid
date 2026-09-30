@@ -21,7 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       # Installs the exact toolchain pinned in mise.toml (node 24.19.0 + pnpm
-      # 11.24.0) and prepends the tool paths to GITHUB_PATH, so every later
+      # 12.8.0) and prepends the tool paths to GITHUB_PATH, so every later
       # step -- including changesets/action's publish script -- uses the
       # mise-provided node and pnpm. Unlike actions/setup-node with
       # `registry-url`, mise never generates an .npmrc, so there is no
