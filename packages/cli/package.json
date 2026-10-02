@@ -80,6 +80,6 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=18.3.0"
+    "node": ">=22"
   }
 }

@@ -89,9 +89,8 @@ unscoped package, and do not document `npx pixid`: the CLI is `npx @pixid/cli`.
 `@pixid/svg` and `@pixid/png` were folded into `@pixid/core` in 0.2.2: their renderers
 are its root exports `toSvg`, `toSvgDataURL`, `toPng` and `toPngDataURL`, each taking
 the `createIcon()` output and an optional scale. `@pixid/svg` 0.2.0 and `@pixid/png`
-0.2.1 are their last versions. Deprecating them on npm is an owner step, run only after
-`@pixid/core` 0.2.2 and `@pixid/cli` 0.2.2 are published (`@pixid/cli` 0.2.1 still
-depends on both, and OIDC trusted publishing cannot run `npm deprecate`):
+0.2.1 are their last versions. Both are deprecated on npm with these messages, run by
+the owner because OIDC trusted publishing cannot run `npm deprecate`:
 
 ```sh
 npm deprecate @pixid/svg "Moved into @pixid/core 0.2.2: toSvg(createIcon({ seed }), scale). See https://github.com/thilllon/pixid#pixidsvg"
@@ -120,8 +119,13 @@ missing from the registry, so it publishes on the very next push to `main`, with
 fails that run. The Release workflow is expected to pass on every push to `main`; any
 Release failure is a real problem.
 
+Apart from a brand-new package (see above), merging a pull request publishes nothing;
+a release takes a changeset and a second merge. A PR records its change with
+`pnpm changeset` (packages, bump, and the note that becomes the changelog entry,
+committed as `.changeset/*.md`); only packages named in a changeset get a new version.
 The Release workflow runs `changesets/action` v2. While changesets are pending it
-opens or updates the "Version Packages" PR. Once that PR is merged it runs
+opens or updates the "Version Packages" PR, which applies the bumps, moves each note
+into `CHANGELOG.md`, and deletes the changeset files. Once that PR is merged it runs
 `pnpm release`, which is `pnpm check` (build, then lint, typecheck, unit tests, and the
 prettier check) followed by `changeset publish`, so a failing check stops the publish.
 The verdaccio e2e suite stays out of it because it runs `pnpm publish` itself, which
@@ -130,7 +134,9 @@ For every package it publishes, the action pushes a git tag (`@pixid/<name>@<ver
 versions up to 0.1.1 predate this and have none. GitHub Releases are deliberately off
 (`create-github-releases: false`): they would repeat each package's CHANGELOG.md, and
 every version bump would create one release per published package. The changelog lives
-in `packages/*/CHANGELOG.md`, and npm carries the published artifact.
+in `packages/*/CHANGELOG.md`, and npm carries the published artifact. npm records SLSA
+provenance for every version the Release workflow publishes; the one version without it
+is `@pixid/vue` 0.2.0, which was published by hand.
 
 ## Development
 
@@ -151,15 +157,27 @@ this file are plain `pnpm` and assume mise is activated in the shell
 `mise install` alone only downloads them; without activation, prefix each command
 with `mise exec --`.
 
-- Build: `tsdown` (migrated from tsup). Each package has its own `build` script;
-  `pnpm build` runs `pnpm --recursive build`.
+- Build: `tsdown` (migrated from tsup). Each package has its own `build` script and
+  `tsdown.config.ts` (ES2022, minified, bundled declarations); `pnpm build` runs
+  `pnpm --recursive build`. `@pixid/canvas` adds a second, IIFE config that inlines the
+  `@pixid/*` graph into `dist/index.global.js` (global `pixidCanvas`, the file its
+  `unpkg` and `jsdelivr` fields point at). `@pixid/cli` builds with `platform: 'node'`
+  and adds a second config for the shebang bin entry (`src/cli.ts`, ESM and CommonJS).
+- Layout: one folder per package under `packages/`, named after what it contains
+  (`packages/cli` is `@pixid/cli`).
 - Tests: `pnpm test` runs the unit project, `pnpm e2e` runs the verdaccio-backed
   project, `pnpm test:all` runs both. Projects are defined in `vitest.config.ts`.
 - Every test is colocated with the code it covers, in its package's `src/`, and matched
   by `packages/*/src/**/*.test.{ts,tsx}`. Files named `*.e2e.test.ts` form the `e2e`
   project and are excluded from `unit`. Tests read `dist/`, so build first.
 - Each library package has a `src/bundle.test.ts` that bundles the built package with
-  esbuild and enforces the size budgets behind the README's Size table.
+  esbuild, enforces a size ceiling (core: 3 KB for `createIcon`, 4 KB with `toSvg`, 6 KB
+  with `toPng`; canvas, react, vue: 4 KB), and checks that unused renderers are left
+  out. The README's Size table lists measured sizes, not those ceilings, and no test
+  covers its `createIcon, toPng, toSvg` row; re-measure the table the same way (esbuild
+  `bundle`, `minify`, `format: esm`, peers external) when the output changes. The README
+  has no tarball-size figures; do not add them back, since every README edit changes
+  them.
 - `packages/cli/src/registry.e2e.test.ts` runs `pnpm --recursive publish` against a throwaway
   verdaccio registry (the private workspace root is skipped), then runs `npx @pixid/cli`
   from a cold cache. It asserts the exact set of packages that reach the registry (all
@@ -190,7 +208,20 @@ or `types` mapping stops being caught, and vitest and any bundler need the same 
   that shows them, the root `README.md` and each `packages/*/README.md` alike, must
   reference them as `https://raw.githubusercontent.com/thilllon/pixid/main/assets/...`,
   never by a relative path: npm renders each package page from the README inside that
-  package's tarball, and no tarball contains `assets/`.
+  package's tarball, and no tarball contains `assets/`. `assets/` sits outside
+  `packages/` for that reason.
+- README anchors: the root `README.md` must keep the anchors `#pixidcore`,
+  `#pixidcanvas`, `#pixidreact`, `#pixidvue`, `#cli`, `#pixidsvg`, and `#pixidpng`.
+  Published package READMEs (0.2.x and later) and the `npm deprecate` messages above
+  link to them, and those links cannot be changed after publishing. If a heading that
+  produces one is renamed or removed, keep the slug with an explicit
+  `<a id="..."></a>`, and do not add an earlier heading that takes the same slug
+  (a `### CLI` above `## CLI` would take `#cli`).
+- Package READMEs: each `packages/*/README.md` must read on its own on npm (install,
+  usage, API, package-specific notes). The root README keeps a summary per package and
+  links to them; put package-specific detail in the package README, not the root.
+- The root README's Contributing section points to this file, so this file is the
+  contributor guide for people as well as agents.
 - Lint, types, and format: `pnpm lint` (`eslint .`), `pnpm typecheck` (`tsc --noEmit`
   for the root and every package; run it after `pnpm build`, since packages type-check
   against their dependencies' `dist/`), `pnpm format` (`prettier --write`), and

@@ -1,5 +1,5 @@
 import { PNG } from 'pngjs';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, expectTypeOf, it, vi } from 'vitest';
 import { createIcon, toPng, toPngDataURL } from './index.js';
 
 /**
@@ -121,6 +121,23 @@ describe('toPng input', () => {
     expect(() => decode(first)).not.toThrow();
     expect(first).toEqual(second);
     expect(first).toEqual(toPng(createIcon({ seed: 'first-crc' })));
+  });
+});
+
+describe('toPng return type', () => {
+  // `pnpm typecheck` covers this file, so a return type widened back to a
+  // plain `Uint8Array` (`Uint8Array<ArrayBufferLike>`) fails there: the DOM
+  // types reject it as a `BlobPart` and as a `Response` body.
+  it('is Uint8Array<ArrayBuffer>, accepted by Blob and Response', async () => {
+    const bytes = toPng(createIcon({ seed: 'types' }));
+    expectTypeOf(bytes).toEqualTypeOf<Uint8Array<ArrayBuffer>>();
+    expect(bytes.buffer).toBeInstanceOf(ArrayBuffer);
+
+    const blob = new Blob([bytes], { type: 'image/png' });
+    expect(new Uint8Array(await blob.arrayBuffer())).toEqual(bytes);
+
+    const response = new Response(bytes, { headers: { 'content-type': 'image/png' } });
+    expect(new Uint8Array(await response.arrayBuffer())).toEqual(bytes);
   });
 });
 

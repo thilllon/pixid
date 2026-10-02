@@ -45,7 +45,7 @@ const adler32 = (bytes: Uint8Array): number => {
  * Icon scanlines are tiny (2 bits per pixel), so compression is not worth
  * a dependency or an async API.
  */
-const zlibStore = (raw: Uint8Array): Uint8Array => {
+const zlibStore = (raw: Uint8Array): Uint8Array<ArrayBuffer> => {
   const blockCount = Math.max(1, Math.ceil(raw.length / 65535));
   const out = new Uint8Array(2 + raw.length + blockCount * 5 + 4);
   let pos = 0;
@@ -82,7 +82,7 @@ const CHUNK_TYPES = {
   IEND: 'IEND',
 } as const;
 
-const chunk = (type: string, data: Uint8Array): Uint8Array => {
+const chunk = (type: string, data: Uint8Array): Uint8Array<ArrayBuffer> => {
   const out = new Uint8Array(12 + data.length);
   const view = new DataView(out.buffer);
   view.setUint32(0, data.length);
@@ -102,8 +102,13 @@ const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
  * `scale` is the pixels per cell, a positive integer. Defaults to 4. Uses an
  * indexed-color PNG (3-entry palette, 2 bits per pixel), so files stay small
  * without a compression library.
+ *
+ * The result is typed `Uint8Array<ArrayBuffer>`, not a plain `Uint8Array`, so
+ * it can go straight into `new Blob([...])`, `new Response(...)` and other DOM
+ * APIs that take a `BufferSource`. Reading that type needs TypeScript 5.7 or
+ * later (or `skipLibCheck`).
  */
-export const toPng = (icon: IconData, scale = 4): Uint8Array => {
+export const toPng = (icon: IconData, scale = 4): Uint8Array<ArrayBuffer> => {
   assertIconData(icon, 'toPng');
   if (!Number.isInteger(scale) || scale < 1) {
     throw new RangeError(`invalid scale: ${scale} (expected a positive integer)`);
