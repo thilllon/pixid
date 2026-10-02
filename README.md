@@ -300,7 +300,7 @@ The `pixid` command is summarized in [CLI](#cli). The package also exports
 ## Stability
 
 pixid follows [semantic versioning](https://semver.org). Within 1.x, for the
-same input:
+same options with a `seed` given (an omitted or empty seed is random):
 
 - `createIcon` returns the same grid and the same colors.
 - `toSvg`, `toSvgDataURL`, `toPng`, and `toPngDataURL` return the same bytes,
