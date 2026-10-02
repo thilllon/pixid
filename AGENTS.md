@@ -204,20 +204,26 @@ or `types` mapping stops being caught, and vitest and any bundler need the same 
   package's tarball, and no tarball contains `assets/`. `assets/` sits outside
   `packages/` for that reason.
 - README anchors: the root `README.md` must keep the anchors `#pixidcore`,
-  `#pixidcanvas`, `#pixidreact`, `#pixidvue`, and `#cli`. Package READMEs published
-  as 0.2.x and 1.0.0 link to them, and those links cannot be changed after publishing. If a heading that
-  produces one is renamed or removed, keep the slug with an explicit
-  `<a id="..."></a>`, and do not add an earlier heading that takes the same slug
-  (a `### CLI` above `## CLI` would take `#cli`).
+  `#pixidcanvas`, `#pixidreact`, `#pixidvue`, and `#cli`. Every package README links to
+  its own one (`@pixid/cli` to `#cli`), as do the READMEs of every version published so far (0.2.x through 1.1.0),
+  and those links cannot be changed after publishing. If a heading that produces one is
+  renamed or removed, keep the slug with an explicit `<a id="..."></a>`, and do not add
+  an earlier heading that takes the same slug (a `### CLI` above `## CLI` would take
+  `#cli`).
 - Example icons in a README are never bare images: they sit in a centered block with a
   caption that says they are example output, names the seeds, and gives the call that
   produces one.
-- Package READMEs: each `packages/*/README.md` must read on its own on npm (install,
-  usage, API, package-specific notes), and links back only to the top of the root README
-  (`https://github.com/thilllon/pixid#readme`), never to a root section that points
-  back at the package README. The READMEs carry no migration or version-history notes;
-  that belongs in each `CHANGELOG.md`. The root README keeps a summary per package and
-  links to them; put package-specific detail in the package README, not the root.
+- Documentation lives in one place: the root `README.md` is the single source of truth
+  for every package (usage, options, API, notes), and states each fact once. The five
+  `packages/*/README.md` files, which npm shows, share one short body: an introduction to
+  pixid, the example icons, the table of all five packages, and a link to the root
+  README. They differ only in the title, the badge URLs, and that link, which points at
+  the package's own root section (the anchors above). Put no package-specific
+  documentation in them: no install notes, usage, API, or caveats. When the shared body
+  changes, change all five the same way. A documentation fix therefore goes in the root
+  README and needs no release; only a change to the shared body does, since npm serves
+  the README from each tarball. No README carries migration or version-history notes;
+  that belongs in each `CHANGELOG.md`.
 - The root README's Contributing section points to this file, so this file is the
   contributor guide for people as well as agents.
 - Lint, types, and format: `pnpm lint` (`eslint .`), `pnpm typecheck` (`tsc --noEmit`

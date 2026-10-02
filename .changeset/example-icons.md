@@ -6,4 +6,4 @@
 '@pixid/cli': patch
 ---
 
-README: the example icons are now a centered row with a caption that names the seeds and the call that produces them, instead of a single unlabeled image.
+README: each package's npm page is now one short shared page that links to the pixid README on GitHub, where all documentation lives. The example icons have a caption that names their seeds.
