@@ -1,5 +1,11 @@
 # @pixid/core
 
+## 1.1.0
+
+### Minor Changes
+
+- a091fba: Documentation only; the published code is unchanged. Each package README now links to the top of the pixid README instead of a section that pointed back at it, the React and Vue examples use a plain seed, and the CLI README splits its flags from its programmatic API.
+
 ## 1.0.0
 
 ### Major Changes
