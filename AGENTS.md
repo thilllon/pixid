@@ -209,6 +209,9 @@ or `types` mapping stops being caught, and vitest and any bundler need the same 
   produces one is renamed or removed, keep the slug with an explicit
   `<a id="..."></a>`, and do not add an earlier heading that takes the same slug
   (a `### CLI` above `## CLI` would take `#cli`).
+- Example icons in a README are never bare images: they sit in a centered block with a
+  caption that says they are example output, names the seeds, and gives the call that
+  produces one.
 - Package READMEs: each `packages/*/README.md` must read on its own on npm (install,
   usage, API, package-specific notes), and links back only to the top of the root README
   (`https://github.com/thilllon/pixid#readme`), never to a root section that points

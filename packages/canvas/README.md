@@ -3,9 +3,21 @@
 [![npm](https://img.shields.io/npm/v/%40pixid%2Fcanvas?logo=npm&label=npm)](https://www.npmjs.com/package/@pixid/canvas)
 [![license](https://img.shields.io/npm/l/%40pixid%2Fcanvas?color=blue)](https://github.com/thilllon/pixid/blob/main/LICENSE)
 
-<img src="https://raw.githubusercontent.com/thilllon/pixid/main/assets/alice.png" width="64" height="64" alt="identicon for alice" />
-
 Renders pixid blocky identicons to an HTML canvas element in the browser.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/thilllon/pixid/main/assets/pixid.png" width="64" height="64" alt="identicon for the seed pixid" />
+  &nbsp;
+  <img src="https://raw.githubusercontent.com/thilllon/pixid/main/assets/alice.png" width="64" height="64" alt="identicon for the seed alice" />
+  &nbsp;
+  <img src="https://raw.githubusercontent.com/thilllon/pixid/main/assets/bob.png" width="64" height="64" alt="identicon for the seed bob" />
+  &nbsp;
+  <img src="https://raw.githubusercontent.com/thilllon/pixid/main/assets/thilllon.png" width="64" height="64" alt="identicon for the seed thilllon" />
+</p>
+<p align="center">
+  <sub>Example output: the icons for the seeds <code>pixid</code>, <code>alice</code>, <code>bob</code>, and <code>thilllon</code>.<br />
+  The same seed always gives the same icon. The second one is what <code>createCanvas({ seed, scale: 16 })</code> draws.</sub>
+</p>
 
 **Requires:** a DOM (`document.createElement('canvas')` and a 2D context) and
 ES2022. The package declares Node.js 22 or later, but in Node.js use `toPng`

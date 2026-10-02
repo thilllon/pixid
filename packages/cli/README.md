@@ -3,10 +3,22 @@
 [![npm](https://img.shields.io/npm/v/%40pixid%2Fcli?logo=npm&label=npm)](https://www.npmjs.com/package/@pixid/cli)
 [![license](https://img.shields.io/npm/l/%40pixid%2Fcli?color=blue)](https://github.com/thilllon/pixid/blob/main/LICENSE)
 
-<img src="https://raw.githubusercontent.com/thilllon/pixid/main/assets/alice.png" width="64" height="64" alt="identicon for alice" />
-
 Command-line blocky identicon generator. Writes deterministic PNG or SVG
 identicons from any seed string.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/thilllon/pixid/main/assets/pixid.png" width="64" height="64" alt="identicon for the seed pixid" />
+  &nbsp;
+  <img src="https://raw.githubusercontent.com/thilllon/pixid/main/assets/alice.png" width="64" height="64" alt="identicon for the seed alice" />
+  &nbsp;
+  <img src="https://raw.githubusercontent.com/thilllon/pixid/main/assets/bob.png" width="64" height="64" alt="identicon for the seed bob" />
+  &nbsp;
+  <img src="https://raw.githubusercontent.com/thilllon/pixid/main/assets/thilllon.png" width="64" height="64" alt="identicon for the seed thilllon" />
+</p>
+<p align="center">
+  <sub>Example output: the icons for the seeds <code>pixid</code>, <code>alice</code>, <code>bob</code>, and <code>thilllon</code>.<br />
+  The same seed always gives the same icon. The second one is what <code>npx @pixid/cli alice</code> writes.</sub>
+</p>
 
 **Requires:** Node.js 22 or later.
 

@@ -9,7 +9,9 @@ dependencies beyond `@pixid/core`, and the same bytes on every runtime.
 [![CI](https://img.shields.io/github/actions/workflow/status/thilllon/pixid/ci.yml?branch=main&logo=githubactions&logoColor=white&label=CI)](https://github.com/thilllon/pixid/actions/workflows/ci.yml)
 [![license](https://img.shields.io/npm/l/%40pixid%2Fcore?color=blue)](./LICENSE)
 
-<table>
+What it generates, one icon per seed:
+
+<table align="center">
   <tr>
     <td align="center"><img src="https://raw.githubusercontent.com/thilllon/pixid/main/assets/eth-d8da6b.png" width="72" alt="identicon for 0xd8da6bf26964af9d7eed9e03e53415d37aa96045" /></td>
     <td align="center"><img src="https://raw.githubusercontent.com/thilllon/pixid/main/assets/eth-8ba1f1.png" width="72" alt="identicon for 0x8ba1f109551bd432803012645ac136ddd64dba72" /></td>
@@ -36,8 +38,10 @@ dependencies beyond `@pixid/core`, and the same bytes on every runtime.
   </tr>
 </table>
 
-Each cell is a 128×128 PNG from `toPng` in `@pixid/core`, shown at 72 px.
-Reproduce one with `npx @pixid/cli alice`.
+<p align="center">
+  <sub>The label under each icon is its seed. Each is a 128×128 PNG from <code>toPng</code> in <code>@pixid/core</code>, shown at 72 px.<br />
+  The same seed always gives the same icon: <code>npx @pixid/cli alice</code> writes the second one in the bottom row.</sub>
+</p>
 
 ## Install
 

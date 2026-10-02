@@ -3,10 +3,22 @@
 [![npm](https://img.shields.io/npm/v/%40pixid%2Freact?logo=npm&label=npm)](https://www.npmjs.com/package/@pixid/react)
 [![license](https://img.shields.io/npm/l/%40pixid%2Freact?color=blue)](https://github.com/thilllon/pixid/blob/main/LICENSE)
 
-<img src="https://raw.githubusercontent.com/thilllon/pixid/main/assets/alice.png" width="64" height="64" alt="identicon for alice" />
-
 React component for pixid blocky identicons. Renders inline SVG, works in
 server components, no client-side requirements.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/thilllon/pixid/main/assets/pixid.png" width="64" height="64" alt="identicon for the seed pixid" />
+  &nbsp;
+  <img src="https://raw.githubusercontent.com/thilllon/pixid/main/assets/alice.png" width="64" height="64" alt="identicon for the seed alice" />
+  &nbsp;
+  <img src="https://raw.githubusercontent.com/thilllon/pixid/main/assets/bob.png" width="64" height="64" alt="identicon for the seed bob" />
+  &nbsp;
+  <img src="https://raw.githubusercontent.com/thilllon/pixid/main/assets/thilllon.png" width="64" height="64" alt="identicon for the seed thilllon" />
+</p>
+<p align="center">
+  <sub>Example output: the icons for the seeds <code>pixid</code>, <code>alice</code>, <code>bob</code>, and <code>thilllon</code>.<br />
+  The same seed always gives the same icon. The second one is what <code>&lt;Pixid seed="alice" scale={16} /&gt;</code> renders.</sub>
+</p>
 
 **Requires:** `react >=17` as a peer dependency (one build covers 17, 18, and 19).
 No `react-dom` dependency. Node.js 22 or later for server rendering.
