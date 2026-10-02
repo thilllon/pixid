@@ -1,10 +1,9 @@
 import type { IconData } from './icon.js';
 
 /**
- * Throws unless `icon` looks like the data `createIcon()` returns. The
- * renderers used to take options in @pixid/svg and @pixid/png; without this,
- * an unmigrated `toSvg({ seed })` fails deep inside the renderer, or returns
- * a broken image when every color is given.
+ * Throws unless `icon` looks like the data `createIcon()` returns. Without
+ * this, a call that passes options, such as `toSvg({ seed })`, fails deep
+ * inside the renderer, or returns a broken image when every color is given.
  */
 export const assertIconData: (icon: unknown, fn: string) => asserts icon is IconData = (
   icon,

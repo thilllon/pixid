@@ -60,7 +60,7 @@ document.querySelector('img')!.src = toCanvasDataURL({ seed: 'alice', scale: 8 }
   its bytes differ between browsers. Use `toPng` from `@pixid/core` when you
   need reproducible files. The grid and colors drawn are the same everywhere.
 
-**Docs:** [`@pixid/canvas` in the pixid README](https://github.com/thilllon/pixid#pixidcanvas).
+**More:** the [pixid README](https://github.com/thilllon/pixid#readme) covers every package, the shared options, and ethereum-blockies compatibility.
 
 **Related:** [`@pixid/core`](https://www.npmjs.com/package/@pixid/core),
 [`@pixid/react`](https://www.npmjs.com/package/@pixid/react),

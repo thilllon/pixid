@@ -30,7 +30,7 @@ npx @pixid/cli alice --size 12 --scale 8                # 12×12 cells, 96×96 p
 npx @pixid/cli alice --bgcolor '#ffffff' --color '#111' # fixed palette
 ```
 
-## API
+## Flags
 
 | Flag                                                    | Default                           | Description                                                                                   |
 | ------------------------------------------------------- | --------------------------------- | --------------------------------------------------------------------------------------------- |
@@ -42,7 +42,9 @@ npx @pixid/cli alice --bgcolor '#ffffff' --color '#111' # fixed palette
 | `--color`, `--bgcolor`, `--spotcolor` `<#rgb\|#rrggbb>` | from seed                         | Foreground, background, and accent colors. Quote the `#`.                                     |
 | `-h`, `--help` / `-v`, `--version`                      |                                   | Print usage or the version and exit 0. Unknown flags or missing values still fail.            |
 
-Programmatically, `runCli(argv?: string[]): void` runs the command
+## Programmatic API
+
+`runCli(argv?: string[]): void` runs the command
 (`argv` defaults to `process.argv.slice(2)`), and `version: string` is the
 package version. Importing `@pixid/cli/run` runs `runCli()`; it is the `bin`
 entry, in both ESM and CommonJS.
@@ -69,7 +71,7 @@ runCli(['--seed', 'alice', '-o', 'alice.png']); // writes the file, prints the p
   `process.exit(1)` too, so use `toPng` and `toSvg` from `@pixid/core` when you
   want values back.
 
-**Docs:** [CLI in the pixid README](https://github.com/thilllon/pixid#cli).
+**More:** the [pixid README](https://github.com/thilllon/pixid#readme) covers every package, the shared options, and ethereum-blockies compatibility.
 
 **Related:** [`@pixid/core`](https://www.npmjs.com/package/@pixid/core),
 [`@pixid/canvas`](https://www.npmjs.com/package/@pixid/canvas),

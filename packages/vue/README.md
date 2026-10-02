@@ -23,12 +23,11 @@ npm i @pixid/vue
 <script setup lang="ts">
 import { Pixid } from '@pixid/vue';
 
-// Seeds are case-sensitive: lowercase Ethereum addresses to match MetaMask.
-defineProps<{ address: string }>();
+defineProps<{ name: string }>();
 </script>
 
 <template>
-  <Pixid :seed="address.toLowerCase()" :scale="6" role="img" :aria-label="address" />
+  <Pixid :seed="name" :scale="6" role="img" :aria-label="name" />
 </template>
 ```
 
@@ -66,7 +65,7 @@ component instance, whose `$el` is the `<svg>`.
   camelCase attributes, so `viewBox` became `viewbox` and server-rendered icons
   shrank to a speck.
 
-**Docs:** [`@pixid/vue` in the pixid README](https://github.com/thilllon/pixid#pixidvue).
+**More:** the [pixid README](https://github.com/thilllon/pixid#readme) covers every package, the shared options, and ethereum-blockies compatibility.
 
 **Related:** [`@pixid/core`](https://www.npmjs.com/package/@pixid/core),
 [`@pixid/react`](https://www.npmjs.com/package/@pixid/react),
