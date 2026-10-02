@@ -1,5 +1,11 @@
 # @pixid/core
 
+## 1.1.2
+
+### Patch Changes
+
+- d6fcffe: README: the package table no longer has an Install column.
+
 ## 1.1.1
 
 ### Patch Changes
