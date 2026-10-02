@@ -516,7 +516,3 @@ carries no PNG encoder.
 
 Development setup, checks, and the release process are in
 [AGENTS.md](./AGENTS.md).
-
-## License
-
-MIT

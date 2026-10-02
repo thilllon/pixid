@@ -35,7 +35,3 @@ PNG, and canvas, and comes with React and Vue components and a CLI.
 
 Usage, options, and the full API for every package are in the
 [pixid README](https://github.com/thilllon/pixid#cli).
-
-## License
-
-MIT
