@@ -1,5 +1,13 @@
 # @pixid/canvas
 
+## 1.1.4
+
+### Patch Changes
+
+- 222189a: README: the License section is removed; the license badge and the `LICENSE` file remain.
+- Updated dependencies [222189a]
+  - @pixid/core@1.1.4
+
 ## 1.1.3
 
 ### Patch Changes
