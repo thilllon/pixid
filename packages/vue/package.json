@@ -1,6 +1,6 @@
 {
   "name": "@pixid/vue",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "Vue 3 component for pixid blocky identicons. Renders inline SVG, works with SSR, no client-side requirements.",
   "keywords": [
     "identicon",
