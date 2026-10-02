@@ -1,13 +1,13 @@
 # pixid
 
+Deterministic blocky identicons from any seed string, compatible with
+[ethereum-blockies](https://github.com/ethereum/blockies). TypeScript, zero
+dependencies beyond `@pixid/core`, and the same bytes on every runtime.
+
+[![npm](https://img.shields.io/npm/v/%40pixid%2Fcore?logo=npm&label=npm)](https://www.npmjs.com/package/@pixid/core)
 [![downloads](https://img.shields.io/npm/d18m/%40pixid%2Fcore?logo=npm&label=downloads)](https://www.npmjs.com/package/@pixid/core)
 [![CI](https://img.shields.io/github/actions/workflow/status/thilllon/pixid/ci.yml?branch=main&logo=githubactions&logoColor=white&label=CI)](https://github.com/thilllon/pixid/actions/workflows/ci.yml)
 [![license](https://img.shields.io/npm/l/%40pixid%2Fcore?color=blue)](./LICENSE)
-
-## Examples
-
-Deterministic blocky identicons from any seed string. Eight seeds, eight icons —
-128×128 PNGs straight out of `toPng` in `@pixid/core`, shown here at 72 px.
 
 <table>
   <tr>
@@ -36,64 +36,80 @@ Deterministic blocky identicons from any seed string. Eight seeds, eight icons �
   </tr>
 </table>
 
-Reproduce any cell with one command, or the whole row with one script:
+Each cell is a 128×128 PNG from `toPng` in `@pixid/core`, shown at 72 px.
+Reproduce one with `npx @pixid/cli 0xd8da6bf26964af9d7eed9e03e53415d37aa96045`.
 
-```
-npx @pixid/cli 0xd8da6bf26964af9d7eed9e03e53415d37aa96045 --scale 16
-pnpm assets   # regenerates assets/*.png from the fixed seeds in assets/generate.ts
-```
+## Install
 
-Same grid and palette algorithm as the original
-[ethereum-blockies](https://github.com/ethereum/blockies), rewritten in
-TypeScript with zero runtime dependencies, split into small packages and
-tree-shakable exports so you only ship the renderer you actually use.
+Install only the package you render with. Each one brings in `@pixid/core`.
 
-Everything is on npm under the `@pixid` scope:
-[`@pixid/cli`](https://www.npmjs.com/package/@pixid/cli) for the command line,
-[`@pixid/core`](https://www.npmjs.com/package/@pixid/core) with the SVG and PNG
-renderers,
-[`@pixid/canvas`](https://www.npmjs.com/package/@pixid/canvas),
-[`@pixid/react`](https://www.npmjs.com/package/@pixid/react), and
-[`@pixid/vue`](https://www.npmjs.com/package/@pixid/vue) as libraries.
-
-- [Examples](#examples)
-- [Quickstart](#quickstart)
-- [Packages](#packages)
-- [Size](#size)
-- [How a seed becomes an icon](#how-a-seed-becomes-an-icon)
-- [Options](#options)
-- [Usage](#usage)
-- [CLI](#cli)
-- [API](#api)
-- [Compatibility](#compatibility)
-- [Development](#development)
-
-## Quickstart
-
-Write a PNG for an Ethereum address, nothing installed:
-
-```
-npx @pixid/cli 0x8ba1f109551bd432803012645ac136ddd64dba72
-# writes 0x8ba1f109551bd432803012645ac136ddd64dba72.png — 128×128 pixels, 4313 bytes
+```sh
+npm i @pixid/core     # SVG and PNG, any runtime
+npm i @pixid/canvas   # <canvas>, browsers
+npm i @pixid/react    # <Pixid /> for React 17+
+npm i @pixid/vue      # <Pixid /> for Vue 3.2.40+
+npx @pixid/cli alice  # the command line, nothing installed; see CLI below
 ```
 
-Seeds are case-sensitive. MetaMask and ethereum-blockies-base64 seed with
-`address.toLowerCase()`, so lowercase Ethereum addresses too: a checksummed
-(mixed-case) address gives a completely different icon (see
-[Compatibility](#compatibility)).
+## Usage
 
-In Node.js, a file or a data URL for an `<img>`:
+Seeds are case-sensitive. To match MetaMask and other blockies for an Ethereum
+address, seed with the lowercase address (see
+[compatibility](#ethereum--blockies-compatibility)).
+
+### Node.js
 
 ```ts
 import { writeFileSync } from 'node:fs';
-import { createIcon, toPng, toPngDataURL } from '@pixid/core';
+import { createIcon, toPng, toPngDataURL, toSvg } from '@pixid/core';
 
-const icon = createIcon({ seed: '0x8ba1f109551bd432803012645ac136ddd64dba72' });
-writeFileSync('avatar.png', toPng(icon, 16)); // 128×128, 4313 bytes
+const icon = createIcon({ seed: 'alice' });
+writeFileSync('alice.png', toPng(icon, 16)); // 128×128 px
+writeFileSync('alice.svg', toSvg(icon, 16));
 const src = toPngDataURL(icon, 16); // 'data:image/png;base64,...'
 ```
 
-In React, inline SVG with no hooks, so it runs in server components too:
+One `createIcon` call feeds every renderer. `toPng` returns a `Uint8Array`,
+which `writeFileSync` accepts as is.
+
+### Browser
+
+With no build step, from a CDN:
+
+```html
+<img id="avatar" width="128" height="128" />
+<script type="module">
+  import { createIcon, toSvgDataURL } from 'https://esm.sh/@pixid/core@1';
+  document.getElementById('avatar').src = toSvgDataURL(createIcon({ seed: 'alice' }), 16);
+</script>
+```
+
+`@pixid/canvas` also ships an IIFE build for classic script tags. It inlines
+`@pixid/core` and exposes the global `pixidCanvas`:
+
+```html
+<img id="avatar" width="128" height="128" />
+<script src="https://cdn.jsdelivr.net/npm/@pixid/canvas@1"></script>
+<script>
+  document.getElementById('avatar').src = pixidCanvas.toCanvasDataURL({ seed: 'alice', scale: 16 });
+</script>
+```
+
+The same file is on unpkg at `https://unpkg.com/@pixid/canvas@1`. The other
+packages are ESM and CommonJS only.
+
+### Canvas
+
+```ts
+import { createCanvas, renderToCanvas } from '@pixid/canvas';
+
+document.body.append(createCanvas({ seed: 'alice', scale: 8 })); // a new 64×64 canvas
+renderToCanvas(document.querySelector('canvas')!, { seed: 'alice', scale: 8 }); // resized to fit
+```
+
+These need a DOM. In Node.js, use `toPng` from `@pixid/core`.
+
+### React
 
 ```tsx
 import { Pixid } from '@pixid/react';
@@ -103,105 +119,246 @@ export const Avatar = ({ address }: { address: string }) => (
 );
 ```
 
-In a browser, no build step:
+The component renders inline SVG with no hooks or browser APIs, so it works in
+server components without `"use client"`.
 
-```html
-<img id="avatar" width="128" height="128" />
-<script type="module">
-  import { createIcon, toSvgDataURL } from 'https://esm.sh/@pixid/core';
-  const icon = createIcon({ seed: '0x8ba1f109551bd432803012645ac136ddd64dba72' });
-  document.getElementById('avatar').src = toSvgDataURL(icon, 16);
+### Vue
+
+```vue
+<script setup lang="ts">
+import { Pixid } from '@pixid/vue';
+
+defineProps<{ address: string }>();
 </script>
+
+<template>
+  <Pixid :seed="address.toLowerCase()" :scale="6" role="img" :aria-label="address" />
+</template>
 ```
 
-Same seed, same bytes, on every runtime. Every flag is in [CLI](#cli), every
-function in [API](#api), and the options they all share in [Options](#options).
+The component is a plain `h()` render function, so it needs no Vue compiler
+and renders under `@vue/server-renderer`.
+
+Both components render the same markup on server and client for a given
+`seed`. Without a `seed` the icon is random and hydration will not match.
+
+### Edge runtimes
+
+`@pixid/core` uses only `Math`, typed arrays, and `DataView`: no `Buffer`, no
+`zlib`, no Node.js built-ins. A Cloudflare Worker that serves avatars:
+
+```ts
+import { createIcon, toPng } from '@pixid/core';
+
+export default {
+  fetch(request: Request) {
+    const seed = new URL(request.url).pathname.slice(1);
+    return new Response(toPng(createIcon({ seed }), 16), {
+      headers: { 'content-type': 'image/png', 'cache-control': 'public, max-age=31536000' },
+    });
+  },
+};
+```
+
+The encoder is synchronous, so there is nothing to await.
 
 ## Packages
 
-Every package name below links to its page on npm.
+| Package                                                        | What it does                                                  | Runs in     |
+| -------------------------------------------------------------- | ------------------------------------------------------------- | ----------- |
+| [`@pixid/core`](https://www.npmjs.com/package/@pixid/core)     | Seed → pixel grid and palette, plus SVG and PNG renderers.    | everywhere  |
+| [`@pixid/canvas`](https://www.npmjs.com/package/@pixid/canvas) | Renders to an HTML `<canvas>`.                                | browsers    |
+| [`@pixid/react`](https://www.npmjs.com/package/@pixid/react)   | `<Pixid />` rendering inline SVG. Works in server components. | React 17+   |
+| [`@pixid/vue`](https://www.npmjs.com/package/@pixid/vue)       | `<Pixid />` rendering inline SVG. Works with SSR.             | Vue 3.2.40+ |
+| [`@pixid/cli`](https://www.npmjs.com/package/@pixid/cli)       | The `pixid` command. Writes PNG or SVG files.                 | Node.js 22+ |
 
-| Package                                                        | What it does                                                                               | Runs in       | Tarball |
-| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ------------- | ------- |
-| [`@pixid/core`](https://www.npmjs.com/package/@pixid/core)     | Seed → pixel grid + color palette, plus SVG and PNG renderers with a built-in PNG encoder. | everywhere    | 5.8 kB  |
-| [`@pixid/canvas`](https://www.npmjs.com/package/@pixid/canvas) | Renders to an HTML `<canvas>`.                                                             | browsers      | 3.9 kB  |
-| [`@pixid/react`](https://www.npmjs.com/package/@pixid/react)   | `<Pixid />` component rendering inline SVG. Works in server components.                    | React 17+     | 2.9 kB  |
-| [`@pixid/vue`](https://www.npmjs.com/package/@pixid/vue)       | `<Pixid />` component rendering inline SVG. Works with SSR.                                | Vue 3.2.40+   | 3.3 kB  |
-| [`@pixid/cli`](https://www.npmjs.com/package/@pixid/cli)       | The `pixid` command. Writes PNG or SVG files.                                              | Node.js 18.3+ | 4.6 kB  |
+Every package is ESM and CommonJS, fully typed, and side-effect free (the CLI's
+bin entry is the one module that runs on import). The only runtime dependency
+of each package is `@pixid/core`; `react >=17` and `vue >=3.2.40` are peer
+dependencies you install yourself. `@pixid/react` and `@pixid/vue` build their
+SVG from `@pixid/core`'s data, and their tests check it against `toSvg` rect by
+rect.
 
-Tarball sizes are the gzipped published artifacts, measured with `pnpm pack`.
+Supported runtimes:
 
-How the packages depend on each other at runtime. An arrow points from a package
-to one it installs; dashed arrows are peer dependencies that you install yourself.
+- **Node.js 22 or later** for every package (`engines.node` is `>=22`). CI
+  tests Node.js 22, 24, and 26.
+- **Browsers** with ES2022 support. `@pixid/canvas` needs a DOM; the others do
+  not.
+- **Edge runtimes** such as Cloudflare Workers, for `@pixid/core`,
+  `@pixid/react`, and `@pixid/vue`.
 
-```mermaid
-flowchart TD
-  cli["@pixid/cli"] --> core["@pixid/core"]
-  canvas["@pixid/canvas"] --> core
-  react["@pixid/react"] --> core
-  vue["@pixid/vue"] --> core
-  react -. peer .-> reactPeer(["react >=17"])
-  vue -. peer .-> vuePeer(["vue >=3.2.40"])
-  classDef external stroke-dasharray: 4 4
-  class reactPeer,vuePeer external
+## Options
+
+These options are shared by `createIcon`, the `@pixid/canvas` functions, the
+React and Vue components, and, as flags, the CLI. Every field is optional.
+
+| Option      | Type         | Default           | Description                                               |
+| ----------- | ------------ | ----------------- | --------------------------------------------------------- |
+| `seed`      | `string`     | random            | Same seed, same icon.                                     |
+| `size`      | `number`     | `8`               | Cells per side. A positive integer.                       |
+| `scale`     | `number`     | `4` (CLI: `16`)   | Pixels per cell. The image is `size * scale` pixels wide. |
+| `color`     | `ColorInput` | derived from seed | Foreground color (grid value `1`).                        |
+| `bgcolor`   | `ColorInput` | derived from seed | Background color (grid value `0`).                        |
+| `spotcolor` | `ColorInput` | derived from seed | Accent color (grid value `2`).                            |
+
+**`seed`.** An omitted, `null`, or empty (`''`) seed is replaced by a random
+14-character hex string, returned on `IconData.seed`. JavaScript callers may
+pass a number or bigint, which is converted with `String()`, so `42`, `42n`,
+and `'42'` give the same icon; pass ids above `Number.MAX_SAFE_INTEGER` as
+strings. Any other type throws a `TypeError`.
+
+**`scale`.** `createIcon` does not take it: its `IconData` is
+resolution-independent, and each renderer takes `scale` as its own argument
+(`toSvg(icon, scale)`) or option (`createCanvas({ scale })`, `<Pixid scale>`).
+PNG and canvas output need a positive integer, since they fill whole pixels.
+SVG output (`toSvg`, React, Vue) takes any finite positive number, such as
+`1.5`. Anything else throws a `RangeError`.
+
+**`ColorInput`** is a hex string or an RGB tuple. Anything else throws a
+`TypeError`; named CSS colors, `rgb()` strings, and alpha are not supported.
+
+| Form        | Example         | Notes                                    |
+| ----------- | --------------- | ---------------------------------------- |
+| `#rgb`      | `'#f0a'`        | Case-insensitive, expanded to `#ff00aa`. |
+| `#rrggbb`   | `'#ff00aa'`     | Case-insensitive.                        |
+| `[r, g, b]` | `[255, 0, 170]` | Three integers in `0..255`.              |
+
+Setting one color changes the rest of the icon too; see
+[how a seed becomes an icon](#how-a-seed-becomes-an-icon).
+
+## CLI
+
+```
+npx @pixid/cli [seed] [options]
 ```
 
-`@pixid/react` and `@pixid/vue` build their inline SVG straight from
-`@pixid/core`'s data rather than calling its `toSvg`; their tests check that
-they draw the same rects as `toSvg`.
+The package installs a command named `pixid`; `npm i -g @pixid/cli` puts it on
+your `PATH`. There is no unscoped `pixid` package on npm, so run it with
+`npx @pixid/cli`.
 
-Every package is ESM + CJS, fully typed, and side-effect free. Nothing here
-depends on `Buffer`, `fs`, `canvas`, or any npm package outside the `@pixid/*`
-graph, so the same code runs in Node.js, browsers, and edge runtimes such as
-Cloudflare Workers. Three documented exceptions: `@pixid/react` has `react >=17`
-as a peer dependency, `@pixid/vue` has `vue >=3.2.40`, and `@pixid/cli` is a
-Node.js program that imports `node:fs`, `node:path`, `node:crypto`, and
-`node:util` (its `sideEffects` lists `./dist/cli.js` and `./dist/cli.cjs`
-rather than being `false`, because those two files run the CLI when imported).
+```sh
+npx @pixid/cli                                          # random seed -> <uuid>.png
+npx @pixid/cli alice                                    # -> alice.png, 128×128
+npx @pixid/cli alice --out avatars/alice.svg            # -> SVG, format inferred
+npx @pixid/cli alice --size 12 --scale 8                # 12×12 cells, 96×96 px
+npx @pixid/cli alice --bgcolor '#ffffff' --color '#111' # fixed palette
+```
 
-## Size
+The CLI's `--scale` defaults to `16`, not `4`. Every flag, the output filename
+rules, and the error behavior: [`packages/cli`](./packages/cli/README.md).
 
-Measured with esbuild (`bundle`, `minify`, `format: esm`), the same way each
-package's `src/bundle.test.ts` enforces its budget:
+## API
 
-| Import                                                   | Minified bundle |
-| -------------------------------------------------------- | --------------- |
-| `import { createIcon } from '@pixid/core'`               | 2.1 kB          |
-| `import { createIcon, toSvg } from '@pixid/core'`        | 2.9 kB          |
-| `import { createIcon, toPng } from '@pixid/core'`        | 3.9 kB          |
-| `import { createIcon, toPng, toSvg } from '@pixid/core'` | 4.6 kB          |
-| `import { createCanvas } from '@pixid/canvas'`           | 2.8 kB          |
-| `import { Pixid } from '@pixid/react'`                   | 2.9 kB          |
-| `import { Pixid } from '@pixid/vue'`                     | 3.1 kB          |
+### `@pixid/core`
 
-The renderers share one package but not one bundle: an app that imports
-`createIcon` or `toSvg` alone carries no PNG encoder. The `@pixid/react` and
-`@pixid/vue` figures exclude `react` and `vue`, which are peer dependencies.
+| Function                                       | Returns                   | Notes                                                         |
+| ---------------------------------------------- | ------------------------- | ------------------------------------------------------------- |
+| `createIcon(options?: IconOptions)`            | `IconData`                | Grid (`size * size` cells, each `0`, `1`, or `2`) and colors. |
+| `toSvg(icon: IconData, scale?: number)`        | `string`                  | A complete `<svg>` document. `scale` defaults to `4`.         |
+| `toSvgDataURL(icon: IconData, scale?: number)` | `string`                  | `data:image/svg+xml;charset=utf-8,` + `encodeURIComponent`.   |
+| `toPng(icon: IconData, scale?: number)`        | `Uint8Array<ArrayBuffer>` | PNG file bytes. `scale` defaults to `4`.                      |
+| `toPngDataURL(icon: IconData, scale?: number)` | `string`                  | `data:image/png;base64,` + the same bytes.                    |
+| `iconRuns(icon: IconData)`                     | `CellRun[]`               | Horizontal runs of same-valued, non-background cells.         |
+| `parseColor(input: ColorInput)`                | `RGB`                     | Normalizes a color. Throws `TypeError` on anything else.      |
+| `rgbToCss(rgb: RGB)`                           | `string`                  | `'rgb(12,34,56)'`.                                            |
 
-A cold `npx @pixid/cli` downloads two tarballs, `@pixid/cli` and
-`@pixid/core`, totaling 10.5 kB, and does not pull in `@pixid/canvas`,
-`@pixid/react`, or `@pixid/vue`; `packages/cli/src/registry.e2e.test.ts`
-publishes everything to a local verdaccio registry and asserts it.
+`toPng` writes an indexed-color PNG in zlib stored (uncompressed) blocks: no
+compression library, synchronous, and identical bytes on every runtime. Full
+reference, including the types and the errors each function throws:
+[`packages/core`](./packages/core/README.md).
 
-## How a seed becomes an icon
+### `@pixid/canvas`
 
-`createIcon` seeds a xorshift PRNG from the seed string, then makes draws in a
-fixed order:
+`CanvasOptions` is `IconOptions` plus `scale`. Full reference:
+[`packages/canvas`](./packages/canvas/README.md).
 
-1. foreground `color` — 6 draws (a hue in whole degrees, saturation, and four lightness samples averaged into a bell curve)
-2. `bgcolor` — 6 draws
-3. `spotcolor` — 6 draws
-4. the grid — `size * ceil(size / 2)` draws, one per cell of the left half
+| Function                                                                | Returns         | Notes                                                 |
+| ----------------------------------------------------------------------- | --------------- | ----------------------------------------------------- |
+| `renderToCanvas(canvas: HTMLCanvasElement, options?: CanvasOptions)`    | the same canvas | Resizes the canvas to `size * scale` and draws.       |
+| `createCanvas(options?: CanvasOptions)`                                 | a new canvas    | Uses `document.createElement('canvas')`.              |
+| `toCanvasDataURL(options?: CanvasOptions)`                              | `string`        | `createCanvas(...).toDataURL('image/png')`.           |
+| `renderIconToCanvas(icon: IconData, canvas: HTMLCanvasElement, scale?)` | the same canvas | Draws precomputed icon data. `scale` defaults to `4`. |
 
-Each grid cell gets `Math.floor(rand() * 2.3)`, so roughly 43% background, 43%
-foreground, and 13% spot. The left half is mirrored onto the right, which is
-what gives blockies their symmetry. With an odd `size` the middle column is
-drawn once and not mirrored.
+`toCanvasDataURL` uses the browser's PNG encoder, so its bytes differ between
+browsers. Use `toPng` when you need reproducible files.
 
-**Explicitly provided colors skip their PRNG draws.** This matters: it is not
-just the one color that changes, it shifts every later draw. Passing `color`
-makes the icon's background take the palette entry the foreground would have
-had, and produces a completely different grid:
+### `@pixid/react`
+
+`<Pixid />` takes the six [options](#options) as props, plus any
+`SVGProps<SVGSVGElement>` (`className`, `style`, `role`, `aria-*`, ...), which
+are spread onto the root `<svg>` after the computed attributes, so `width`,
+`height`, and `viewBox` can be overridden. A `ref` reaches the `<svg>` on React
+17, 18, and 19. Full reference: [`packages/react`](./packages/react/README.md).
+
+### `@pixid/vue`
+
+`<Pixid />` declares the six [options](#options) as props. Everything else,
+such as `class`, `style`, `role`, `aria-*`, and listeners, falls through to the
+root `<svg>`, and can override `width`, `height`, and `viewBox`. The markup is
+byte for byte what `@pixid/react` renders. Full reference:
+[`packages/vue`](./packages/vue/README.md).
+
+### `@pixid/cli`
+
+The `pixid` command is summarized in [CLI](#cli). The package also exports
+`runCli(argv?)` and `version` for running the CLI from a script. Full reference:
+[`packages/cli`](./packages/cli/README.md).
+
+## Stability
+
+pixid follows [semantic versioning](https://semver.org). Within 1.x, for the
+same input:
+
+- `createIcon` returns the same grid and the same colors.
+- `toSvg`, `toSvgDataURL`, `toPng`, and `toPngDataURL` return the same bytes,
+  and so do the files the CLI writes.
+
+A change to any of these is a major release. The promise does not cover the
+markup that `@pixid/react` and `@pixid/vue` render, beyond the grid and colors
+it draws, or `toCanvasDataURL`, whose bytes come from the browser. Randomly
+generated seeds are random.
+
+Changes are listed in each package's `CHANGELOG.md`, for example
+[`packages/core/CHANGELOG.md`](./packages/core/CHANGELOG.md).
+
+## Ethereum / blockies compatibility
+
+The PRNG, draw order, color arithmetic, cell distribution, and mirroring rules
+are identical to ethereum-blockies. `packages/core/src/core.test.ts` keeps a
+direct port of the original code as an oracle and asserts grid-for-grid and
+color-for-color equality, and it checks palettes against PNGs rendered by
+ethereum-blockies-base64.
+
+- **Grids** always match.
+- **Colors** match ethereum-blockies-base64 and MetaMask Mobile's Blockies
+  down to the RGB value. The original ethereum-blockies hands CSS `hsl()`
+  strings to the browser, whose rounding can differ by one step on rare seeds
+  (about 1 in 10,000 in Chromium). MetaMask's browser extension draws with
+  `blo`, which drops the fractions of saturation and lightness, so its colors
+  can differ by a few steps while hue and grid stay the same.
+- **Seeds** are used exactly as given. MetaMask and ethereum-blockies-base64
+  seed with `address.toLowerCase()`, so lowercase the address to match them. A
+  checksummed address such as `0x8ba1f109551bD432803012645Ac136ddd64DBA72`
+  is a different seed and gives a completely different icon.
+
+### How a seed becomes an icon
+
+`createIcon` seeds a xorshift PRNG from the seed string, then draws in a fixed
+order:
+
+1. `color`: 6 draws (a hue in whole degrees, saturation, and four lightness samples averaged into a bell curve)
+2. `bgcolor`: 6 draws
+3. `spotcolor`: 6 draws
+4. the grid: `size * ceil(size / 2)` draws, one per cell of the left half
+
+Each cell gets `Math.floor(rand() * 2.3)`: roughly 43% background, 43%
+foreground, and 13% spot. The left half is mirrored onto the right; with an odd
+`size` the middle column is drawn once.
+
+An explicitly provided color skips its six draws, which shifts every later
+draw. Passing `color` gives the background the palette entry the foreground
+would have had, and a different grid:
 
 ```ts
 import { createIcon } from '@pixid/core';
@@ -210,495 +367,34 @@ createIcon({ seed: 'alice' }).bgcolor; // [44, 38, 18]
 createIcon({ seed: 'alice', color: '#ff0000' }).bgcolor; // [27, 12, 11]
 ```
 
-This is the original ethereum-blockies behavior, kept deliberately so icons
-match classic blockies for the same inputs. If you want a fixed background
-without disturbing the rest of the icon, replace the color on the icon data
-before rendering it. The renderers read RGB tuples, so convert with
-`parseColor`: `toSvg({ ...createIcon({ seed }), bgcolor: parseColor('#fff') })`.
+To change only one color, replace it on the icon data instead:
+`toSvg({ ...createIcon({ seed }), bgcolor: parseColor('#fff') })`.
 
-Everything else is pure: the same options always produce the same bytes, on
-every runtime, with no global state. When `seed` is omitted, `createIcon`
-generates a random 14-character hex string (the CLI generates a UUID instead)
-and returns it on `IconData.seed`. An empty string counts as omitted, as it
-does in ethereum-blockies: it has no characters to seed the PRNG with, so the
-state would stay all zero, every draw would be `0`, and the icon would come
-out solid black.
+This is the original ethereum-blockies behavior, kept so icons match for the
+same inputs. An empty seed counts as omitted, as it does there: it would leave
+the PRNG state all zero and the icon solid black.
 
-## Options
+## Migrating
 
-`renderToCanvas`, `createCanvas`, and `toCanvasDataURL` from `@pixid/canvas`,
-and the `@pixid/react` and `@pixid/vue` components, accept all of these options
-in one object, and every field is optional. `createIcon` takes the same object
-without `scale`; the functions that render the `IconData` it returns (`toSvg`,
-`toSvgDataURL`, `toPng`, `toPngDataURL`, `renderIconToCanvas`) take `scale` as
-an argument of their own:
+### From 0.x to 1.0
 
-| Option      | Type         | Default           | Description                                                    |
-| ----------- | ------------ | ----------------- | -------------------------------------------------------------- |
-| `seed`      | `string`     | random            | Same seed, same icon. Ethereum addresses work well.            |
-| `size`      | `number`     | `8`               | Cells per side. Must be a positive integer.                    |
-| `scale`     | `number`     | `4` (CLI: `16`)   | Pixels per cell. Rendered image is `size * scale` pixels wide. |
-| `color`     | `ColorInput` | derived from seed | Foreground color (grid value `1`).                             |
-| `bgcolor`   | `ColorInput` | derived from seed | Background color (grid value `0`).                             |
-| `spotcolor` | `ColorInput` | derived from seed | Accent color (grid value `2`).                                 |
+- **Node.js 22 or later.** Every package now declares `engines.node: ">=22"`
+  (it was `>=18`, and `>=18.3.0` for the CLI).
+- **`toPng` returns `Uint8Array<ArrayBuffer>`.** It can go straight into
+  `new Response()` or `new Blob()`, so an `as Uint8Array<ArrayBuffer>` cast can
+  be removed. Reading the type needs TypeScript 5.7 or later, or
+  `skipLibCheck`.
 
-`seed` is typed as a string, and `''` counts as omitted. JavaScript callers
-may also pass a number or bigint, which is converted with `String()`, so `42`,
-`42n`, and `'42'` give the same icon. A number above `Number.MAX_SAFE_INTEGER`
-may already have lost precision, so pass ids that large as strings. `null`
-counts as omitted too, and any other non-string `seed`, such as a boolean or an
-object, throws a `TypeError`.
-
-`scale` belongs to the renderers (`toSvg` and `toPng` in `@pixid/core`,
-`@pixid/canvas`, `@pixid/react`, `@pixid/vue`), not to `createIcon`, whose
-`IconData` is resolution-independent and renders at any scale. `toPng` and
-`@pixid/canvas` require a positive integer, since they fill whole pixels, and
-`toSvg`, `@pixid/react`, and `@pixid/vue` take any finite positive number.
-Each throws a `RangeError` otherwise.
-
-A `ColorInput` is either a hex string or an RGB tuple:
-
-| Form        | Example         | Notes                                    |
-| ----------- | --------------- | ---------------------------------------- |
-| `#rgb`      | `'#f0a'`        | Case-insensitive, expanded to `#ff00aa`. |
-| `#rrggbb`   | `'#ff00aa'`     | Case-insensitive.                        |
-| `[r, g, b]` | `[255, 0, 170]` | Three integers in `0..255`.              |
-
-Anything else throws a `TypeError` from `parseColor`. Named CSS colors,
-`rgb()` strings, and alpha channels are not supported.
-
-## Usage
-
-### Node.js
-
-```ts
-import { writeFileSync } from 'node:fs';
-import { createIcon, toPng, toPngDataURL, toSvg } from '@pixid/core';
-
-const icon = createIcon({ seed: 'alice' });
-writeFileSync('avatar.png', toPng(icon, 16)); // 128×128, 4313 bytes
-writeFileSync('avatar.svg', toSvg(icon, 16));
-
-const url = toPngDataURL(icon, 16); // data:image/png;base64,...
-```
-
-`toPng` returns a `Uint8Array`. `writeFileSync` accepts it directly; there is
-no `Buffer` anywhere in the encoder. One `createIcon` call feeds every
-renderer, so the PRNG runs once however many formats you write.
-
-### Browser, no install
-
-```html
-<img id="avatar" width="128" height="128" />
-<script type="module">
-  import { createIcon, toSvgDataURL } from 'https://esm.sh/@pixid/core';
-  document.getElementById('avatar').src = toSvgDataURL(createIcon({ seed: 'alice' }), 16);
-</script>
-```
-
-`@pixid/canvas` also ships an IIFE build for classic script tags, exposing the
-global `pixidCanvas`:
-
-```html
-<script src="https://cdn.jsdelivr.net/npm/@pixid/canvas"></script>
-<script>
-  document.getElementById('avatar').src = pixidCanvas.toCanvasDataURL({ seed: 'alice', scale: 16 });
-</script>
-```
-
-The IIFE bundle inlines its `@pixid/*` dependencies and is 2.9 kB minified.
-`@pixid/core`, `@pixid/react`, and `@pixid/vue` are ESM/CJS only.
-
-### Canvas
-
-```ts
-import { createCanvas, renderToCanvas, toCanvasDataURL } from '@pixid/canvas';
-
-// New element, sized to size * scale and appended by you.
-document.body.append(createCanvas({ seed: 'alice', scale: 8 }));
-
-// Or draw into a canvas you already have. It is resized to fit.
-const existing = document.querySelector('canvas')!;
-renderToCanvas(existing, { seed: 'alice', scale: 8 });
-
-// Or go straight to a PNG data URL produced by the browser's encoder.
-document.querySelector('img')!.src = toCanvasDataURL({ seed: 'alice', scale: 8 });
-```
-
-These need a DOM. `createCanvas` and `toCanvasDataURL` call
-`document.createElement('canvas')`; in Node.js, use `toPng` from `@pixid/core`
-instead.
-
-### React
-
-```tsx
-import { Pixid } from '@pixid/react';
-
-export const Avatar = ({ address }: { address: string }) => (
-  <Pixid
-    seed={address.toLowerCase()}
-    scale={6}
-    className="avatar"
-    role="img"
-    aria-label={address}
-  />
-);
-```
-
-The component renders inline SVG with no hooks, no effects, and no browser
-APIs, so it works in React Server Components and during SSR without a
-`"use client"` boundary:
-
-```tsx
-// app/page.tsx — a server component, no directive needed
-import { Pixid } from '@pixid/react';
-
-export default async function Page() {
-  const user = await getUser();
-  return <Pixid seed={user.id} scale={8} />;
-}
-```
-
-Given a `seed`, the same props always produce the same markup, so server and
-client renders match and hydration is clean. Omitting `seed` makes the
-component non-deterministic and will cause a hydration mismatch.
-
-One build covers React 17, 18, and 19: refs reach the `<svg>` element on all
-three, and the package loads under Node.js ESM even with React 17. Details are
-in [`@pixid/react`](#pixidreact).
-
-### Vue
-
-```vue
-<script setup lang="ts">
-import { Pixid } from '@pixid/vue';
-
-const props = defineProps<{ address: string }>();
-</script>
-
-<template>
-  <Pixid
-    :seed="props.address.toLowerCase()"
-    :scale="6"
-    class="avatar"
-    role="img"
-    :aria-label="props.address"
-  />
-</template>
-```
-
-The component is written with Vue's `h()` render function, so the package ships
-plain JavaScript and needs no Vue compiler — an app without a build step can
-import it too. It uses no lifecycle hooks and no browser APIs, so it renders
-under `@vue/server-renderer` as happily as in the browser:
-
-```ts
-import { Pixid } from '@pixid/vue';
-import { renderToString } from '@vue/server-renderer';
-import { createSSRApp } from 'vue';
-
-const markup = await renderToString(createSSRApp(Pixid, { seed: 'alice', scale: 8 }));
-```
-
-Given a `seed`, the same props always produce the same markup, so server and
-client renders match and hydration is clean. Omitting `seed` makes the
-component non-deterministic and will cause a hydration mismatch. Details are in
-[`@pixid/vue`](#pixidvue).
-
-### Edge runtimes
-
-`@pixid/core`, renderers included, uses only `Math`, typed arrays, and
-`DataView`. No `Buffer`, no `fs`, no `zlib`, no dynamic `require`, no Node.js
-built-ins at all:
-
-```ts
-import { createIcon, toPng } from '@pixid/core';
-
-export default {
-  fetch(request: Request) {
-    const seed = new URL(request.url).pathname.slice(1);
-    const png = toPng(createIcon({ seed }), 16) as Uint8Array<ArrayBuffer>;
-    return new Response(png, {
-      headers: { 'content-type': 'image/png', 'cache-control': 'public, max-age=31536000' },
-    });
-  },
-};
-```
-
-The `as Uint8Array<ArrayBuffer>` is needed because `toPng` is typed as a plain
-`Uint8Array`, which the DOM types in TypeScript 5.9 and later reject as a
-`Response` body since it could be backed by a `SharedArrayBuffer`; `toPng`
-always allocates a regular `ArrayBuffer`, so the assertion is safe.
-
-The PNG encoder is synchronous and allocation-light, so there is nothing to
-await and no CPU-time surprise: a 128×128 icon is 4313 bytes.
-
-## CLI
-
-```
-npx @pixid/cli [seed] [options]
-```
-
-`@pixid/cli` installs a `pixid` command (`npm i -g @pixid/cli` gives you
-`pixid` on your `PATH`). The command is named `pixid`, but the package is
-always `@pixid/cli`: there is no unscoped `pixid` package on npm, so
-`npx pixid` only works where `@pixid/cli` is already installed. Use
-`npx @pixid/cli`.
-
-### Flags
-
-| Flag                   | Type              | Default                           | Description                                                         |
-| ---------------------- | ----------------- | --------------------------------- | ------------------------------------------------------------------- |
-| `[seed]`               | positional        | random UUID                       | The seed. Mutually exclusive with `--seed`. At most one is allowed. |
-| `-s`, `--seed <seed>`  | string            | random UUID                       | The seed, as a flag.                                                |
-| `-o`, `--out <file>`   | path              | `<sanitized-seed>.<format>`       | Output path, resolved against the current directory.                |
-| `-f`, `--format <fmt>` | `png`\|`svg`      | inferred from `--out`, else `png` | Output format.                                                      |
-| `--size <n>`           | integer ≥ 1       | `8`                               | Cells per side. `size × scale` must be at most 4096.                |
-| `--scale <n>`          | integer ≥ 1       | `16`                              | Pixels per cell. Note this differs from the library default of `4`. |
-| `--color <color>`      | `#rgb`\|`#rrggbb` | from seed                         | Foreground color.                                                   |
-| `--bgcolor <color>`    | `#rgb`\|`#rrggbb` | from seed                         | Background color.                                                   |
-| `--spotcolor <color>`  | `#rgb`\|`#rrggbb` | from seed                         | Accent color.                                                       |
-| `-h`, `--help`         | boolean           |                                   | Print usage and exit 0. Unknown flags or missing values still fail. |
-| `-v`, `--version`      | boolean           |                                   | Print the `@pixid/cli` version and exit 0.                          |
-
-RGB tuples are library-only; on the command line colors must be hex strings.
-
-### Behavior
-
-**Seed.** Pass it positionally or with `--seed`, not both — doing both exits 1
-with `pass the seed either as a positional argument or with --seed, not both`.
-More than one positional argument is also an error. With no seed at all the
-CLI generates a `crypto.randomUUID()` and names the file after it. An empty
-seed (`--seed ''` or `''` as the positional) counts as no seed.
-
-**Format inference.** If `--format` is given it wins. Otherwise, when `--out`
-is given, the format is `svg` if the path ends in `.svg` (case-insensitive)
-and `png` for every other extension — `-o icon.jpeg` writes PNG bytes to
-`icon.jpeg`. With neither flag the format is `png`.
-
-**Default filename.** Without `--out` the file is named after the seed with
-every character outside `[A-Za-z0-9._-]` replaced by `_`, cut to its first
-100 characters, plus the format extension. Seed `a/b:c` writes `a_b_c.png`.
-The cut keeps names well under the 255-byte limit of common filesystems; it
-only affects the filename, not the icon, so seeds that share their first 100
-characters write to the same file. `--out` is used verbatim and is resolved
-against `process.cwd()`.
-
-**Output.** On success the absolute path and size go to stdout —
-`/tmp/x/alice.png (4313 bytes)` — where the size is the PNG byte length, or
-the SVG string length for `--format svg`. Missing parent directories are
-created, so `--out avatars/alice.svg` works without an `avatars/` directory.
-Existing files are overwritten.
-
-**Size limit.** The rendered image is capped at 4096 pixels per side, so
-`--size × --scale` may not exceed 4096 — `--scale 100000` exits 1 rather than
-spending minutes allocating a 640-billion-pixel image. The library functions
-take any size you ask for; only the command line draws the line.
-
-**Errors.** Every invalid input writes `pixid: <message>` followed by
-`Run "pixid --help" for usage.` to stderr and exits with code 1. That covers
-unknown flags, unknown formats, non-positive-integer `--size`/`--scale`, an
-image over the size limit, and malformed colors. Nothing is written to disk when an input error occurs. A
-file that cannot be written — `--out` names an existing directory, a
-permission is missing, a name is too long — is reported the same way with the
-system's message, such as
-`pixid: EISDIR: illegal operation on a directory, open '/tmp/x/avatars'`.
-
-### Examples
-
-```
-npx @pixid/cli                                            # random seed -> <uuid>.png
-npx @pixid/cli alice                                      # -> alice.png, 128×128
-npx @pixid/cli --seed alice --out avatars/alice.svg       # -> SVG, format inferred
-npx @pixid/cli alice -f svg --scale 32                    # -> alice.svg, 256×256
-npx @pixid/cli alice --size 12 --scale 8                  # 12×12 cells, 96×96 px
-npx @pixid/cli alice --bgcolor '#ffffff' --color '#111'   # fixed palette
-npx @pixid/cli 0x8ba1f109551bd432803012645ac136ddd64dba72 # MetaMask-style avatar
-```
-
-Quote hex colors so your shell does not treat `#` as a comment.
-
-## API
-
-### `@pixid/core`
-
-Types first, since every other package builds on them.
-
-```ts
-type RGB = readonly [number, number, number];
-type ColorInput = RGB | string;
-
-interface IconOptions {
-  seed?: string;
-  size?: number;
-  color?: ColorInput;
-  bgcolor?: ColorInput;
-  spotcolor?: ColorInput;
-}
-
-interface IconData {
-  seed: string; // the seed used, including a generated one
-  size: number;
-  grid: readonly number[]; // size * size entries, row-major, each 0 | 1 | 2
-  color: RGB; // grid value 1
-  bgcolor: RGB; // grid value 0
-  spotcolor: RGB; // grid value 2
-}
-
-interface CellRun {
-  x: number;
-  y: number;
-  width: number;
-  value: number; // 1 = foreground, 2 = spot; background is never emitted
-}
-```
-
-#### `createIcon(options?: IconOptions): IconData`
-
-Computes the grid and palette for a seed. Throws `RangeError` if `size` is not
-a positive integer, and `TypeError` if any color is malformed or `seed` is not
-a string, number, or bigint. A number or bigint seed is converted with
-`String()`; an omitted, `null`, or empty (`''`) seed is replaced by a random
-one. Either way, `IconData.seed` is the string that was actually used.
-
-```ts
-import { createIcon } from '@pixid/core';
-
-const icon = createIcon({ seed: 'alice' });
-icon.size; // 8
-icon.grid.length; // 64
-icon.grid.slice(0, 8); // [1, 0, 1, 2, 2, 1, 0, 1]
-icon.color; // [27, 12, 11]
-icon.bgcolor; // [44, 38, 18]
-icon.spotcolor; // [198, 2, 12]
-
-createIcon({ size: 5 }).grid.length; // 25
-createIcon({}).seed; // e.g. '001c5f3778786a' — a generated seed, echoed back
-createIcon({ seed: '' }).seed; // e.g. '0b8e2d51f7a3c6' — '' counts as omitted
-```
-
-#### `iconRuns(icon: IconData): CellRun[]`
-
-Collapses the grid into horizontal runs of adjacent same-valued non-background
-cells. The renderers use it to emit one shape per run instead of one per cell;
-`createIcon({ seed: 'alice' })` has 64 cells and 29 runs.
-
-```ts
-import { createIcon, iconRuns } from '@pixid/core';
-
-iconRuns(createIcon({ seed: 'alice' })).slice(0, 3);
-// [ { x: 0, y: 0, width: 1, value: 1 },
-//   { x: 2, y: 0, width: 1, value: 1 },
-//   { x: 3, y: 0, width: 2, value: 2 } ]
-```
-
-Runs never cross a row boundary, and background cells (`0`) are skipped
-entirely, which is why every renderer paints a full-size background rect first.
-
-#### `parseColor(input: ColorInput): RGB`
-
-Normalizes a `ColorInput` into an RGB tuple. Throws `TypeError` on anything
-else, including out-of-range or non-integer tuple entries.
-
-```ts
-import { parseColor } from '@pixid/core';
-
-parseColor('#f0a'); // [255, 0, 170]
-parseColor('#FF00AA'); // [255, 0, 170]
-parseColor([255, 0, 170]); // [255, 0, 170]
-parseColor('red'); // TypeError: invalid color: "red" (expected #rgb or #rrggbb)
-parseColor([300, 0, 0]); // TypeError: invalid color: [300,0,0]
-```
-
-#### `rgbToCss(rgb: RGB): string`
-
-```ts
-import { rgbToCss } from '@pixid/core';
-
-rgbToCss([12, 34, 56]); // 'rgb(12,34,56)'
-```
-
-#### `toSvg(icon, scale?)` and `toSvgDataURL(icon, scale?)`
-
-| Function                                       | Returns  | Notes                                                       |
-| ---------------------------------------------- | -------- | ----------------------------------------------------------- |
-| `toSvg(icon: IconData, scale?: number)`        | `string` | Complete `<svg>` document. `scale` defaults to `4`.         |
-| `toSvgDataURL(icon: IconData, scale?: number)` | `string` | `data:image/svg+xml;charset=utf-8,` + `encodeURIComponent`. |
-
-Both throw `TypeError` unless `icon` is icon data, and `RangeError` unless
-`scale` is a finite positive number, so `0`,
-negative, `NaN`, and infinite scales never reach the `width` and `height`
-attributes. Fractions are allowed, because those attributes are SVG lengths,
-not a pixel buffer: a `scale` of `1.5` on the default 8×8 grid gives a 12×12
-image with the same `viewBox`.
-
-The output has `width`/`height` in pixels, a `viewBox` in cell units, and
-`shape-rendering="crispEdges"` so cells stay square at any display size:
-
-```ts
-import { createIcon, toSvg, toSvgDataURL } from '@pixid/core';
-
-toSvg(createIcon({ seed: 'alice', size: 2 }), 4);
-// <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 2 2"
-//   shape-rendering="crispEdges"><rect width="2" height="2" fill="rgb(44,38,18)"/>
-//   <rect x="0" y="0" width="2" height="1" fill="rgb(27,12,11)"/></svg>
-
-const icon = createIcon({ seed: 'alice' });
-toSvg(icon).length; // 1934
-toSvgDataURL(icon).slice(0, 33); // 'data:image/svg+xml;charset=utf-8,'
-```
-
-#### `toPng(icon, scale?)` and `toPngDataURL(icon, scale?)`
-
-| Function                                       | Returns      | Notes                                                       |
-| ---------------------------------------------- | ------------ | ----------------------------------------------------------- |
-| `toPng(icon: IconData, scale?: number)`        | `Uint8Array` | Complete PNG file bytes. `scale` defaults to `4`.           |
-| `toPngDataURL(icon: IconData, scale?: number)` | `string`     | `data:image/png;base64,` + a dependency-free base64 encode. |
-
-Both throw `TypeError` unless `icon` is icon data, and `RangeError` unless
-`scale` is a positive integer, since a PNG is made of whole pixels.
-
-```ts
-import { createIcon, toPng, toPngDataURL } from '@pixid/core';
-
-const icon = createIcon({ seed: 'alice' });
-toPng(icon).byteLength; // 377   (8×8 cells × scale 4 = 32×32 px)
-toPng(icon, 16).byteLength; // 4313  (128×128 px)
-toPngDataURL(icon).slice(0, 21); // 'data:image/png;base64'
-```
-
-The encoder writes indexed-color PNGs: a three-entry `PLTE` palette and two
-bits per pixel, wrapped in zlib _stored_ (uncompressed) deflate blocks with a
-real Adler-32 and CRC-32. That is spec-valid everywhere, needs no compression
-library, is synchronous, and produces identical bytes on every runtime — the
-same seed gives the same file in Node.js, a browser, and a Worker. A bundle
-that imports neither `toPng` nor `toPngDataURL` leaves the encoder out.
-
-Every renderer takes the `IconData` from `createIcon` rather than options, so
-one icon can be written in several formats, and its palette reused, while the
-PRNG runs once:
-
-```ts
-import { createIcon, toPng, toSvg } from '@pixid/core';
-
-const icon = createIcon({ seed: 'alice' });
-const svg = toSvg(icon, 16);
-const png = toPng(icon, 16);
-const dominant = icon.color; // reuse the palette elsewhere
-```
+Icons are unchanged: 0.2.x and 1.0 give the same bytes for the same input.
 
 <a id="pixidsvg"></a><a id="pixidpng"></a>
 
-#### Coming from `@pixid/svg` or `@pixid/png`
+### From `@pixid/svg` or `@pixid/png`
 
 Both packages are discontinued: their renderers moved into `@pixid/core` in
 0.2.2, and `@pixid/svg` 0.2.0 and `@pixid/png` 0.2.1 are their last versions.
 The output is byte for byte what they produced. Replace them with
-`@pixid/core` 0.2.2 or later (`npm i @pixid/core@^0.2.2`; an older core that
-the old packages pulled in has no renderers) and pass the renderers an icon
-instead of options. `seed`, `size`, and the colors go to `createIcon`, and
-`scale` becomes the second argument; `SvgOptions` and `PngOptions` are gone
-with the options forms:
+`npm i @pixid/core` and pass the renderers icon data instead of options:
 
 | Before                                | After                                             |
 | ------------------------------------- | ------------------------------------------------- |
@@ -710,318 +406,61 @@ with the options forms:
 | `iconToPng(icon, 16)`                 | `toPng(icon, 16)`                                 |
 | `toSvg()`, `toPng()` (random seed)    | `toSvg(createIcon())`, `toPng(createIcon())`      |
 
-`toSvgDataURL` and `toPngDataURL` change the same way as `toSvg` and `toPng`.
-TypeScript flags an unmigrated call at compile time; at runtime it throws a
-`TypeError` that names the new form.
+`toSvgDataURL` and `toPngDataURL` change the same way, and `SvgOptions` and
+`PngOptions` are gone. TypeScript flags an unmigrated call; at runtime it
+throws `TypeError: toSvg: expected icon data from createIcon()` (or `toPng:`,
+and so on).
 
-### `@pixid/canvas`
+### From `blockies-typed`
 
-`CanvasOptions` is `IconOptions` plus `scale?: number` (default `4`).
-
-| Function                                                                | Returns         | Notes                                           |
-| ----------------------------------------------------------------------- | --------------- | ----------------------------------------------- |
-| `renderToCanvas(canvas: HTMLCanvasElement, options?: CanvasOptions)`    | the same canvas | Resizes the canvas to `size * scale` and draws. |
-| `createCanvas(options?: CanvasOptions)`                                 | a new canvas    | Uses `document.createElement('canvas')`.        |
-| `toCanvasDataURL(options?: CanvasOptions)`                              | `string`        | `createCanvas(...).toDataURL('image/png')`.     |
-| `renderIconToCanvas(icon: IconData, canvas: HTMLCanvasElement, scale?)` | the same canvas | Precomputed data. `scale` defaults to `4`.      |
-
-All four throw `RangeError` unless `scale` is a positive integer, like
-`toPng`: canvas dimensions are whole pixels, so a fractional scale would
-blur the cell edges. The check runs before the canvas is resized, so a canvas
-you pass in is left as it was.
-
-All four throw `Error: could not get a 2d context from the canvas` if
-`getContext('2d')` returns `null`. Unlike `toPng`, the bytes you get from
-`toCanvasDataURL` come from the browser's PNG encoder, so they are not
-byte-stable across browsers — use `toPng` from `@pixid/core` when you need
-reproducibility.
-
-```ts
-import { createIcon } from '@pixid/core';
-import { renderIconToCanvas } from '@pixid/canvas';
-
-const icon = createIcon({ seed: 'alice', size: 10 });
-const canvas = document.querySelector('canvas')!;
-renderIconToCanvas(icon, canvas, 12); // canvas is now 120×120
-```
-
-### `@pixid/react`
-
-```tsx
-import { Pixid, type PixidProps } from '@pixid/react';
-```
-
-| Prop        | Type                      | Default | Description                                                |
-| ----------- | ------------------------- | ------- | ---------------------------------------------------------- |
-| `seed`      | `string`                  | random  | Same seed, same icon.                                      |
-| `size`      | `number`                  | `8`     | Cells per side.                                            |
-| `scale`     | `number`                  | `4`     | Pixels per cell; sets `width`/`height`. Finite and > 0.    |
-| `color`     | `ColorInput`              | seed    | Foreground color.                                          |
-| `bgcolor`   | `ColorInput`              | seed    | Background color.                                          |
-| `spotcolor` | `ColorInput`              | seed    | Accent color.                                              |
-| `ref`       | `Ref<SVGSVGElement>`      | —       | Receives the root `<svg>` element on React 17, 18, and 19. |
-| `...rest`   | `SVGProps<SVGSVGElement>` | —       | Spread onto the root `<svg>`.                              |
-
-`PixidProps` extends `Omit<SVGProps<SVGSVGElement>, 'color' | 'seed'>`, so
-`className`, `style`, `onClick`, `role`, `aria-*`, and `data-*` all work.
-The two omitted names are re-typed as pixid options rather than SVG
-attributes.
-
-`Pixid` is a `forwardRef` component, which is what gets a `ref` to the `<svg>`
-on React 17 and 18: they never pass `ref` to a plain function component.
-`Pixid.displayName` is `'Pixid'`, so React DevTools and React's warnings name
-it even though the build is minified.
-
-`scale` must be a finite positive number; fractions are fine, since the output
-is SVG. Anything else, such as `0`, `-1`, `NaN`, or `Infinity`, throws while
-rendering: `RangeError: invalid scale: -1 (expected a finite positive number)`.
-`size` and the colors are checked by `createIcon`, so they throw the errors
-listed under [`@pixid/core`](#pixidcore).
-
-Passthrough props are spread _after_ the computed attributes, so you can
-override `width`, `height`, or `viewBox` — useful for making the icon fill a
-CSS-sized box:
-
-```tsx
-<Pixid seed="alice" width="100%" height="100%" />
-```
-
-The rendered markup is the same geometry and palette that `toSvg` renders for
-the same options (`packages/react/src/react.test.tsx` cross-checks them rect by
-rect; only React's attribute serialization differs). There is no `"use client"`
-directive in the package and no `react-dom` dependency — just `react` as a
-peer dependency at `>=17`. The built files import only `react` and
-`@pixid/core`: the elements are made with `createElement` rather than JSX,
-because JSX compiles to imports of `react/jsx-runtime`, a subpath that Node.js's
-ESM resolver cannot find in React 17, which has no exports map.
-
-```tsx
-<Pixid seed="alice" size={2} scale={24} className="avatar" role="img" aria-label="alice" />
-// <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 2 2"
-//   shape-rendering="crispEdges" class="avatar" role="img" aria-label="alice">
-//   <rect width="2" height="2" fill="rgb(44,38,18)"></rect>
-//   <rect x="0" y="0" width="2" height="1" fill="rgb(27,12,11)"></rect></svg>
-```
-
-### `@pixid/vue`
-
-```ts
-import { Pixid, type PixidProps } from '@pixid/vue';
-```
-
-| Prop        | Type         | Default | Description                                             |
-| ----------- | ------------ | ------- | ------------------------------------------------------- |
-| `seed`      | `string`     | random  | Same seed, same icon.                                   |
-| `size`      | `number`     | `8`     | Cells per side.                                         |
-| `scale`     | `number`     | `4`     | Pixels per cell; sets `width`/`height`. Finite and > 0. |
-| `color`     | `ColorInput` | seed    | Foreground color.                                       |
-| `bgcolor`   | `ColorInput` | seed    | Background color.                                       |
-| `spotcolor` | `ColorInput` | seed    | Accent color.                                           |
-
-Those six are the component's declared props; everything else a parent passes
-is a fallthrough attribute, so `class`, `style`, `role`, `aria-*`, `data-*`,
-and listeners all work. A template `ref` on `<Pixid>` gives the component
-instance, whose `$el` is the root `<svg>` element.
-
-`Pixid` is declared with `name: 'Pixid'`, so Vue DevTools and Vue's warnings
-name it even though the build is minified.
-
-`scale` must be a finite positive number; fractions are fine, since the output
-is SVG. Anything else, such as `0`, `-1`, `NaN`, or `Infinity`, throws while
-rendering: `RangeError: invalid scale: -1 (expected a finite positive number)`.
-`size` and the colors are checked by `createIcon`, so they throw the errors
-listed under [`@pixid/core`](#pixidcore).
-
-Vue merges `$attrs` onto the root element _after_ the render function's own
-attributes, so you can override `width`, `height`, or `viewBox` — useful for
-making the icon fill a CSS-sized box:
-
-```vue
-<Pixid seed="alice" width="100%" height="100%" />
-```
-
-`class` and `style` are the exception Vue makes to that rule: it combines them
-rather than replacing. The component sets neither, so there is nothing to
-combine with and yours is what lands on the `<svg>`.
-
-The rendered markup is the same geometry and palette that `toSvg` renders for
-the same options (`packages/vue/src/vue.test.ts` cross-checks them rect by
-rect), and byte for byte what `@pixid/react` renders. The component uses no lifecycle
-hooks and no browser APIs, so `@vue/server-renderer` renders it on the server;
-`vue >=3.2.40` is the only peer dependency, and the built files import nothing
-but `vue` and `@pixid/core`. There is no single-file component and no JSX in
-the package — the elements are made with `h()`, so the package ships plain
-JavaScript and needs no Vue compiler.
-
-The peer range starts at 3.2.40 rather than 3, because `@vue/server-renderer`
-lowercased every camelCase attribute name before that release. SVG attribute
-names are case-sensitive, so the `viewBox` this component emits would be
-serialized as `viewbox`, the browser would ignore it, and the icon — drawn in
-cell units — would render as a speck in the top-left corner of the `<svg>`.
-Hydration does not repair it, and client-only rendering was never affected.
-
-```vue
-<Pixid seed="alice" :size="2" :scale="24" class="avatar" role="img" aria-label="alice" />
-<!-- <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 2 2"
-       shape-rendering="crispEdges" class="avatar" role="img" aria-label="alice">
-       <rect width="2" height="2" fill="rgb(44,38,18)"></rect>
-       <rect x="0" y="0" width="2" height="1" fill="rgb(27,12,11)"></rect></svg> -->
-```
-
-### `@pixid/cli`
-
-Provides the `pixid` bin documented in [CLI](#cli), plus a small programmatic
-surface:
-
-| Export                            | Type                        | Description                                                          |
-| --------------------------------- | --------------------------- | -------------------------------------------------------------------- |
-| `runCli(argv?: string[])`         | `(argv?: string[]) => void` | Runs the CLI. `argv` defaults to `process.argv.slice(2)`.            |
-| `version`                         | `string`                    | The `@pixid/cli` version, baked in at build time.                    |
-| `@pixid/cli/run` (export subpath) | side-effecting module       | Importing it runs `runCli()`. This is also the file `bin` points at. |
-
-`runCli` writes to stdout/stderr and calls `process.exit(1)` on invalid input,
-so it is an entry point, not a library function — use `toPng` and `toSvg`
-from `@pixid/core` directly if you want values back.
-
-`@pixid/cli/run` ships in both module formats with declarations, so
-`import '@pixid/cli/run'` and `require('@pixid/cli/run')` both work and both
-type-check.
-
-```ts
-import { runCli, version } from '@pixid/cli';
-
-console.log(version); // e.g. '0.1.1'
-runCli(['--seed', 'alice', '-o', 'alice.png']); // writes the file, prints the path
-```
-
-## Compatibility
-
-The PRNG (xorshift seeded from the string), the draw order (foreground,
-background, spot color, then grid), the color arithmetic (a whole-degree hue,
-percentage saturation and lightness), the `Math.floor(rand() * 2.3)` cell
-distribution, and the mirroring rules are identical to ethereum-blockies.
-`packages/core/src/core.test.ts` keeps a direct port of the original code as
-an independent oracle and asserts grid-for-grid and color-for-color equality,
-including the draw-skipping behavior for explicit colors and locked regression
-vectors, and it checks palettes against PNGs rendered by
-ethereum-blockies-base64.
-
-Grids always match. Colors match ethereum-blockies-base64, and MetaMask
-Mobile's Blockies (a port of it), down to the RGB value. The original
-ethereum-blockies hands CSS `hsl()` strings to the browser, whose rounding can
-differ by one step on rare seeds (about 1 in 10,000 in Chromium). MetaMask's
-browser extension draws Blockies with `blo`, which drops the fractions of
-saturation and lightness, so its colors can differ by a few steps even though
-the hue and the grid are the same.
-
-To match any of them for an Ethereum address, seed with the lowercase address. MetaMask and
-ethereum-blockies-base64 both seed with `address.toLowerCase()`, while pixid
-uses the seed exactly as given. A checksummed (mixed-case) address is a
-different seed: `0x8ba1f109551bD432803012645Ac136ddd64DBA72` and
-`0x8ba1f109551bd432803012645ac136ddd64dba72` give completely different icons,
-palette and grid alike.
-
-pixid replaces `blockies-typed`, which lived in this same repository (formerly
-`github.com/thilllon/blockies-typed`). Every `blockies-typed` version has been
-unpublished from npm and this project no longer controls the name, so anything
-published under it later is not from this project: remove it from your
-`package.json` and lockfile, and do not run `npx blockies-typed`. Its last
-source is tagged [`1.0.1`](https://github.com/thilllon/pixid/tree/1.0.1) in
-this repository. Its entire public API was `createBuffer` and `createDataURL`:
+pixid replaces `blockies-typed`, which lived in this repository. Every
+`blockies-typed` version has been unpublished from npm and this project no
+longer controls the name, so anything published under it later is not from
+this project: remove it from your `package.json` and lockfile, and do not run
+`npx blockies-typed`. Its last source is the git tag
+[`1.0.1`](https://github.com/thilllon/pixid/tree/1.0.1), a `blockies-typed`
+version, not a pixid release.
 
 | `blockies-typed` 1.0.1                    | pixid                                              |
 | ----------------------------------------- | -------------------------------------------------- |
 | `createBuffer(opts)` → `Buffer`           | `toPng(createIcon(options), scale)` → `Uint8Array` |
 | `createDataURL(opts)`                     | `toPngDataURL(createIcon(options), scale)`         |
-| `fgColor: [r, g, b]`                      | `color: [r, g, b]` or `color: '#rrggbb'`           |
-| `bgColor` / `spotColor`                   | `bgcolor` / `spotcolor`                            |
+| `fgColor`, `bgColor`, `spotColor`         | `color`, `bgcolor`, `spotcolor`                    |
 | defaults `size: 7`, `scale: 24` (168×168) | defaults `size: 8`, `scale: 4` (32×32)             |
-| `npx blockies-typed --seed x`             | `npx @pixid/cli --seed x`                          |
-| `-o`, `--output <file>`                   | `-o`, `--out <file>`                               |
-| `commander` + `pngjs` deps                | no dependencies outside `@pixid/*`                 |
+| `npx blockies-typed --seed x -o <file>`   | `npx @pixid/cli --seed x --out <file>`             |
 
-Option names are lowercased, so rename `fgColor`, `bgColor`, and `spotColor`
-before passing the old options to `createIcon`: it ignores the old names, and
-an unrenamed object keeps the seed's own colors without an error. Colors
-accept hex strings as well as tuples, `scale` is the second argument of
-`toPng` rather than an option, and `toPng`
-returns a `Uint8Array` instead of a Node.js `Buffer` (`writeFileSync` takes
-both). `blockies-typed` also deviated from the original algorithm (one
-random color shared by foreground and spot, a white background, and PRNG state
-that leaked from one call into the next), so icons for the same seed differ
-between it and pixid. pixid follows the original.
+`toPng` returns a `Uint8Array`, not a `Buffer`: `writeFileSync` takes it as is,
+and `Buffer.from(png)` converts it where you need `Buffer` methods. Rename the
+color options: `createIcon` ignores the old names without an error. Colors also
+accept hex strings.
+`blockies-typed` also deviated from the original algorithm, so icons for the
+same seed differ between it and pixid; pixid follows the original.
 
-## Development
+## Size
 
-Node.js and pnpm versions are pinned in `mise.toml` (Node.js 24 LTS, pnpm 12.8.0).
-With [mise](https://mise.jdx.dev) installed, `mise install` downloads both, and an
-activated shell (`mise activate`) puts them on `PATH`; otherwise run the commands
-below as `mise exec -- pnpm ...`.
+Minified with esbuild (`bundle`, `minify`, `format: esm`), excluding the
+`react` and `vue` peers:
 
-```
-pnpm install
-pnpm check        # build, then lint + typecheck + tests + prettier in parallel
-pnpm build        # tsdown, all packages
-pnpm test         # unit tests, including per-package bundle-size checks
-pnpm e2e          # publish/npx flow against a local verdaccio registry
-pnpm test:all     # both
-pnpm lint         # eslint
-pnpm typecheck    # tsc --noEmit, root and every package (after pnpm build)
-pnpm format       # prettier --write
-pnpm format:check # prettier --check, as CI runs it
-pnpm assets       # regenerate the README gallery in assets/
-```
+| Import                                                   | Minified bundle |
+| -------------------------------------------------------- | --------------- |
+| `import { createIcon } from '@pixid/core'`               | 2.0 kB          |
+| `import { createIcon, toSvg } from '@pixid/core'`        | 2.9 kB          |
+| `import { createIcon, toPng } from '@pixid/core'`        | 3.9 kB          |
+| `import { createIcon, toPng, toSvg } from '@pixid/core'` | 4.6 kB          |
+| `import { createCanvas } from '@pixid/canvas'`           | 2.7 kB          |
+| `import { Pixid } from '@pixid/react'`                   | 2.9 kB          |
+| `import { Pixid } from '@pixid/vue'`                     | 3.1 kB          |
 
-Every package is bundled by [tsdown](https://tsdown.dev) (Rolldown) from its
-own `tsdown.config.ts`, targeting ES2022 with minification and bundled type
-declarations. `@pixid/canvas` adds a second, IIFE config that inlines the
-`@pixid/*` graph into `dist/index.global.js`; `@pixid/cli` adds a Node.js-platform
-config for the shebang bin entry.
+The figures are measurements, not limits. Each library package's
+`src/bundle.test.ts` enforces a ceiling (3 KB for `createIcon` alone, 4 KB with
+`toSvg`, 6 KB with `toPng`, 4 KB for canvas, React, and Vue) and checks that an
+import leaves out the renderers it does not use: `createIcon` or `toSvg` alone
+carries no PNG encoder.
 
-Layout: one folder per package under `packages/`, named after what it contains.
-`packages/cli` is `@pixid/cli`. Tests are colocated with the code they cover,
-in each package's `src/`.
+## Contributing
 
-Each library package's `src/bundle.test.ts` bundles the built package with
-esbuild and enforces its budget from [Size](#size).
-`packages/cli/src/registry.e2e.test.ts` spins up verdaccio, publishes every
-package with `pnpm publish`, then runs `npx @pixid/cli` from a cold cache.
-Files named `*.e2e.test.ts` make up the `e2e` vitest project that `pnpm e2e`
-runs; everything else is a unit test.
-
-The root `assets/` folder holds the gallery PNGs at the top of this file and
-the `assets/generate.ts` script that produces them (`pnpm assets`). It sits
-outside `packages/`, so no published tarball contains it.
-
-### Releasing
-
-Merging a pull request publishes nothing. Releasing a change takes a
-[changeset](https://github.com/changesets/changesets) and a second merge:
-
-1. **In your PR, record the change:** run `pnpm changeset`, pick the packages
-   and the bump (patch, minor, major), write the note that becomes the
-   changelog entry, and commit the generated `.changeset/*.md`.
-2. **Merge the PR.** The Release workflow opens or updates a "Version
-   Packages" pull request that applies the bumps, moves your note into each
-   `CHANGELOG.md`, and deletes the changeset files.
-3. **Merge that pull request.** CI runs `pnpm release` and publishes every
-   package whose version is not on npm yet, over OIDC trusted publishing with
-   provenance, then pushes a `@pixid/<name>@<version>` tag.
-
-So a PR without a changeset lands on `main` and ships nothing. Only the
-packages named in a changeset get a new version; the rest stay where they are.
-
-Forgetting one is the easy mistake, so CI's `changeset` job fails a pull
-request that touches a package without adding a changeset. When the change
-genuinely must not be released — tests, CI, repository docs — record that on
-purpose with `pnpm changeset add --empty`. Dependabot's pull requests are
-exempt: they only move devDependencies, which no tarball contains, and they
-merge on their own once CI is green.
-
-A brand-new package is the one exception to step 1: it has no published
-version, so step 3 picks it up with no changeset at all. Its first version has
-to be published by hand, because npm only accepts a trusted publisher for a
-package that already exists. AGENTS.md has that recipe.
+Development setup, checks, and the release process are in
+[AGENTS.md](./AGENTS.md).
 
 ## License
 
