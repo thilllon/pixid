@@ -1,5 +1,11 @@
 # @pixid/core
 
+## 1.1.3
+
+### Patch Changes
+
+- fec5ff4: README: the package table lists core, cli, canvas, react, vue.
+
 ## 1.1.2
 
 ### Patch Changes
