@@ -37,7 +37,7 @@ dependencies beyond `@pixid/core`, and the same bytes on every runtime.
 </table>
 
 Each cell is a 128×128 PNG from `toPng` in `@pixid/core`, shown at 72 px.
-Reproduce one with `npx @pixid/cli 0xd8da6bf26964af9d7eed9e03e53415d37aa96045`.
+Reproduce one with `npx @pixid/cli alice`.
 
 ## Install
 
@@ -52,10 +52,6 @@ npx @pixid/cli alice  # the command line, nothing installed; see CLI below
 ```
 
 ## Usage
-
-Seeds are case-sensitive. To match MetaMask and other blockies for an Ethereum
-address, seed with the lowercase address (see
-[compatibility](#ethereum--blockies-compatibility)).
 
 ### Node.js
 
@@ -114,8 +110,8 @@ These need a DOM. In Node.js, use `toPng` from `@pixid/core`.
 ```tsx
 import { Pixid } from '@pixid/react';
 
-export const Avatar = ({ address }: { address: string }) => (
-  <Pixid seed={address.toLowerCase()} scale={6} role="img" aria-label={address} />
+export const Avatar = ({ name }: { name: string }) => (
+  <Pixid seed={name} scale={6} role="img" aria-label={name} />
 );
 ```
 
@@ -128,11 +124,11 @@ server components without `"use client"`.
 <script setup lang="ts">
 import { Pixid } from '@pixid/vue';
 
-defineProps<{ address: string }>();
+defineProps<{ name: string }>();
 </script>
 
 <template>
-  <Pixid :seed="address.toLowerCase()" :scale="6" role="img" :aria-label="address" />
+  <Pixid :seed="name" :scale="6" role="img" :aria-label="name" />
 </template>
 ```
 
@@ -264,24 +260,20 @@ rules, and the error behavior: [`packages/cli`](./packages/cli/README.md).
 | `rgbToCss(rgb: RGB)`                           | `string`                  | `'rgb(12,34,56)'`.                                            |
 
 `toPng` writes an indexed-color PNG in zlib stored (uncompressed) blocks: no
-compression library, synchronous, and identical bytes on every runtime. Full
-reference, including the types and the errors each function throws:
+compression library, synchronous, and identical bytes on every runtime. Its
+return type goes straight into `new Response()` or `new Blob()`; reading it
+needs TypeScript 5.7 or later, or `skipLibCheck`. Full reference, including the
+types and the errors each function throws:
 [`packages/core`](./packages/core/README.md).
 
 ### `@pixid/canvas`
 
-`CanvasOptions` is `IconOptions` plus `scale`. Full reference:
-[`packages/canvas`](./packages/canvas/README.md).
-
-| Function                                                                | Returns         | Notes                                                 |
-| ----------------------------------------------------------------------- | --------------- | ----------------------------------------------------- |
-| `renderToCanvas(canvas: HTMLCanvasElement, options?: CanvasOptions)`    | the same canvas | Resizes the canvas to `size * scale` and draws.       |
-| `createCanvas(options?: CanvasOptions)`                                 | a new canvas    | Uses `document.createElement('canvas')`.              |
-| `toCanvasDataURL(options?: CanvasOptions)`                              | `string`        | `createCanvas(...).toDataURL('image/png')`.           |
-| `renderIconToCanvas(icon: IconData, canvas: HTMLCanvasElement, scale?)` | the same canvas | Draws precomputed icon data. `scale` defaults to `4`. |
-
+`createCanvas(options?)` returns a new `<canvas>`, `renderToCanvas(canvas,
+options?)` draws into an existing one, and `toCanvasDataURL(options?)` returns
+a PNG data URL. They take the six [options](#options), including `scale`.
 `toCanvasDataURL` uses the browser's PNG encoder, so its bytes differ between
-browsers. Use `toPng` when you need reproducible files.
+browsers; use `toPng` when you need reproducible files. Full reference:
+[`packages/canvas`](./packages/canvas/README.md).
 
 ### `@pixid/react`
 
@@ -308,7 +300,7 @@ The `pixid` command is summarized in [CLI](#cli). The package also exports
 ## Stability
 
 pixid follows [semantic versioning](https://semver.org). Within 1.x, for the
-same input:
+same options with a `seed` given (an omitted or empty seed is random):
 
 - `createIcon` returns the same grid and the same colors.
 - `toSvg`, `toSvgDataURL`, `toPng`, and `toPngDataURL` return the same bytes,
@@ -316,8 +308,7 @@ same input:
 
 A change to any of these is a major release. The promise does not cover the
 markup that `@pixid/react` and `@pixid/vue` render, beyond the grid and colors
-it draws, or `toCanvasDataURL`, whose bytes come from the browser. Randomly
-generated seeds are random.
+it draws, or `toCanvasDataURL`, whose bytes come from the browser.
 
 Changes are listed in each package's `CHANGELOG.md`, for example
 [`packages/core/CHANGELOG.md`](./packages/core/CHANGELOG.md).
@@ -373,68 +364,6 @@ To change only one color, replace it on the icon data instead:
 This is the original ethereum-blockies behavior, kept so icons match for the
 same inputs. An empty seed counts as omitted, as it does there: it would leave
 the PRNG state all zero and the icon solid black.
-
-## Migrating
-
-### From 0.x to 1.0
-
-- **Node.js 22 or later.** Every package now declares `engines.node: ">=22"`
-  (it was `>=18`, and `>=18.3.0` for the CLI).
-- **`toPng` returns `Uint8Array<ArrayBuffer>`.** It can go straight into
-  `new Response()` or `new Blob()`, so an `as Uint8Array<ArrayBuffer>` cast can
-  be removed. Reading the type needs TypeScript 5.7 or later, or
-  `skipLibCheck`.
-
-Icons are unchanged: 0.2.x and 1.0 give the same bytes for the same input.
-
-<a id="pixidsvg"></a><a id="pixidpng"></a>
-
-### From `@pixid/svg` or `@pixid/png`
-
-Both packages are discontinued: their renderers moved into `@pixid/core` in
-0.2.2, and `@pixid/svg` 0.2.0 and `@pixid/png` 0.2.1 are their last versions.
-The output is byte for byte what they produced. Replace them with
-`npm i @pixid/core` and pass the renderers icon data instead of options:
-
-| Before                                | After                                             |
-| ------------------------------------- | ------------------------------------------------- |
-| `import { toSvg } from '@pixid/svg'`  | `import { createIcon, toSvg } from '@pixid/core'` |
-| `toSvg({ seed: 'alice', scale: 16 })` | `toSvg(createIcon({ seed: 'alice' }), 16)`        |
-| `iconToSvg(icon, 16)`                 | `toSvg(icon, 16)`                                 |
-| `import { toPng } from '@pixid/png'`  | `import { createIcon, toPng } from '@pixid/core'` |
-| `toPng({ seed: 'alice', scale: 16 })` | `toPng(createIcon({ seed: 'alice' }), 16)`        |
-| `iconToPng(icon, 16)`                 | `toPng(icon, 16)`                                 |
-| `toSvg()`, `toPng()` (random seed)    | `toSvg(createIcon())`, `toPng(createIcon())`      |
-
-`toSvgDataURL` and `toPngDataURL` change the same way, and `SvgOptions` and
-`PngOptions` are gone. TypeScript flags an unmigrated call; at runtime it
-throws `TypeError: toSvg: expected icon data from createIcon()` (or `toPng:`,
-and so on).
-
-### From `blockies-typed`
-
-pixid replaces `blockies-typed`, which lived in this repository. Every
-`blockies-typed` version has been unpublished from npm and this project no
-longer controls the name, so anything published under it later is not from
-this project: remove it from your `package.json` and lockfile, and do not run
-`npx blockies-typed`. Its last source is the git tag
-[`1.0.1`](https://github.com/thilllon/pixid/tree/1.0.1), a `blockies-typed`
-version, not a pixid release.
-
-| `blockies-typed` 1.0.1                    | pixid                                              |
-| ----------------------------------------- | -------------------------------------------------- |
-| `createBuffer(opts)` → `Buffer`           | `toPng(createIcon(options), scale)` → `Uint8Array` |
-| `createDataURL(opts)`                     | `toPngDataURL(createIcon(options), scale)`         |
-| `fgColor`, `bgColor`, `spotColor`         | `color`, `bgcolor`, `spotcolor`                    |
-| defaults `size: 7`, `scale: 24` (168×168) | defaults `size: 8`, `scale: 4` (32×32)             |
-| `npx blockies-typed --seed x -o <file>`   | `npx @pixid/cli --seed x --out <file>`             |
-
-`toPng` returns a `Uint8Array`, not a `Buffer`: `writeFileSync` takes it as is,
-and `Buffer.from(png)` converts it where you need `Buffer` methods. Rename the
-color options: `createIcon` ignores the old names without an error. Colors also
-accept hex strings.
-`blockies-typed` also deviated from the original algorithm, so icons for the
-same seed differ between it and pixid; pixid follows the original.
 
 ## Size
 

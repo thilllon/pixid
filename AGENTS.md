@@ -87,19 +87,12 @@ package that was waiting for that name has been removed. Do not reintroduce an
 unscoped package, and do not document `npx pixid`: the CLI is `npx @pixid/cli`.
 
 `@pixid/svg` and `@pixid/png` were folded into `@pixid/core` in 0.2.2: their renderers
-are its root exports `toSvg`, `toSvgDataURL`, `toPng` and `toPngDataURL`, each taking
-the `createIcon()` output and an optional scale. `@pixid/svg` 0.2.0 and `@pixid/png`
-0.2.1 are their last versions. Both are deprecated on npm with these messages, run by
-the owner because OIDC trusted publishing cannot run `npm deprecate`:
-
-```sh
-npm deprecate @pixid/svg "Moved into @pixid/core 0.2.2: toSvg(createIcon({ seed }), scale). See https://github.com/thilllon/pixid#pixidsvg"
-npm deprecate @pixid/png "Moved into @pixid/core 0.2.2: toPng(createIcon({ seed }), scale). See https://github.com/thilllon/pixid#pixidpng"
-```
-
-Do not reintroduce them, and do not document them as current packages; the README keeps
-only a migration note for their users, reachable at the old `#pixidsvg` and `#pixidpng`
-anchors that their npm READMEs link to.
+are its root exports `toSvg`, `toSvgDataURL`, `toPng` and `toPngDataURL`. Both packages
+are deprecated on npm (`npm deprecate` is an owner step, since OIDC trusted publishing
+cannot run it). Do not reintroduce them, and do not mention them in any README: nobody
+used them publicly, so there are no migration notes. Their deprecation messages link to
+`#pixidsvg` and `#pixidpng`, anchors the README no longer has; the links open the README
+at the top.
 
 The Release workflow publishes over OIDC trusted publishing only; the repository has
 no `NPM_TOKEN` secret. Every package it publishes therefore needs a trusted publisher
@@ -211,14 +204,16 @@ or `types` mapping stops being caught, and vitest and any bundler need the same 
   package's tarball, and no tarball contains `assets/`. `assets/` sits outside
   `packages/` for that reason.
 - README anchors: the root `README.md` must keep the anchors `#pixidcore`,
-  `#pixidcanvas`, `#pixidreact`, `#pixidvue`, `#cli`, `#pixidsvg`, and `#pixidpng`.
-  Published package READMEs (0.2.x and later) and the `npm deprecate` messages above
-  link to them, and those links cannot be changed after publishing. If a heading that
+  `#pixidcanvas`, `#pixidreact`, `#pixidvue`, and `#cli`. Package READMEs published
+  as 0.2.x and 1.0.0 link to them, and those links cannot be changed after publishing. If a heading that
   produces one is renamed or removed, keep the slug with an explicit
   `<a id="..."></a>`, and do not add an earlier heading that takes the same slug
   (a `### CLI` above `## CLI` would take `#cli`).
 - Package READMEs: each `packages/*/README.md` must read on its own on npm (install,
-  usage, API, package-specific notes). The root README keeps a summary per package and
+  usage, API, package-specific notes), and links back only to the top of the root README
+  (`https://github.com/thilllon/pixid#readme`), never to a root section that points
+  back at the package README. The READMEs carry no migration or version-history notes;
+  that belongs in each `CHANGELOG.md`. The root README keeps a summary per package and
   links to them; put package-specific detail in the package README, not the root.
 - The root README's Contributing section points to this file, so this file is the
   contributor guide for people as well as agents.

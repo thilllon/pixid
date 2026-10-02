@@ -108,11 +108,8 @@ interface CellRun {
 - **Stability.** Within 1.x, the same input gives the same `createIcon` grid
   and colors and the same `toSvg`, `toSvgDataURL`, `toPng`, and `toPngDataURL`
   bytes.
-- **`@pixid/svg` and `@pixid/png`** are discontinued; their renderers are the
-  ones above. Migration:
-  [From `@pixid/svg` or `@pixid/png`](https://github.com/thilllon/pixid#pixidsvg).
 
-**Docs:** [`@pixid/core` in the pixid README](https://github.com/thilllon/pixid#pixidcore).
+**More:** the [pixid README](https://github.com/thilllon/pixid#readme) covers every package, the shared options, and ethereum-blockies compatibility.
 
 **Related:** [`@pixid/canvas`](https://www.npmjs.com/package/@pixid/canvas),
 [`@pixid/react`](https://www.npmjs.com/package/@pixid/react),

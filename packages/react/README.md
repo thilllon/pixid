@@ -22,9 +22,8 @@ npm i @pixid/react
 ```tsx
 import { Pixid } from '@pixid/react';
 
-// Seeds are case-sensitive: lowercase Ethereum addresses to match MetaMask.
-export const Avatar = ({ address }: { address: string }) => (
-  <Pixid seed={address.toLowerCase()} scale={6} role="img" aria-label={address} />
+export const Avatar = ({ name }: { name: string }) => (
+  <Pixid seed={name} scale={6} role="img" aria-label={name} />
 );
 ```
 
@@ -61,7 +60,7 @@ export const Avatar = ({ address }: { address: string }) => (
   `<svg>` on 17 and 18. Elements are built with `createElement`, not JSX,
   because React 17 has no exports map for `react/jsx-runtime` under Node.js ESM.
 
-**Docs:** [`@pixid/react` in the pixid README](https://github.com/thilllon/pixid#pixidreact).
+**More:** the [pixid README](https://github.com/thilllon/pixid#readme) covers every package, the shared options, and ethereum-blockies compatibility.
 
 **Related:** [`@pixid/core`](https://www.npmjs.com/package/@pixid/core),
 [`@pixid/vue`](https://www.npmjs.com/package/@pixid/vue),
