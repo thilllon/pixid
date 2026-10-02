@@ -1,5 +1,11 @@
 # @pixid/core
 
+## 1.1.1
+
+### Patch Changes
+
+- ac0600f: README: each package's npm page is now one short shared page that links to the pixid README on GitHub, where all documentation lives. The example icons have a caption that names their seeds.
+
 ## 1.1.0
 
 ### Minor Changes
