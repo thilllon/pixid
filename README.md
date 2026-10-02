@@ -162,10 +162,10 @@ export default {
 | Package                                                        | What it does                                                  | Runs in     |
 | -------------------------------------------------------------- | ------------------------------------------------------------- | ----------- |
 | [`@pixid/core`](https://www.npmjs.com/package/@pixid/core)     | Seed → pixel grid and palette, plus SVG and PNG renderers.    | everywhere  |
+| [`@pixid/cli`](https://www.npmjs.com/package/@pixid/cli)       | The `pixid` command. Writes PNG or SVG files.                 | Node.js     |
 | [`@pixid/canvas`](https://www.npmjs.com/package/@pixid/canvas) | Renders to an HTML `<canvas>`.                                | browsers    |
 | [`@pixid/react`](https://www.npmjs.com/package/@pixid/react)   | `<Pixid />` rendering inline SVG. Works in server components. | React 17+   |
 | [`@pixid/vue`](https://www.npmjs.com/package/@pixid/vue)       | `<Pixid />` rendering inline SVG. Works with SSR.             | Vue 3.2.40+ |
-| [`@pixid/cli`](https://www.npmjs.com/package/@pixid/cli)       | The `pixid` command. Writes PNG or SVG files.                 | Node.js     |
 
 Every package is ESM and CommonJS, fully typed, and side-effect free (the CLI's
 bin entry is the one module that runs on import). The only runtime dependency
