@@ -16,13 +16,11 @@ What it generates, one icon per seed:
     <td align="center"><img src="https://raw.githubusercontent.com/thilllon/pixid/main/assets/pixid.png" width="72" alt="identicon for pixid" /></td>
     <td align="center"><img src="https://raw.githubusercontent.com/thilllon/pixid/main/assets/alice.png" width="72" alt="identicon for alice" /></td>
     <td align="center"><img src="https://raw.githubusercontent.com/thilllon/pixid/main/assets/bob.png" width="72" alt="identicon for bob" /></td>
-    <td align="center"><img src="https://raw.githubusercontent.com/thilllon/pixid/main/assets/thilllon.png" width="72" alt="identicon for thilllon" /></td>
   </tr>
   <tr>
     <td align="center"><sub><code>pixid</code></sub></td>
     <td align="center"><sub><code>alice</code></sub></td>
     <td align="center"><sub><code>bob</code></sub></td>
-    <td align="center"><sub><code>thilllon</code></sub></td>
   </tr>
   <tr>
     <td align="center"><img src="https://raw.githubusercontent.com/thilllon/pixid/main/assets/eth-d8da6b.png" width="72" alt="identicon for 0xd8da6bf26964af9d7eed9e03e53415d37aa96045" /></td>
@@ -157,15 +155,7 @@ export default {
 };
 ```
 
-## Packages
-
-| Package                                                        | What it does                                                  | Runs in     |
-| -------------------------------------------------------------- | ------------------------------------------------------------- | ----------- |
-| [`@pixid/core`](https://www.npmjs.com/package/@pixid/core)     | Seed → pixel grid and palette, plus SVG and PNG renderers.    | everywhere  |
-| [`@pixid/cli`](https://www.npmjs.com/package/@pixid/cli)       | The `pixid` command. Writes PNG or SVG files.                 | Node.js     |
-| [`@pixid/canvas`](https://www.npmjs.com/package/@pixid/canvas) | Renders to an HTML `<canvas>`.                                | browsers    |
-| [`@pixid/react`](https://www.npmjs.com/package/@pixid/react)   | `<Pixid />` rendering inline SVG. Works in server components. | React 17+   |
-| [`@pixid/vue`](https://www.npmjs.com/package/@pixid/vue)       | `<Pixid />` rendering inline SVG. Works with SSR.             | Vue 3.2.40+ |
+## Supported runtimes
 
 Every package is ESM and CommonJS, fully typed, and side-effect free (the CLI's
 bin entry is the one module that runs on import). The only runtime dependency
@@ -173,8 +163,6 @@ of each package is `@pixid/core`; `react` and `vue` are peer
 dependencies you install yourself. `@pixid/react` and `@pixid/vue` build their
 SVG from `@pixid/core`'s data, and their tests check it against `toSvg` rect by
 rect.
-
-Supported runtimes:
 
 - **Node.js 22 or later** for every package (`engines.node` is `>=22`). CI
   tests Node.js 22, 24, and 26.

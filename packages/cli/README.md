@@ -13,23 +13,11 @@ PNG, and canvas, and comes with React and Vue components and a CLI.
   <img src="https://raw.githubusercontent.com/thilllon/pixid/main/assets/alice.png" width="64" height="64" alt="identicon for the seed alice" />
   &nbsp;
   <img src="https://raw.githubusercontent.com/thilllon/pixid/main/assets/bob.png" width="64" height="64" alt="identicon for the seed bob" />
-  &nbsp;
-  <img src="https://raw.githubusercontent.com/thilllon/pixid/main/assets/thilllon.png" width="64" height="64" alt="identicon for the seed thilllon" />
 </p>
 <p align="center">
-  <sub>Example output: the icons for the seeds <code>pixid</code>, <code>alice</code>, <code>bob</code>, and <code>thilllon</code>.<br />
+  <sub>Example output: the icons for the seeds <code>pixid</code>, <code>alice</code>, and <code>bob</code>.<br />
   The same seed always gives the same icon: <code>npx @pixid/cli alice</code> writes the second one.</sub>
 </p>
-
-## Packages
-
-| Package                                                        | What it does                                                  |
-| -------------------------------------------------------------- | ------------------------------------------------------------- |
-| [`@pixid/core`](https://www.npmjs.com/package/@pixid/core)     | Seed → pixel grid and palette, plus SVG and PNG renderers.    |
-| [`@pixid/cli`](https://www.npmjs.com/package/@pixid/cli)       | The `pixid` command. Writes PNG or SVG files.                 |
-| [`@pixid/canvas`](https://www.npmjs.com/package/@pixid/canvas) | Renders to an HTML `<canvas>`.                                |
-| [`@pixid/react`](https://www.npmjs.com/package/@pixid/react)   | `<Pixid />` rendering inline SVG. Works in server components. |
-| [`@pixid/vue`](https://www.npmjs.com/package/@pixid/vue)       | `<Pixid />` rendering inline SVG. Works with SSR.             |
 
 ## Documentation
 
