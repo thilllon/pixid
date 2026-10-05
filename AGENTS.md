@@ -155,14 +155,7 @@ with `mise exec --`.
   `pnpm --recursive build`. `@pixid/canvas` adds a second, IIFE config that inlines the
   `@pixid/*` graph into `dist/index.global.js` (global `pixidCanvas`, the file its
   `unpkg` and `jsdelivr` fields point at). `@pixid/cli` builds with `platform: 'node'`
-  from two entries in one config, `src/index.ts` and the bin `src/cli.ts`, whose shebang
-  tsdown keeps; both import one shared chunk. That chunk contains commander, the CLI's
-  argument parser: it is a devDependency that tsdown bundles (`deps.onlyBundle`), so
-  `@pixid/core` stays the only package installed with the CLI, and the CommonJS build
-  works although commander is ESM-only. Its licence ships as
-  `packages/cli/THIRD_PARTY_LICENSES.md`; update that file when the bundled set changes.
-  Do not swap in a parser that coerces values (cac, yargs): `--seed 0x8ba1…` must stay a
-  string.
+  and adds a second config for the shebang bin entry (`src/cli.ts`, ESM and CommonJS).
 - Layout: one folder per package under `packages/`, named after what it contains
   (`packages/cli` is `@pixid/cli`).
 - Tests: `pnpm test` runs the unit project, `pnpm e2e` runs the verdaccio-backed
@@ -265,9 +258,8 @@ which is the pile-up the config exists to prevent.
   design. Nothing Dependabot can touch ships: every published package's runtime
   dependencies are `workspace:^`, so its bumps land in devDependencies, which are not
   part of any tarball. Build tooling is the one grey area: a bump of `tsdown` (and the
-  Rolldown it bundles), of `typescript` (which emits the declarations), or of `commander`
-  (bundled into `@pixid/cli`'s `dist`) can change `dist`, and it merges without a
-  changeset. That output ships with each package's next
+  Rolldown it bundles) or of `typescript` (which emits the declarations) can change
+  `dist`, and it merges without a changeset. That output ships with each package's next
   release anyway; if a tooling bump should ship on its own, compare `pnpm pack` output
   before and after and add a patch changeset for every package whose `dist` changed.
   The tsup-to-tsdown switch changed every tarball.

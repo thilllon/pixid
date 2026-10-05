@@ -65,8 +65,7 @@
     "pixid": "./dist/cli.js"
   },
   "files": [
-    "dist",
-    "THIRD_PARTY_LICENSES.md"
+    "dist"
   ],
   "scripts": {
     "build": "tsdown"
@@ -75,7 +74,6 @@
     "@pixid/core": "workspace:^"
   },
   "devDependencies": {
-    "commander": "^15.0.0",
     "verdaccio": "^6.10.4"
   },
   "publishConfig": {
