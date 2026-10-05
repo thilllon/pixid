@@ -1,5 +1,13 @@
 # @pixid/canvas
 
+## 1.1.5
+
+### Patch Changes
+
+- a28f327: Remove the `thilllon` example icon and the Packages table from the README.
+- Updated dependencies [a28f327]
+  - @pixid/core@1.1.5
+
 ## 1.1.4
 
 ### Patch Changes
