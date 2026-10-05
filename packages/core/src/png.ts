@@ -158,20 +158,15 @@ export const toPng = (icon: IconData, scale = 4): Uint8Array<ArrayBuffer> => {
   return out;
 };
 
-const BASE64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-
+// `btoa` takes a "binary string", one character per byte. Appending byte by
+// byte keeps the call stack flat: spreading the bytes into one `fromCharCode`
+// call overflows it for a large image.
 const toBase64 = (bytes: Uint8Array): string => {
-  let out = '';
-  for (let i = 0; i < bytes.length; i += 3) {
-    const b0 = bytes[i]!;
-    const b1 = bytes[i + 1];
-    const b2 = bytes[i + 2];
-    out += BASE64_CHARS[b0 >> 2]!;
-    out += BASE64_CHARS[((b0 & 3) << 4) | ((b1 ?? 0) >> 4)]!;
-    out += b1 === undefined ? '=' : BASE64_CHARS[((b1 & 15) << 2) | ((b2 ?? 0) >> 6)]!;
-    out += b2 === undefined ? '=' : BASE64_CHARS[b2 & 63]!;
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]!);
   }
-  return out;
+  return btoa(binary);
 };
 
 /** Encodes icon data from `createIcon()` as a `data:image/png;base64` URL. */

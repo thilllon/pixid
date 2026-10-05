@@ -170,7 +170,7 @@ describe('npx against a real registry', () => {
     expect(installedPackages(join(workDir, 'cache-png'))).toEqual(['@pixid/cli', '@pixid/core']);
   });
 
-  it('publishes exactly the public packages and keeps the npx download under 30 KB', () => {
+  it('publishes exactly the public packages and keeps the npx download under 40 KB', () => {
     // Every published package gets a storage directory named after it, and
     // nothing outside the `@pixid` scope may appear.
     const published = readdirSync(storageDir, { withFileTypes: true })
@@ -203,7 +203,8 @@ describe('npx against a real registry', () => {
     expect(tarballs).toHaveLength(published.length);
     for (const t of tarballs) {
       console.log(`${t.name}: ${t.size} bytes`);
-      expect(t.size).toBeLessThan(20 * 1024);
+      // The CLI carries commander inside its `dist`; the libraries carry nothing.
+      expect(t.size).toBeLessThan((t.name.startsWith('cli-') ? 32 : 20) * 1024);
     }
 
     const download = (names: string[]) =>
@@ -213,7 +214,7 @@ describe('npx against a real registry', () => {
 
     const total = download(['cli', 'core']);
     console.log(`npx @pixid/cli total download: ${total} bytes`);
-    expect(total).toBeLessThan(30 * 1024);
+    expect(total).toBeLessThan(40 * 1024);
   });
 
   it('renders SVG through npx with an inferred format', () => {
