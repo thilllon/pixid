@@ -150,6 +150,15 @@ describe('toPngDataURL', () => {
     expect(new Uint8Array(decoded)).toEqual(toPng(icon));
   });
 
+  it('encodes an image larger than one binary-string slice', () => {
+    // 64 * 64 = 4096 pixels per side: several megabytes, well past the slice
+    // size and past what a single spread into fromCharCode can take.
+    const icon = createIcon({ seed: 'large', size: 64 });
+    const url = toPngDataURL(icon, 64);
+    const decoded = Buffer.from(url.slice('data:image/png;base64,'.length), 'base64');
+    expect(decoded.equals(toPng(icon, 64))).toBe(true);
+  });
+
   it('pads base64 correctly regardless of byte length', () => {
     // Different scales shift the total byte count across all mod-3 cases.
     const icon = createIcon({ seed: 'padding' });

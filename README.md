@@ -160,7 +160,9 @@ export default {
 Every package is ESM and CommonJS, fully typed, and side-effect free (the CLI's
 bin entry is the one module that runs on import). The only runtime dependency
 of each package is `@pixid/core`; `react` and `vue` are peer
-dependencies you install yourself. `@pixid/react` and `@pixid/vue` build their
+dependencies you install yourself. `@pixid/cli` parses its arguments with
+[commander](https://github.com/tj/commander.js), which is bundled into the
+package, not installed beside it. `@pixid/react` and `@pixid/vue` build their
 SVG from `@pixid/core`'s data, and their tests check it against `toSvg` rect by
 rect.
 

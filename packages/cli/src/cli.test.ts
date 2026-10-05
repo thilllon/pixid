@@ -216,6 +216,37 @@ describe('@pixid/cli', () => {
     expect(runFail(['--nope'])).toContain('--nope');
   });
 
+  it('rejects a second positional argument and a flag without its value', () => {
+    expect(runFail(['a', 'b'])).toContain('too many arguments');
+    expect(runFail(['--seed'])).toContain('argument missing');
+    expect(readdirSync(cwd)).toHaveLength(0);
+  });
+
+  it('reports parser errors in the same shape as its own', () => {
+    expect(runFail(['--nope'])).toBe(
+      'pixid: unknown option \'--nope\'\n\nRun "pixid --help" for usage.\n',
+    );
+  });
+
+  it('keeps numeric-looking values as the strings they are', () => {
+    // A parser that coerces numbers turns this address into 7.97e+47 and
+    // `007` into 7.
+    const seed = '0x8ba1f109551bd432803012645ac136ddd64dba72';
+    run(['--seed', seed, '--out', '007']);
+    expect(new Uint8Array(readFileSync(join(cwd, '007')))).toEqual(toPng(createIcon({ seed }), 16));
+    run(['12345678901234567890']);
+    expect(existsSync(join(cwd, '12345678901234567890.png'))).toBe(true);
+  });
+
+  it('ships no dependency besides @pixid/core, with commander bundled', () => {
+    expect(Object.keys(pkg.dependencies)).toEqual(['@pixid/core']);
+    const dist = fileURLToPath(new URL('../dist', import.meta.url));
+    for (const file of readdirSync(dist).filter((name) => /\.c?js$/.test(name))) {
+      const code = readFileSync(join(dist, file), 'utf8');
+      expect(code, file).not.toMatch(/from\s*["']commander["']|require\(["']commander["']\)/);
+    }
+  });
+
   it('rejects invalid colors with a clean error', () => {
     expect(runFail(['--seed', 'x', '--color', 'red'])).toContain('invalid color');
   });

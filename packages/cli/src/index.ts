@@ -1,37 +1,57 @@
 import { randomUUID } from 'node:crypto';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { parseArgs } from 'node:util';
 import { createIcon, toPng, toSvg } from '@pixid/core';
+import { Command, CommanderError } from 'commander';
 
 declare const __PKG_VERSION__: string;
 
 /** Version of `@pixid/cli`, baked in at build time. */
 export const version: string = __PKG_VERSION__;
 
-const HELP = `pixid - blocky identicon generator
-
-Usage:
-  pixid [seed] [options]
-
-Options:
-  -s, --seed <seed>       seed string (same as the positional argument)
-  -o, --out <file>        output path (default: <seed>.<format>)
-  -f, --format <format>   png or svg (default: inferred from --out, else png)
-      --size <n>          cells per side (default: 8)
-      --scale <n>         pixels per cell (default: 16; size x scale <= 4096)
-      --color <color>     foreground color, #rgb or #rrggbb
-      --bgcolor <color>   background color, #rgb or #rrggbb
-      --spotcolor <color> accent color, #rgb or #rrggbb
-  -h, --help              show this message
-  -v, --version           show the version
-
+const EXAMPLES = `
 Examples:
   npx @pixid/cli
   npx @pixid/cli 0x8ba1f109551bd432803012645ac136ddd64dba72
   npx @pixid/cli --seed alice --out alice.svg --scale 32
   npx @pixid/cli --format svg --bgcolor "#ffffff"
 `;
+
+interface CliOptions {
+  seed?: string;
+  out?: string;
+  format?: string;
+  size?: string;
+  scale?: string;
+  color?: string;
+  bgcolor?: string;
+  spotcolor?: string;
+}
+
+/**
+ * Declares the command line. A `Command` keeps what it parsed, so every run
+ * gets a new one. Option values stay strings: `runCli` validates them itself
+ * so that every error has the same shape.
+ */
+const createProgram = (): Command =>
+  new Command('pixid')
+    .description('blocky identicon generator')
+    .argument('[seed]', 'seed string (default: a random UUID)')
+    .option('-s, --seed <seed>', 'seed string (same as the positional argument)')
+    .option('-o, --out <file>', 'output path (default: <seed>.<format>)')
+    .option('-f, --format <format>', 'png or svg (default: inferred from --out, else png)')
+    .option('--size <n>', 'cells per side (default: 8)')
+    .option('--scale <n>', 'pixels per cell (default: 16; size x scale <= 4096)')
+    .option('--color <color>', 'foreground color, #rgb or #rrggbb')
+    .option('--bgcolor <color>', 'background color, #rgb or #rrggbb')
+    .option('--spotcolor <color>', 'accent color, #rgb or #rrggbb')
+    .helpOption('-h, --help', 'show this message')
+    .version(version, '-v, --version', 'show the version')
+    .addHelpText('after', EXAMPLES)
+    // Throw instead of exiting, and say nothing on stderr: `runCli` reports
+    // every failure through `fail`.
+    .exitOverride()
+    .configureOutput({ writeErr: () => {} });
 
 /**
  * How many characters of the sanitized seed a default filename keeps at most.
@@ -73,41 +93,19 @@ const parsePositiveInt = (name: string, value: string): number => {
  *             Defaults to `process.argv.slice(2)`.
  */
 export const runCli = (argv: string[] = process.argv.slice(2)): void => {
-  let args;
+  const program = createProgram();
   try {
-    args = parseArgs({
-      args: argv,
-      allowPositionals: true,
-      options: {
-        seed: { type: 'string', short: 's' },
-        out: { type: 'string', short: 'o' },
-        format: { type: 'string', short: 'f' },
-        size: { type: 'string' },
-        scale: { type: 'string' },
-        color: { type: 'string' },
-        bgcolor: { type: 'string' },
-        spotcolor: { type: 'string' },
-        help: { type: 'boolean', short: 'h' },
-        version: { type: 'boolean', short: 'v' },
-      },
-    });
+    program.parse(argv, { from: 'user' });
   } catch (error) {
-    return fail(error instanceof Error ? error.message : String(error));
+    // --help and --version have already written to stdout.
+    if (error instanceof CommanderError && error.exitCode === 0) return;
+    const message = error instanceof Error ? error.message : String(error);
+    return fail(message.replace(/^error: /, ''));
   }
 
-  const { values, positionals } = args;
+  const values = program.opts<CliOptions>();
+  const positionals = program.args;
 
-  if (values.help) {
-    process.stdout.write(HELP);
-    return;
-  }
-  if (values.version) {
-    process.stdout.write(`${version}\n`);
-    return;
-  }
-  if (positionals.length > 1) {
-    return fail(`expected at most one positional argument, got ${positionals.length}`);
-  }
   if (values.seed !== undefined && positionals.length > 0) {
     return fail('pass the seed either as a positional argument or with --seed, not both');
   }
