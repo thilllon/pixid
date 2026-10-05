@@ -3,3 +3,6 @@ packages:
 
 allowBuilds:
   esbuild: true
+
+# Minutes. Refuse versions published less than seven days ago.
+minimumReleaseAge: 10080

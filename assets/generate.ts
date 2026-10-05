@@ -21,8 +21,6 @@ const SAMPLES = [
   { seed: 'pixid', file: 'pixid.png' },
   { seed: 'alice', file: 'alice.png' },
   { seed: 'bob', file: 'bob.png' },
-  // No README shows this one any more; the READMEs published up to 1.1.4 still load it.
-  { seed: 'thilllon', file: 'thilllon.png' },
   { seed: '550e8400-e29b-41d4-a716-446655440000', file: 'uuid-550e8400.png' },
 ] as const;
 
