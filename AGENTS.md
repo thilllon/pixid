@@ -206,9 +206,10 @@ or `types` mapping stops being caught, and vitest and any bundler need the same 
   package's tarball, and no tarball contains `assets/`. `assets/` sits outside
   `packages/` for that reason.
 - README anchors: the root `README.md` must keep the anchors `#pixidcore`,
-  `#pixidcanvas`, `#pixidreact`, `#pixidvue`, and `#cli`. Every package README links to
-  its own one (`@pixid/cli` to `#cli`), as do the READMEs of every version published so far (0.2.x through 1.1.0),
-  and those links cannot be changed after publishing. If a heading that produces one is
+  `#pixidcanvas`, `#pixidreact`, `#pixidvue`, and `#cli`. The package READMEs published
+  from 0.2.x through 1.1.4 each link to their own one (`@pixid/cli` to `#cli`), and those
+  links cannot be changed after publishing; later ones link to the repository page with
+  no anchor. If a heading that produces one is
   renamed or removed, keep the slug with an explicit `<a id="..."></a>`, and do not add
   an earlier heading that takes the same slug (a `### CLI` above `## CLI` would take
   `#cli`).
@@ -219,8 +220,8 @@ or `types` mapping stops being caught, and vitest and any bundler need the same 
   for every package (usage, options, API, notes), and states each fact once. The five
   `packages/*/README.md` files, which npm shows, share one short body: an introduction to
   pixid, the example icons, and a link to the root README (no table of packages). They
-  differ only in the title, the badge URLs, and that link, which points at
-  the package's own root section (the anchors above). Put no package-specific
+  differ only in the title and the badge URLs; the link is
+  `https://github.com/thilllon/pixid` in all five, with no anchor. Put no package-specific
   documentation in them: no install notes, usage, API, or caveats. When the shared body
   changes, change all five the same way. A documentation fix therefore goes in the root
   README and needs no release; only a change to the shared body does, since npm serves
