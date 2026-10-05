@@ -217,9 +217,40 @@ describe('@pixid/cli', () => {
   });
 
   it('rejects a second positional argument and a flag without its value', () => {
-    expect(runFail(['a', 'b'])).toContain('too many arguments');
+    expect(runFail(['a', 'b'])).toContain('at most one positional argument, got 2');
     expect(runFail(['--seed'])).toContain('argument missing');
     expect(readdirSync(cwd)).toHaveLength(0);
+  });
+
+  it('does not take the next flag as a forgotten value', () => {
+    // commander alone would write a PNG to a file named `-f`.
+    expect(runFail(['-o', '-f', 'svg'])).toContain("option '-o' is missing its value");
+    expect(runFail(['--seed', '--help'])).toContain("option '--seed' is missing its value");
+    expect(runFail(['x', '--out', '--scale', '4'])).toContain("option '--out' is missing");
+    expect(readdirSync(cwd)).toHaveLength(0);
+
+    // The = form and anything after `--` are taken as written.
+    run(['--seed=-x', '--out=-y.svg']);
+    expect(readFileSync(join(cwd, '-y.svg'), 'utf8')).toBe(toSvg(createIcon({ seed: '-x' }), 16));
+    run(['--', '--seed']);
+    expect(existsSync(join(cwd, '--seed.png'))).toBe(true);
+  });
+
+  it('still rejects bad input next to --help or --version', () => {
+    for (const args of [
+      ['--nope', '-h'],
+      ['-h', '--nope'],
+      ['-v', '--nope'],
+      ['-v', '--seed'],
+    ]) {
+      expect(runFail(args), args.join(' ')).toMatch(/^pixid: /);
+    }
+  });
+
+  it('gives --help precedence over --version, clustered or apart', () => {
+    for (const args of [['-hv'], ['-vh'], ['-h', '-v'], ['-v', '-h'], ['-h', 'a', 'b']]) {
+      expect(run(args), args.join(' ')).toContain('Usage:');
+    }
   });
 
   it('reports parser errors in the same shape as its own', () => {

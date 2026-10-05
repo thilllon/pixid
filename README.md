@@ -138,8 +138,9 @@ and renders under `@vue/server-renderer`.
 
 ### Edge runtimes
 
-`@pixid/core` uses only `Math`, typed arrays, and `DataView`: no `Buffer`, no
-`zlib`, no Node.js built-ins. A Cloudflare Worker that serves avatars:
+`@pixid/core` uses only `Math`, typed arrays, and `DataView`, plus the global
+`btoa` in `toPngDataURL`: no `Buffer`, no `zlib`, no Node.js built-ins. A
+Cloudflare Worker that serves avatars:
 
 ```ts
 import { createIcon, toPng } from '@pixid/core';

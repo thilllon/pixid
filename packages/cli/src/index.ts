@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { createIcon, toPng, toSvg } from '@pixid/core';
-import { Command, CommanderError } from 'commander';
+import { Command } from 'commander';
 
 declare const __PKG_VERSION__: string;
 
@@ -26,7 +26,41 @@ interface CliOptions {
   color?: string;
   bgcolor?: string;
   spotcolor?: string;
+  help?: boolean;
+  version?: boolean;
 }
+
+/** Flags that take a value, in every spelling. */
+const VALUE_FLAGS = new Set([
+  '-s',
+  '--seed',
+  '-o',
+  '--out',
+  '-f',
+  '--format',
+  '--size',
+  '--scale',
+  '--color',
+  '--bgcolor',
+  '--spotcolor',
+]);
+
+/**
+ * Finds a value flag followed by another flag, as in `--out --format svg`.
+ * commander would take `--format` as the output path and write a file by that
+ * name; a forgotten value should be an error. A value that really starts with
+ * a dash can be given as `--seed=-x`.
+ */
+const findSwallowedFlag = (argv: readonly string[]): string | undefined => {
+  for (let i = 0; i < argv.length && argv[i] !== '--'; i++) {
+    const flag = argv[i]!;
+    if (!VALUE_FLAGS.has(flag)) continue;
+    const next = argv[i + 1];
+    if (next !== undefined && next.length > 1 && next.startsWith('-')) return flag;
+    i++;
+  }
+  return undefined;
+};
 
 /**
  * Declares the command line. A `Command` keeps what it parsed, so every run
@@ -45,9 +79,14 @@ const createProgram = (): Command =>
     .option('--color <color>', 'foreground color, #rgb or #rrggbb')
     .option('--bgcolor <color>', 'background color, #rgb or #rrggbb')
     .option('--spotcolor <color>', 'accent color, #rgb or #rrggbb')
-    .helpOption('-h, --help', 'show this message')
-    .version(version, '-v, --version', 'show the version')
-    .addHelpText('after', EXAMPLES)
+    // Plain flags, handled in `runCli` once parsing has succeeded. commander's
+    // own help and version act in the middle of parsing, so `--help --nope`
+    // would print help instead of rejecting `--nope`.
+    .helpOption(false)
+    .option('-h, --help', 'show this message')
+    .option('-v, --version', 'show the version')
+    // `runCli` counts the positionals itself, after --help and --version.
+    .allowExcessArguments()
     // Throw instead of exiting, and say nothing on stderr: `runCli` reports
     // every failure through `fail`.
     .exitOverride()
@@ -93,12 +132,18 @@ const parsePositiveInt = (name: string, value: string): number => {
  *             Defaults to `process.argv.slice(2)`.
  */
 export const runCli = (argv: string[] = process.argv.slice(2)): void => {
+  const swallowed = findSwallowedFlag(argv);
+  if (swallowed !== undefined) {
+    return fail(
+      `option '${swallowed}' is missing its value; ` +
+        `write a value that starts with a dash as ${swallowed}=<value>`,
+    );
+  }
+
   const program = createProgram();
   try {
     program.parse(argv, { from: 'user' });
   } catch (error) {
-    // --help and --version have already written to stdout.
-    if (error instanceof CommanderError && error.exitCode === 0) return;
     const message = error instanceof Error ? error.message : String(error);
     return fail(message.replace(/^error: /, ''));
   }
@@ -106,6 +151,17 @@ export const runCli = (argv: string[] = process.argv.slice(2)): void => {
   const values = program.opts<CliOptions>();
   const positionals = program.args;
 
+  if (values.help) {
+    process.stdout.write(program.helpInformation() + EXAMPLES);
+    return;
+  }
+  if (values.version) {
+    process.stdout.write(`${version}\n`);
+    return;
+  }
+  if (positionals.length > 1) {
+    return fail(`expected at most one positional argument, got ${positionals.length}`);
+  }
   if (values.seed !== undefined && positionals.length > 0) {
     return fail('pass the seed either as a positional argument or with --seed, not both');
   }

@@ -150,9 +150,9 @@ describe('toPngDataURL', () => {
     expect(new Uint8Array(decoded)).toEqual(toPng(icon));
   });
 
-  it('encodes an image larger than one binary-string slice', () => {
-    // 64 * 64 = 4096 pixels per side: several megabytes, well past the slice
-    // size and past what a single spread into fromCharCode can take.
+  it('encodes a multi-megabyte image', () => {
+    // 64 * 64 = 4096 pixels per side, the largest image the CLI draws: far
+    // more bytes than one spread into fromCharCode can take.
     const icon = createIcon({ seed: 'large', size: 64 });
     const url = toPngDataURL(icon, 64);
     const decoded = Buffer.from(url.slice('data:image/png;base64,'.length), 'base64');

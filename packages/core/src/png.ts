@@ -158,15 +158,13 @@ export const toPng = (icon: IconData, scale = 4): Uint8Array<ArrayBuffer> => {
   return out;
 };
 
-// `btoa` takes a "binary string", one character per byte. The string is built
-// in slices because spreading a large array into `fromCharCode` overflows the
-// call stack: a 4096x4096 PNG is several megabytes.
-const BINARY_STRING_SLICE = 0x8000;
-
+// `btoa` takes a "binary string", one character per byte. Appending byte by
+// byte keeps the call stack flat: spreading the bytes into one `fromCharCode`
+// call overflows it for a large image.
 const toBase64 = (bytes: Uint8Array): string => {
   let binary = '';
-  for (let i = 0; i < bytes.length; i += BINARY_STRING_SLICE) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + BINARY_STRING_SLICE));
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]!);
   }
   return btoa(binary);
 };
