@@ -166,8 +166,9 @@ rect.
 
 - **Node.js 22 or later** for every package (`engines.node` is `>=22`). CI
   tests Node.js 22, 24, and 26.
-- **Browsers** with ES2022 support. `@pixid/canvas` needs a DOM; the others do
-  not.
+- **Browsers** with ES2022 support, for `@pixid/core`, `@pixid/canvas`,
+  `@pixid/react`, and `@pixid/vue`. `@pixid/canvas` needs a DOM; the others do
+  not. `@pixid/cli` runs on Node.js only.
 - **Edge runtimes** such as Cloudflare Workers, for `@pixid/core`,
   `@pixid/react`, and `@pixid/vue`.
 
