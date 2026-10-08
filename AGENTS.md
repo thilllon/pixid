@@ -30,7 +30,7 @@ from those excluded authors.
 - Release commits produced by `changeset version`: version bumps in `package.json`,
   generated `CHANGELOG.md` files, consumed changeset files.
 - Repository metadata and config touch-ups that cannot break the build, e.g.
-  `.vscode/*`, `.gitignore`, `.prettierignore`, LICENSE and repository-field metadata.
+  `.vscode/*`, `.gitignore`, LICENSE and repository-field metadata.
 - Any change where the owner explicitly asks for a direct push, or explicitly asks
   for a merge, in that session.
 
@@ -44,7 +44,7 @@ This applies to direct pushes exactly as it applies to PR branches. Run the full
 suite locally and require it to pass:
 
 ```sh
-pnpm check    # build, then lint + typecheck + unit tests + prettier in parallel
+pnpm check    # build, then lint + typecheck + unit tests + format check in parallel
 pnpm e2e      # the verdaccio suite, which `check` leaves out
 ```
 
@@ -54,7 +54,7 @@ dependency's `dist/`, then runs the four checks with
 wrote it. Run the pieces on their own (`pnpm lint`, `pnpm typecheck`, ...) when you want
 one tool's output unmixed.
 
-CI runs the same checks: build, lint, `pnpm typecheck`, the prettier check
+CI runs the same checks: build, lint, `pnpm typecheck`, the format check
 (`pnpm format:check`), and the unit tests on every leg, plus the e2e suite on Node 24.
 After pushing, confirm CI is green on the Node 22/24/26 matrix
 (`gh run list --branch main --limit 3`).
@@ -120,7 +120,7 @@ The Release workflow runs `changesets/action` v2. While changesets are pending i
 opens or updates the "Version Packages" PR, which applies the bumps, moves each note
 into `CHANGELOG.md`, and deletes the changeset files. Once that PR is merged it runs
 `pnpm release`, which is `pnpm check` (build, then lint, typecheck, unit tests, and the
-prettier check) followed by `changeset publish`, so a failing check stops the publish.
+format check) followed by `changeset publish`, so a failing check stops the publish.
 The verdaccio e2e suite stays out of it because it runs `pnpm publish` itself, which
 does not belong in the OIDC-enabled release job.
 For every package it publishes, the action pushes a git tag (`@pixid/<name>@<version>`);
@@ -227,10 +227,10 @@ or `types` mapping stops being caught, and vitest and any bundler need the same 
   that belongs in each `CHANGELOG.md`.
 - The root README's Contributing section points to this file, so this file is the
   contributor guide for people as well as agents.
-- Lint, types, and format: `pnpm lint` (`eslint .`), `pnpm typecheck` (`tsc --noEmit`
+- Lint, types, and format: `pnpm lint` (`oxlint`), `pnpm typecheck` (`tsc --noEmit`
   for the root and every package; run it after `pnpm build`, since packages type-check
-  against their dependencies' `dist/`), `pnpm format` (`prettier --write`), and
-  `pnpm format:check` (`prettier --check`, as CI runs it).
+  against their dependencies' `dist/`), `pnpm format` (`oxfmt`), and
+  `pnpm format:check` (`oxfmt --check`, as CI runs it).
 - Versioning: changesets. Add a changeset for any user-visible change
   (`pnpm changeset`). CI enforces it: the `changeset` job runs
   `changeset status --since=origin/<base>` on every pull request and fails when a
@@ -317,9 +317,9 @@ which is the pile-up the config exists to prevent.
 - Dependabot waits seven days after an npm release before proposing it (`cooldown`),
   so a compromised or yanked version is usually caught by the ecosystem before it can
   auto-merge here. GitHub Actions bumps use a three-day cooldown.
-- TypeScript majors are ignored: typescript-eslint's peer range stops below 6.1, and
-  TypeScript 7 breaks its parser. Upgrade TypeScript by hand once typescript-eslint
-  supports the new major, then drop that rule from `dependabot.yml`.
+- TypeScript majors are ignored: TypeScript emits the declarations every package ships,
+  so a major can change `dist` and would auto-merge without a changeset. Upgrade
+  TypeScript by hand, comparing `pnpm pack` output as described above.
 - A `uses:` ref on a floating major tag (`@v7`) only ever gets major bumps, because
   Dependabot precision-matches the ref. A ref pinned to a commit SHA with a
   `# vX.Y.Z` comment also gets minor and patch bumps.
@@ -342,12 +342,16 @@ concrete reason — everything left is load-bearing:
 - `.github/`, `.vscode/`, `.changeset/`, `.coderabbit.yaml` — each tool hard-codes its
   path. `.coderabbit.yaml` only tunes the review; the rules stay in this file.
   `.cursor/` is gitignored: Cursor settings stay local to each checkout.
-- `eslint.config.mts`, `.prettierrc.json`, `.prettierignore`, `vitest.config.ts` — resolved
-  from the working directory, and `vitest.config.ts` owns both projects, so it cannot
-  belong to a package. Prettier only reads `.prettierignore` from the cwd. ESLint loads
-  the TypeScript config through `jiti`, which is why that devDependency exists.
-- `tsconfig.json` covers repository-owned TypeScript: `assets/`, `eslint.config.mts`,
-  and `vitest.config.ts`, so `pnpm typecheck` checks the config files too.
+- `.oxlintrc.json`, `.oxfmtrc.json`, `vitest.config.ts` — resolved from the working
+  directory, and `vitest.config.ts` owns both projects, so it cannot belong to a
+  package. Both oxc tools skip what the repository's `.gitignore` lists, and
+  oxfmt skips lockfiles on its own. A global gitignore is not read, so `.oxfmtrc.json`'s
+  `ignorePatterns` names `.omc/`: local oh-my-claudecode state, untracked and hidden only
+  by a global gitignore. `.oxlintrc.json` enables the `correctness` category and lists, one
+  by one, the rules from ESLint's and typescript-eslint's recommended sets that fall
+  outside it.
+- `tsconfig.json` covers repository-owned TypeScript: `assets/` and
+  `vitest.config.ts`, so `pnpm typecheck` checks the config files too.
   `tsconfig.base.json` is what all five package tsconfigs extend, and those cover each
   package's tests.
 - `mise.toml`, `LICENSE`, `README.md`, `AGENTS.md`, `.gitignore` — convention or
