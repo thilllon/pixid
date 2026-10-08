@@ -1,6 +1,6 @@
 {
   "js/ts.suggest.autoImports": true,
   "[yaml]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "oxc.oxc-vscode"
   }
 }

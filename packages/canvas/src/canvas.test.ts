@@ -79,7 +79,7 @@ describe('renderToCanvas', () => {
       ]);
 
       // Replay every fill call onto a virtual grid.
-      const rebuilt = new Array(size * size).fill(-1);
+      const rebuilt = Array.from({ length: size * size }, () => -1);
       for (const call of calls) {
         const value = colorToValue.get(call.fillStyle);
         expect(value, `unexpected fillStyle ${call.fillStyle}`).toBeDefined();
@@ -89,7 +89,7 @@ describe('renderToCanvas', () => {
         expect(call.h % scale).toBe(0);
         for (let dy = 0; dy < call.h / scale; dy++) {
           for (let dx = 0; dx < call.w / scale; dx++) {
-            rebuilt[(call.y / scale + dy) * size + (call.x / scale + dx)] = value;
+            rebuilt[(call.y / scale + dy) * size + (call.x / scale + dx)] = value ?? -1;
           }
         }
       }

@@ -8,7 +8,7 @@ import { createIcon, iconRuns, parseColor, rgbToCss } from './index.js';
  * PRNG in exactly the same order and produces identical grids and colors.
  */
 const oracle = (() => {
-  const randseed = new Array<number>(4);
+  const randseed = Array.from<number>({ length: 4 });
 
   const seedrand = (seed: string) => {
     randseed.fill(0);
@@ -301,7 +301,7 @@ describe('iconRuns', () => {
   it('reconstructs the exact grid when expanded', () => {
     for (const seed of ['runs-a', 'runs-b', 'runs-c']) {
       const icon = createIcon({ seed, size: 10 });
-      const rebuilt = new Array(icon.size * icon.size).fill(0);
+      const rebuilt = Array.from({ length: icon.size * icon.size }, () => 0);
       for (const run of iconRuns(icon)) {
         for (let i = 0; i < run.width; i++) {
           rebuilt[run.y * icon.size + run.x + i] = run.value;

@@ -47,8 +47,8 @@ reviews:
       - 'dependabot[bot]'
       - 'github-actions[bot]'
   tools:
-    # CI already runs eslint on every pull request.
-    eslint:
+    # CI already runs oxlint on every pull request.
+    oxc:
       enabled: false
 
 chat:
