@@ -34,12 +34,12 @@
   "devDependencies": {
     "@changesets/cli": "^3.0.3",
     "@pixid/core": "workspace:^",
-    "@types/node": "^26.6.3",
+    "@types/node": "^26.6.4",
     "esbuild": "^0.28.2",
     "oxfmt": "^0.71.0",
     "oxlint": "^1.86.0",
     "tsdown": "^0.23.0",
     "typescript": "^5.9.3",
-    "vitest": "^5.0.2"
+    "vitest": "^5.0.3"
   }
 }
