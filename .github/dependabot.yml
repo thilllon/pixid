@@ -50,10 +50,9 @@ updates:
     # replaced by a real one -- internal versions belong to changesets.
     ignore:
       - dependency-name: '@pixid/*'
-      # typescript-eslint's peer range stops below TypeScript 6.1, and
-      # TypeScript 7 breaks its parser outright, so a TypeScript major would
-      # break `pnpm lint`. Take TypeScript majors by hand once typescript-eslint
-      # supports them, then drop this rule.
+      # TypeScript emits the declarations every package ships, so a major can
+      # change published `dist` output and would auto-merge without a changeset.
+      # Take TypeScript majors by hand.
       - dependency-name: 'typescript'
         update-types: ['version-update:semver-major']
 

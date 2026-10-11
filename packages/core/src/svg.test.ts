@@ -6,7 +6,7 @@ const RECT_RE =
 
 /** Rebuilds the cell grid by replaying every rect in the SVG markup. */
 const gridFromSvg = (svg: string, size: number): number[] => {
-  const grid = new Array(size * size).fill(-1);
+  const grid = Array.from({ length: size * size }, () => -1);
   const palette = new Map<string, number>();
 
   for (const match of svg.matchAll(RECT_RE)) {
