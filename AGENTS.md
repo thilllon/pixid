@@ -45,7 +45,7 @@ suite locally and require it to pass:
 
 ```sh
 pnpm check    # build, then lint + typecheck + unit tests + format check in parallel
-pnpm e2e      # the verdaccio suite, which `check` leaves out
+pnpm test:e2e # the verdaccio suite, which `check` leaves out
 ```
 
 `pnpm check` builds first because the package tsconfigs and the unit tests read each
@@ -158,8 +158,8 @@ with `mise exec --`.
   and adds a second config for the shebang bin entry (`src/cli.ts`, ESM and CommonJS).
 - Layout: one folder per package under `packages/`, named after what it contains
   (`packages/cli` is `@pixid/cli`).
-- Tests: `pnpm test` runs the unit project, `pnpm e2e` runs the verdaccio-backed
-  project, `pnpm test:all` runs both. Projects are defined in `vitest.config.ts`.
+- Tests: `pnpm test:unit` runs the unit project, `pnpm test:e2e` runs the
+  verdaccio-backed project, `pnpm test:all` runs both. Projects are defined in `vitest.config.ts`.
 - Every test is colocated with the code it covers, in its package's `src/`, and matched
   by `packages/*/src/**/*.test.{ts,tsx}`. Files named `*.e2e.test.ts` form the `e2e`
   project and are excluded from `unit`. Tests read `dist/`, so build first.

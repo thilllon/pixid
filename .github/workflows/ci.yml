@@ -36,10 +36,10 @@ jobs:
       # each dependency's built `dist/`, so type-checking runs after the build.
       - run: pnpm typecheck
       - run: pnpm format:check
-      - run: pnpm test
+      - run: pnpm test:unit
       # The verdaccio-backed e2e suite is the slowest part of CI, so it runs
       # only on the Active LTS leg (node 24) to keep total matrix time down.
-      - run: pnpm e2e
+      - run: pnpm test:e2e
         if: matrix.node == 24
 
   # Catches the easy mistake: changing a published package and forgetting the
