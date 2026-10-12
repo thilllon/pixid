@@ -15,7 +15,7 @@ updates:
       day: 'monday'
       time: '09:00'
       timezone: 'Asia/Seoul'
-    # Our manifests carry tight caret floors (`^5.9.3`), so bump the floor
+    # Our manifests carry tight caret floors (`^7.0.2`), so bump the floor
     # instead of the default library behaviour, which would widen `^1.0.0` into
     # `>=1.0.0 <3.0.0` on a major bump.
     versioning-strategy: 'increase'
