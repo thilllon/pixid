@@ -4,8 +4,5 @@
   // Each package has its own tsconfig extending the same base, which also
   // covers its tests.
   "extends": "./tsconfig.base.json",
-  "compilerOptions": {
-    "types": ["node"]
-  },
   "include": ["assets/**/*.ts", "vitest.config.ts"]
 }
