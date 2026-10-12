@@ -19,14 +19,14 @@
   "scripts": {
     "build": "pnpm --recursive build",
     "assets": "node assets/generate.ts",
-    "test": "vitest run --project unit",
-    "e2e": "vitest run --project e2e",
+    "test:unit": "vitest run --project unit",
+    "test:e2e": "vitest run --project e2e",
     "test:all": "vitest run",
     "lint": "oxlint",
     "typecheck": "tsc --noEmit --project tsconfig.json && pnpm --recursive exec tsc --noEmit --project tsconfig.json",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
-    "check": "pnpm build && pnpm --workspace-root run --parallel \"/^(lint|typecheck|test|format:check)$/\"",
+    "check": "pnpm build && pnpm --workspace-root run --parallel \"/^(lint|typecheck|test:unit|format:check)$/\"",
     "changeset": "changeset",
     "version": "changeset version",
     "release": "pnpm check && changeset publish"
