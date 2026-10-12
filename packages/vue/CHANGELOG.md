@@ -1,5 +1,17 @@
 # @pixid/vue
 
+## 2.0.0
+
+### Major Changes
+
+- 00c89bd: Build with TypeScript 7.0.2. The API is unchanged, and every published file is
+  byte-identical to the previous release.
+
+### Patch Changes
+
+- Updated dependencies [00c89bd]
+  - @pixid/core@2.0.0
+
 ## 1.1.5
 
 ### Patch Changes

@@ -1,5 +1,12 @@
 # @pixid/core
 
+## 2.0.0
+
+### Major Changes
+
+- 00c89bd: Build with TypeScript 7.0.2. The API is unchanged, and every published file is
+  byte-identical to the previous release.
+
 ## 1.1.6
 
 ### Patch Changes
