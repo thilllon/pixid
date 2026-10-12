@@ -77,7 +77,7 @@ With no build step, from a CDN:
 ```html
 <img id="avatar" width="128" height="128" />
 <script type="module">
-  import { createIcon, toSvgDataURL } from 'https://esm.sh/@pixid/core@1';
+  import { createIcon, toSvgDataURL } from 'https://esm.sh/@pixid/core@2';
   document.getElementById('avatar').src = toSvgDataURL(createIcon({ seed: 'alice' }), 16);
 </script>
 ```
@@ -86,13 +86,13 @@ With no build step, from a CDN:
 
 ```html
 <img id="avatar" width="128" height="128" />
-<script src="https://cdn.jsdelivr.net/npm/@pixid/canvas@1"></script>
+<script src="https://cdn.jsdelivr.net/npm/@pixid/canvas@2"></script>
 <script>
   document.getElementById('avatar').src = pixidCanvas.toCanvasDataURL({ seed: 'alice', scale: 16 });
 </script>
 ```
 
-The same file is on unpkg at `https://unpkg.com/@pixid/canvas@1`. Only
+The same file is on unpkg at `https://unpkg.com/@pixid/canvas@2`. Only
 `@pixid/canvas` has a script-tag build.
 
 ### Canvas
@@ -414,7 +414,7 @@ back.
 
 ## Stability
 
-pixid follows [semantic versioning](https://semver.org). Within 1.x, for the
+pixid follows [semantic versioning](https://semver.org). Within a major version, for the
 same options with a `seed` given:
 
 - `createIcon` returns the same grid and the same colors.
@@ -495,7 +495,7 @@ includes `@pixid/core`:
 | `import { createCanvas } from '@pixid/canvas'`                | 2.7 kB          |
 | `import { Pixid } from '@pixid/react'`                        | 2.9 kB          |
 | `import { Pixid } from '@pixid/vue'`                          | 3.1 kB          |
-| `<script src="https://cdn.jsdelivr.net/npm/@pixid/canvas@1">` | 2.9 kB          |
+| `<script src="https://cdn.jsdelivr.net/npm/@pixid/canvas@2">` | 2.9 kB          |
 
 The figures are measurements, not limits. Each library package's
 `src/bundle.test.ts` enforces a ceiling and checks that an
