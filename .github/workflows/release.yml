@@ -32,7 +32,7 @@ jobs:
       # The job caches nothing (`cache: false` here, no pnpm store cache), per
       # npm's trusted-publishing guidance to never cache in release builds: a
       # poisoned cache entry would run with this job's publish permissions.
-      - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
+      - uses: jdx/mise-action@9b200bcecbfd6303e69a4a261b2e09e3757440a7 # v5.2.0
         with:
           cache: false
       - run: pnpm install --frozen-lockfile
