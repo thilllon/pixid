@@ -36,10 +36,10 @@
     "@pixid/core": "workspace:^",
     "@types/node": "^26.6.5",
     "esbuild": "^0.28.2",
-    "oxfmt": "^0.72.0",
-    "oxlint": "^1.87.0",
+    "oxfmt": "^0.73.0",
+    "oxlint": "^1.88.0",
     "tsdown": "^0.23.1",
     "typescript": "^7.0.2",
-    "vitest": "^5.0.3"
+    "vitest": "^5.0.5"
   }
 }
