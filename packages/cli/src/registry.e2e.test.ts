@@ -1,5 +1,5 @@
 import { execFileSync, spawn, type ChildProcess } from 'node:child_process';
-import { createRequire } from 'node:module';
+import { findPackageJSON } from 'node:module';
 import {
   mkdirSync,
   mkdtempSync,
@@ -61,13 +61,15 @@ beforeAll(async () => {
   );
 
   // Resolve the verdaccio binary from this package's own node_modules.
-  const require = createRequire(import.meta.url);
-  const verdaccioPkg = require('verdaccio/package.json') as {
+  // verdaccio 7 has an `exports` map without `./package.json`, so locate the
+  // manifest with `findPackageJSON` instead of requiring the subpath.
+  const verdaccioPkgPath = findPackageJSON('verdaccio', import.meta.url)!;
+  const verdaccioPkg = JSON.parse(readFileSync(verdaccioPkgPath, 'utf8')) as {
     bin: string | Record<string, string>;
   };
   const binRelative =
     typeof verdaccioPkg.bin === 'string' ? verdaccioPkg.bin : verdaccioPkg.bin.verdaccio!;
-  const verdaccioBin = join(dirname(require.resolve('verdaccio/package.json')), binRelative);
+  const verdaccioBin = join(dirname(verdaccioPkgPath), binRelative);
 
   verdaccio = spawn(process.execPath, [verdaccioBin, '-c', configPath, '-l', `127.0.0.1:${PORT}`], {
     stdio: ['ignore', 'ignore', 'pipe'],
