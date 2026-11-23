@@ -74,7 +74,7 @@
     "@pixid/core": "workspace:^"
   },
   "devDependencies": {
-    "verdaccio": "^7.1.0"
+    "verdaccio": "^7.1.1"
   },
   "publishConfig": {
     "access": "public"
