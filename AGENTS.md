@@ -10,7 +10,11 @@ workflow changes, test infrastructure.
 
 1. Branch off `main` as `cursor/<descriptive-name>`, commit, push.
 2. Open a PR targeting `main` with a clear title and a summary of the changes.
-3. Report the PR URL. Do not merge on your own initiative.
+3. Carry the PR through to `main` yourself: when every required check is green and no
+   review finding is left open, merge it with the local recipe under "`gh` CLI", then
+   confirm `main`'s CI, Release and CodeQL runs and that the linked issue closed.
+   Report the PR URL and the merge commit. Do not merge a PR with a red required check
+   or an unanswered finding; report what blocks it instead.
 
 ### Code review
 
@@ -31,8 +35,7 @@ from those excluded authors.
   generated `CHANGELOG.md` files, consumed changeset files.
 - Repository metadata and config touch-ups that cannot break the build, e.g.
   `.vscode/*`, `.gitignore`, LICENSE and repository-field metadata.
-- Any change where the owner explicitly asks for a direct push, or explicitly asks
-  for a merge, in that session.
+- Any change where the owner explicitly asks for a direct push in that session.
 
 Owner instructions in the session always override this file. If a change mixes a
 documentation edit with a substantive one, treat the whole change as substantive and
@@ -67,11 +70,13 @@ Use it there for reads only — `gh run list`, `gh run view --log-failed`,
 `gh pr view` — and create PRs with the agent's own PR tool. The binary may be at
 `/exec-daemon/gh` if it is not on `PATH`.
 
-Elsewhere `gh` may be authenticated with write access, but merges follow the rules
-above in every environment: never on your own initiative, and when the owner
-explicitly asks for a merge, do it locally. `main` is protected by required status
-checks (see "Dependency updates"), but the rule does not apply to admins, so the
-owner's push goes through as before:
+An environment that cannot push to `main`, such as that one, stops at step 3's report
+and leaves the merge to the owner.
+
+Elsewhere `gh` may be authenticated with write access. Merge locally, not with
+`gh pr merge`. `main` is protected by required status checks (see "Dependency
+updates"), but the rule does not apply to admins, so the owner's push goes through as
+before:
 
 ```sh
 git checkout main && git merge --no-ff <branch> && git push origin main
@@ -271,6 +276,16 @@ which is the pile-up the config exists to prevent.
   merged; to hold majors for review, add
   `steps.metadata.outputs.update-type != 'version-update:semver-major'` to the merge
   step's `if`, as the workflow comment shows.
+- A stuck Dependabot pull request (conflicted, or red because of something fixed on
+  `main` since) is yours to unstick, not the owner's: comment `@dependabot rebase`
+  and follow it until it merges. Never push to its branch or press "Update branch":
+  once anyone else has pushed, Dependabot refuses to rebase ("edited by someone other
+  than Dependabot"). If that has already happened, comment `@dependabot recreate`; if
+  Dependabot does not answer, rebuild the branch on `main` (same manifest change, fresh
+  lockfile, full verification) and force-push it with `--force-with-lease` set to
+  Dependabot's commit. Security updates for transitive dependencies can fail with
+  `dependency_file_not_resolvable` when pnpm resolves higher than Dependabot asked;
+  `pnpm update -r <pkg>` in a pull request of your own does the same update.
 - `main` carries a classic branch protection rule for that reason: required status
   checks only, `strict` off, admins not enforced. It exists so that auto-merge has
   something to wait for; without it `gh pr merge --auto` merges a pull request at once,
